@@ -1,11 +1,13 @@
 #ifndef OF_APP_H
 #define OF_APP_H
 
+#include "Polygon.h"
+
 #include "ofMain.h"
 #include "ofxGui.h"
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
-#include "polygon.h"
+
 
 
 #ifdef WIN32
@@ -46,7 +48,7 @@ private:
     
     // Only draw final output visuals - no GUI, no debug visuals, only content that can be seen by spectator
     void drawVisuals();
-	void drawPolygons();
+	void drawAreaPolygons();
     // Draw the interface of your app : visuals, GUI, debug content...
     void drawInterface();
     // Minimalist interface with black screen and some information
@@ -80,14 +82,14 @@ private:
     
 	//Parameters AreaEditor
 	bool m_bIsCreating;
-	int m_iNumberOfPolygons;
-	vector<polygon> m_vPolygonsVector;
+	int m_iNumberOfAreaPolygons;
+	vector<AreaPolygon> m_vAreaPolygonsVector;
 
     // Gui panel
     ofxPanel m_gui;
     // Gui content ----------------
     ofxLabel m_sFramerate;
-	ofxLabel m_sNumberOfPolygons;
+	ofxLabel m_sNumberOfAreaPolygons;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     // Parameters group to organize your parameters
     ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;

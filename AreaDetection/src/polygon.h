@@ -1,14 +1,16 @@
+#ifndef AreaPolygon_H
+#define AreaPolygon_H
+
 #include <vector>
 #include "ofVec2f.h"
 #include "ofGraphics.h"
 
 
 
-class polygon {
-
+class AreaPolygon {
 public:
 
-	polygon(ofVec2f a_oFirstPoint);
+	AreaPolygon(ofVec2f a_oFirstPoint);
 
 	inline void setRadius(float a_fRadius){ m_fRadius = a_fRadius; };
 	inline void setColorCircle(ofColor a_oCircleColor){ m_oPointsColor = a_oCircleColor; };
@@ -23,7 +25,7 @@ public:
 	void draw();
 	
 	void addPoint(ofVec2f a_oPoint);
-	void removeLastPoint();
+	bool removeLastPoint();
 
 private:
 	vector<ofVec2f> m_vVectorPoints;
@@ -31,7 +33,9 @@ private:
 
 	ofColor m_oPointsColor;
 	ofColor m_oLinesColor;
+	ofColor m_oLinesCompletedColor;
 	float m_fRadius;
 	int m_iLinesWidth;
 
 };
+#endif // AreaPolygon_H

@@ -67,7 +67,7 @@ void ofApp::init(){
 	m_iLinesWidthSlider = 2;
 	m_bRedondanteMode = true;
 	m_bIsCreating = false;
-	m_iNumberOfPolygons = 0;
+	m_iNumberOfAreaPolygons = 0;
 	m_iRadiusClosePolyZone = 30;
     m_vMyVec = ofVec3f(1,2,3);
     
@@ -90,23 +90,22 @@ void ofApp::update(){
     
 
 	//Update GUI
-	m_iNumberOfPolygons = m_vPolygonsVector.size();
-	for (size_t i = 0; i < m_vPolygonsVector.size(); i++){
-		m_vPolygonsVector[i].setRadius(m_fPointRadius);
-		m_vPolygonsVector[i].setLinesWidth(m_iLinesWidthSlider);
+	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
+	for (size_t i = 0; i < m_vAreaPolygonsVector.size(); i++){
+		m_vAreaPolygonsVector[i].setRadius(m_fPointRadius);
+		m_vAreaPolygonsVector[i].setLinesWidth(m_iLinesWidthSlider);
 	}
 }
 
 //--------------------------------------------------------------
-void ofApp::drawPolygons(){
+void ofApp::drawAreaPolygons(){
 	m_fbo.begin();
 	ofClear(ofColor::black); // Clear FBO content to black
 	ofEnableDepthTest();
 
-	for (int i = 0; i < m_vPolygonsVector.size(); ++i){
-		m_vPolygonsVector[i].draw();
+	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
+		m_vAreaPolygonsVector[i].draw();
 	}
-
 
 	ofDisableDepthTest();
 	m_fbo.end();
@@ -117,7 +116,7 @@ void ofApp::draw(){
     
  //   drawVisuals(); // Draw visuals (in a FBO)
 	
-	drawPolygons();
+	drawAreaPolygons();
 
 	sendVisuals(); // Remove this line if you don't need it !
     
@@ -199,7 +198,7 @@ void ofApp::drawInterface(){
     
     // Update the UI element containing framerate
     m_sFramerate = ofToString(ofGetFrameRate());
-	m_sNumberOfPolygons = ofToString(m_iNumberOfPolygons);
+	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
     m_gui.draw();
 }
 
@@ -307,9 +306,17 @@ void ofApp::keyPressed(int key){
 
 		case 'r':
 		case 'R':
-			//Delete all polygons
-			ofLogNotice("keyPressed", "All polygons are now deleted ");
-			m_vPolygonsVector.clear();
+			//Delete all AreaPolygons
+			ofLogNotice("keyPressed", "All AreaPolygons are now deleted ");
+			m_vAreaPolygonsVector.clear();
+			m_bIsCreating = false;
+			break;
+
+		case 'Z':
+		case 'z':
+			//Delete Last AreaPolygon
+			ofLogNotice("keyPressed", "Last AreaPolygon is now deleted ");
+			m_vAreaPolygonsVector.pop_back();
 			m_bIsCreating = false;
 			break;
 
@@ -345,38 +352,39 @@ void ofApp::mouseDragged(int x, int y, int button){
 void ofApp::mousePressed(int x, int y, int button){
 
 	if(button == 0){
-		//One polygon is not finish
+		//One AreaPolygon is not finish
 		if (m_bIsCreating){
 			//Is closing the poly
-			if (m_vPolygonsVector[m_iNumberOfPolygons - 1].getFirstpoint().distance(ofVec2f(x,y))<m_iRadiusClosePolyZone){
-				//set poly state to close 
+			if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getFirstpoint().distance(ofVec2f(x,y))<m_iRadiusClosePolyZone){
+				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
 				m_bIsCreating = false;
 			}
 			//Create another point
 			else{
-				m_vPolygonsVector[m_iNumberOfPolygons - 1].addPoint(ofVec2f(x, y));
+				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].addPoint(ofVec2f(x, y));
 			}
 		}
 
-		//Every polygons are completed
+		//Every AreaPolygons are completed
 		else{
 
-			m_vPolygonsVector.push_back(polygon(ofVec2f(x, y)));
+			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(x, y)));
 			m_bIsCreating = true;
 
 		}
 	}
 	if (button == 2){
-		//One polygon is not finish
+		//One AreaPolygon is not finish
 		if (m_bIsCreating){
-
-			m_vPolygonsVector[m_vPolygonsVector.size() - 1].removeLastPoint();
-
+			if (m_vAreaPolygonsVector[m_vAreaPolygonsVector.size() - 1].removeLastPoint()){}
+			else{
+				m_vAreaPolygonsVector.pop_back();
+				m_bIsCreating = false;
+			}
 		}
 
-		//Every polygons are completed
+		//Every AreaPolygons are completed
 		else{
-
 
 		}
 	}
@@ -445,7 +453,7 @@ void ofApp::setupGUI(){
     
     // Add content to GUI panel
     m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
-	m_gui.add(m_sNumberOfPolygons.setup("Number of polygons", m_sNumberOfPolygons));
+	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of AreaPolygons", m_sNumberOfAreaPolygons));
     m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
   
 	// guiFirstGroup parameters ---------------------------

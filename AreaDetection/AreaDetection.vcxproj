@@ -134,7 +134,7 @@
     <ClCompile Include="..\..\..\addons\ofxSpout2\libs\src\SpoutSender.cpp" />
     <ClCompile Include="..\..\..\addons\ofxSpout2\libs\src\SpoutSenderNames.cpp" />
     <ClCompile Include="..\..\..\addons\ofxSpout2\libs\src\SpoutSharedMemory.cpp" />
-    <ClCompile Include="src\polygon.cpp" />
+    <ClCompile Include="src\Polygon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\addons\ofxAugmenta\src\AugmentaEvents.h" />
@@ -186,7 +186,7 @@
     <ClInclude Include="..\..\..\addons\ofxSpout2\libs\include\SpoutSender.h" />
     <ClInclude Include="..\..\..\addons\ofxSpout2\libs\include\SpoutSenderNames.h" />
     <ClInclude Include="..\..\..\addons\ofxSpout2\libs\include\SpoutSharedMemory.h" />
-    <ClInclude Include="src\polygon.h" />
+    <ClInclude Include="src\Polygon.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libs\openFrameworksCompiled\project\vs\openframeworksLib.vcxproj">
