@@ -73,7 +73,7 @@ private:
     int m_iFboHeight;
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
-    
+	void deleteNotCompletedPolygons();
     // OSC
     ofxOscReceiver m_oscReceiver;
     ofxOscSender m_oscSender;

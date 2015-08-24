@@ -421,6 +421,9 @@ void ofApp::mousePressed(int x, int y, int button){
 			if (temp.distance(ofVec2f(x, y)) < m_iRadiusClosePolyZone){
 				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
 				m_bEditMode = false;
+				if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getSize() <= 2){
+					m_vAreaPolygonsVector.pop_back();
+				}
 			}
 			//Create another point
 			else{
@@ -801,6 +804,15 @@ void ofApp::sendOSC(){
 //_______________________________________________________________
 
 //--------------------------------------------------------------
+void ofApp::deleteNotCompletedPolygons(){
+	/*
+	if (!m_vAreaPolygonsVector[m_vAreaPolygonsVector.size()-1].isCompleted()){
+			m_vAreaPolygonsVector.pop_back();
+		}
+		*/
+}
+
+//--------------------------------------------------------------
 void ofApp::exit(){
 
 #ifdef WIN32
@@ -812,7 +824,7 @@ void ofApp::exit(){
 	Parameters are saved in another file that the one used in saveSettings() function
 	to prevent saving wrong parameters if application quit unexpectedly.
 	*/
-
+	deleteNotCompletedPolygons();
 	m_gui.saveToFile("autosave.xml");
 	savePreferences();
 	// Remove listener because instance of our gui button will be deleted
