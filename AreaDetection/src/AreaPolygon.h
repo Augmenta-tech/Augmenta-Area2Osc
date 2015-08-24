@@ -23,7 +23,7 @@ public:
 	void save();
 	void load();
 
-	void draw();
+	void draw(int width, int height);
 	
 	void addPoint(ofVec2f a_oPoint);
 	bool removeLastPoint();

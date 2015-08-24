@@ -1,4 +1,4 @@
-#include "Polygon.h"
+#include "AreaPolygon.h"
 
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint){
 	m_oPointsColor = ofColor::lightBlue;
@@ -12,11 +12,11 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint){
 
 //--------------------------------------------------------------
 void AreaPolygon::addPoint(ofVec2f a_oPoint){
-	m_vVectorPoints.push_back(a_oPoint);
+	m_vVectorPoints.push_back(ofVec2f(a_oPoint.x,a_oPoint.y));
 }
 
 //--------------------------------------------------------------
-void AreaPolygon::draw(){
+void AreaPolygon::draw(int width,int height){
 	ofPushStyle();
 	ofSetLineWidth(m_iLinesWidth);
 
@@ -26,16 +26,16 @@ void AreaPolygon::draw(){
 		ofSetColor(m_oLinesColor);
 		for (int i = 0; i < m_vVectorPoints.size() - 1; ++i){
 			for (int j = 1; j < m_vVectorPoints.size(); ++j){
-				ofLine(m_vVectorPoints[i], m_vVectorPoints[j]);
+				ofLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
 				++i;
 			}
 		}
-		ofLine(m_vVectorPoints[0], m_vVectorPoints[m_vVectorPoints.size() - 1]);
+		ofLine(m_vVectorPoints[0].x * width, m_vVectorPoints[0].y * height, m_vVectorPoints[m_vVectorPoints.size() - 1].x * width, m_vVectorPoints[m_vVectorPoints.size() - 1].y * height);
 		ofSetColor(m_oLinesCompletedColor);
 		ofSetPolyMode(OF_POLY_WINDING_NONZERO);
 		ofBeginShape();
 		for (size_t i = 0; i < m_vVectorPoints.size(); i++){
-			ofVertex(m_vVectorPoints[i].x, m_vVectorPoints[i].y);
+			ofVertex(m_vVectorPoints[i].x*width, m_vVectorPoints[i].y*height);
 		}
 		ofEndShape();	
 	}
@@ -43,13 +43,13 @@ void AreaPolygon::draw(){
 	else{
 		ofSetColor(m_oPointsColor);
 		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			ofCircle(m_vVectorPoints[i].x, m_vVectorPoints[i].y, m_fRadius);
+			ofCircle(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_fRadius);
 		}
 		ofSetColor(m_oLinesColor);
 		ofSetLineWidth(m_iLinesWidth);
 		for (int i = 0; i < m_vVectorPoints.size() - 1; ++i){
 			for (int j = 1; j < m_vVectorPoints.size(); ++j){
-				ofLine(m_vVectorPoints[i],m_vVectorPoints[j]);
+				ofLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
 				++i;
 			}
 		}

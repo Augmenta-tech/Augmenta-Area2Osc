@@ -75,7 +75,7 @@
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\..\..\addons\ofxGui\libs;..\..\..\addons\ofxGui\src;..\..\..\addons\ofxOsc\libs;..\..\..\addons\ofxOsc\src;..\..\..\addons\ofxOsc\libs\oscpack;..\..\..\addons\ofxOsc\libs\oscpack\src;..\..\..\addons\ofxOsc\libs\oscpack\src\ip;..\..\..\addons\ofxOsc\libs\oscpack\src\ip\posix;..\..\..\addons\ofxOsc\libs\oscpack\src\ip\win32;..\..\..\addons\ofxOsc\libs\oscpack\src\osc;..\..\..\addons\ofxXmlSettings\libs;..\..\..\addons\ofxXmlSettings\src;..\..\..\addons\ofxSpout2\libs;..\..\..\addons\ofxSpout2\src;..\..\..\addons\ofxSpout2\libs\include;..\..\..\addons\ofxSpout2\libs\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\..\..\addons\ofxGui\libs;..\..\..\addons\ofxGui\src;..\..\..\addons\ofxOsc\libs;..\..\..\addons\ofxOsc\src;..\..\..\addons\ofxOsc\libs\oscpack;..\..\..\addons\ofxOsc\libs\oscpack\src;..\..\..\addons\ofxOsc\libs\oscpack\src\ip;..\..\..\addons\ofxOsc\libs\oscpack\src\ip\posix;..\..\..\addons\ofxOsc\libs\oscpack\src\ip\win32;..\..\..\addons\ofxOsc\libs\oscpack\src\osc;..\..\..\addons\ofxXmlSettings\libs;..\..\..\addons\ofxXmlSettings\src;..\..\..\addons\ofxSpout2\libs;..\..\..\addons\ofxSpout2\src;..\..\..\addons\ofxSpout2\libs\include;..\..\..\addons\ofxSpout2\libs\src;..\..\..\addons\ofxAugmenta\src</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
@@ -134,7 +134,7 @@
     <ClCompile Include="..\..\..\addons\ofxSpout2\libs\src\SpoutSender.cpp" />
     <ClCompile Include="..\..\..\addons\ofxSpout2\libs\src\SpoutSenderNames.cpp" />
     <ClCompile Include="..\..\..\addons\ofxSpout2\libs\src\SpoutSharedMemory.cpp" />
-    <ClCompile Include="src\Polygon.cpp" />
+    <ClCompile Include="src\AreaPolygon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\addons\ofxAugmenta\src\AugmentaEvents.h" />
@@ -186,7 +186,7 @@
     <ClInclude Include="..\..\..\addons\ofxSpout2\libs\include\SpoutSender.h" />
     <ClInclude Include="..\..\..\addons\ofxSpout2\libs\include\SpoutSenderNames.h" />
     <ClInclude Include="..\..\..\addons\ofxSpout2\libs\include\SpoutSharedMemory.h" />
-    <ClInclude Include="src\Polygon.h" />
+    <ClInclude Include="src\AreaPolygon.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libs\openFrameworksCompiled\project\vs\openframeworksLib.vcxproj">

@@ -136,7 +136,7 @@
     <ClCompile Include="..\..\..\addons\ofxAugmenta\src\ofxAugmenta.cpp">
       <Filter>addons\ofxAugmenta\src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Polygon.cpp">
+    <ClCompile Include="src\AreaPolygon.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -362,7 +362,7 @@
     <ClInclude Include="..\..\..\addons\ofxAugmenta\src\ofxAugmenta.h">
       <Filter>addons\ofxAugmenta\src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Polygon.h">
+    <ClInclude Include="src\AreaPolygon.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

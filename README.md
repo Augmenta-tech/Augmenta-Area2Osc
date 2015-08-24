@@ -1,4 +1,4 @@
-# OfxTemplate
+﻿# OfxTemplate
 
 OfxTemplate is our set of simple internal codebases for Openframeworks containing all the libs and examples code to get started in most THÉORIZ cases. It does send OSC, receive OSC, and draw and send some visuals to Syphon/Spout.
 
@@ -111,7 +111,7 @@ External Addons :
 
 - [ofxSyphon](https://github.com/astellato/ofxSyphon) (Mac OSX >= v10.6)
 - [ofxSpout2](https://github.com/Kj1/ofxSpout2) (Windows with NVIDIA DirectX/Opengl interop extension)
-- [ofxStateMachine](https://github.com/Lyptik/ofxStateMachine) (For myStateMachineSketch only)
+- [ofxAugmenta](https://github.com/Theoriz/ofxAugmenta)
 
 ## Setup
 

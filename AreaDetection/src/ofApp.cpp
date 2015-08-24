@@ -23,7 +23,6 @@ void ofApp::setup(){
 
     // Important : call those function AFTER init,
     // because init() will define all default values
-   // setupPreferences();
     setupGUI();
     setupOSC();
 	loadPreferences();
@@ -105,7 +104,7 @@ void ofApp::drawAreaPolygons(){
 	ofEnableDepthTest();
 
 	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
-		m_vAreaPolygonsVector[i].draw();
+		m_vAreaPolygonsVector[i].draw(m_iFboWidth,m_iFboHeight);
 	}
 
 	ofDisableDepthTest();
@@ -114,9 +113,7 @@ void ofApp::drawAreaPolygons(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    
-	//drawVisuals(); // Draw visuals (in a FBO)
-	
+  	
 	drawAreaPolygons();
 
 	sendVisuals(); // Remove this line if you don't need it !
@@ -141,47 +138,6 @@ void ofApp::sendVisuals(){
     m_syphonServer.publishTexture(&m_fbo.getTextureReference());
     #endif
 }
-
-//--------------------------------------------------------------
-// Only draw the content that will be sent outside the app here
-/*
-void ofApp::drawVisuals(){
-    
-    m_fbo.begin(); // Render scene in the FBO
-    
-    ofClear(ofColor::black); // Clear FBO content to black
-    
-    // Draw whatever you want here !
-    
-    // Remember to disable it when you don't need it anymore, to prevent problems in other drawing functions !
-    ofEnableDepthTest();
-    
-    //ofCamera myCam = ofCamera();    // A camera is needed to draw 3D stuff. Here, we use an ofEasyCam, which allows us to navigate in 3D with mouse.
-    m_myCam.begin();                  // Start rendering to camera
-    
-    // /!\ REMEMBER : every time you make a Push(something), you MUST do a Pop(something) somewhere after.
-    ofPushMatrix();                 // Store your current transformation matrix.
-    ofPushStyle();                  // Store your current style parameters (color, fill...)
-    
-    ofTranslate(m_,0,0);          // After this point, all content is translated in space to position x:m_iMyInt, y:0, z:0.
-    ofRotate(ofGetFrameNum() % 360, m_vMyVec->x, m_vMyVec->y, m_vMyVec->z);
-   
-    ofFill();
-    ofDrawBox(120);
-    // Draw outline of the cube
-    ofNoFill();
-    ofSetColor(ofColor::black);
-    ofDrawBox(120);
-    
-    ofPopStyle();                   // Go back to the previous style (the one defined before pushStyle). For example, the color is not set to salmon anymore
-    ofPopMatrix();                  // Go back to the previous transform matrix (the one defined before pushMatrix). For example, the translation and rotation defined above aren't taken into account anymore.
-    
-    m_myCam.end();                    // Stop rendering to camera
-    
-    ofDisableDepthTest();
-    
-    m_fbo.end(); // End of rendering inside FBO
-}*/
 
 //--------------------------------------------------------------
 // Draw the interface of your app : visuals, GUI, debug content...
@@ -318,8 +274,10 @@ void ofApp::keyPressed(int key){
 		case 'z':
 			//Delete Last AreaPolygon
 			ofLogNotice("keyPressed", "Last AreaPolygon is now deleted ");
-			m_vAreaPolygonsVector.pop_back();
-			m_bIsCreating = false;
+			if (m_vAreaPolygonsVector.size() >= 1){
+				m_vAreaPolygonsVector.pop_back();
+				m_bIsCreating = false;
+			}
 			break;
 
         default:
@@ -357,20 +315,25 @@ void ofApp::mousePressed(int x, int y, int button){
 		//One AreaPolygon is not finish
 		if (m_bIsCreating){
 			//Is closing the poly
-			if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getPoint(0).distance(ofVec2f(x,y))<m_iRadiusClosePolyZone){
+
+			ofVec2f temp = m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getPoint(0);
+			temp.x = temp.x * m_iFboWidth;
+			temp.y = temp.y * m_iFboHeight;
+
+			if (temp.distance(ofVec2f(x,y))<m_iRadiusClosePolyZone){
 				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
 				m_bIsCreating = false;
 			}
 			//Create another point
 			else{
-				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].addPoint(ofVec2f(x, y));
+				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].addPoint(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
 			}
 		}
 
 		//Every AreaPolygons are completed
 		else{
 
-			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(x, y)));
+			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight)));
 			m_bIsCreating = true;
 
 		}
@@ -400,44 +363,6 @@ void ofApp::mouseReleased(int x, int y, int button){
 //_______________________________________________________________
 //_____________________________SETUP_____________________________
 //_______________________________________________________________
-
-//--------------------------------------------------------------
-void ofApp::setupPreferences(){
-    
-    /*
-     
-     Loading or creating preferences.xml file containing
-     all settings which are not part of the GUI
-     
-     */
-    
-    ofxXmlSettings preferences;
-    // If a preferences.xml file exists, load it
-    if(ofFile::doesFileExist("preferences.xml")){
-        preferences.load("preferences.xml");
-        preferences.pushTag("Settings");
-        m_bHideInterface = preferences.getValue("HideInterface", m_bHideInterface);
-        m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
-        m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
-        m_iFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
-        preferences.popTag();
-    }
-    // Else, create a new preferences.xml file with the default values
-    else{
-        preferences.addTag("Settings");
-        preferences.pushTag("Settings");
-        preferences.addValue("HideInterface", m_bHideInterface);
-        preferences.addValue("LogToFile", m_bLogToFile);
-        preferences.addValue("FboWidth", m_iFboWidth);
-        preferences.addValue("FboHeight", m_iFboHeight);   				
-	}
-	preferences.saveFile("preferences.xml");
-    // Setup log output here because m_bLogToFile variable has just been loaded above from preferences.xml
-    if(m_bLogToFile){
-        ofLogToFile("../../../" +
-                    ofGetTimestampString("%Y-%m-%d_%H-%M-%S") + "_" + APP_NAME + ".log");
-    }
-}
 
 //--------------------------------------------------------------
 void ofApp::setupGUI(){
@@ -664,8 +589,8 @@ for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
 		for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){	
 			preferences.addTag("Point");
 			preferences.pushTag("Point", j);
-				preferences.addValue("x", static_cast<int>(m_vAreaPolygonsVector[i].getPoint(j).x));
-				preferences.addValue("y", static_cast<int>(m_vAreaPolygonsVector[i].getPoint(j).y));
+				preferences.addValue("x", m_vAreaPolygonsVector[i].getPoint(j).x);
+				preferences.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
 			preferences.popTag();
 		}
 		

@@ -41,5 +41,14 @@ cd $ADDONS &&
 git checkout master
 fi
 
+# Install ofxAugmenta
+	ADDONS=ofxAugmenta
+	cd $SCRIPT_PATH/../../../addons/ &&
+	if [ ! -d $ADDONS ]; then
+	        git clone https://github.com/Theoriz/ofxAugmenta &&
+	        cd $ADDONS &&
+	        git checkout master
+	fi
+
 cd $ORIG_PATH &&
 echo "Done!"

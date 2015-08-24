@@ -1,12 +1,13 @@
 #ifndef OF_APP_H
 #define OF_APP_H
 
-#include "Polygon.h"
+#include "AreaPolygon.h"
 
 #include "ofMain.h"
 #include "ofxGui.h"
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
+//#include "ofxAugmenta.h"
 
 
 
@@ -42,8 +43,7 @@ private:
     void init();
     void reset();
     
-    void setupPreferences();
-    void setupOSC();
+	void setupOSC();
     void setupGUI();
     
     void receiveOSC();
