@@ -26,6 +26,7 @@ void ofApp::setup(){
    // setupPreferences();
     setupGUI();
     setupOSC();
+	loadPreferences();
     
     /*
      
@@ -452,7 +453,7 @@ void ofApp::setupGUI(){
     
     // Add content to GUI panel
     m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
-	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of AreaPolygons", m_sNumberOfAreaPolygons));
+	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
     m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
   
 	// guiFirstGroup parameters ---------------------------
@@ -655,16 +656,16 @@ preferences.addValue("HideInterface", m_bHideInterface);
 preferences.addValue("LogToFile", m_bLogToFile);
 preferences.addValue("FboWidth", m_iFboWidth);
 preferences.addValue("FboHeight", m_iFboHeight);
-	preferences.addTag("AreaPolygon");
+	
 for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
-
-	preferences.pushTag("AreaPolygon");
+	preferences.addTag("AreaPolygon");
+	preferences.pushTag("AreaPolygon",i);
 			
-		for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){
+		for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){	
 			preferences.addTag("Point");
 			preferences.pushTag("Point", j);
-				preferences.addValue("x", m_vAreaPolygonsVector[i].getPoint(j).x);
-				preferences.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
+				preferences.addValue("x", static_cast<int>(m_vAreaPolygonsVector[i].getPoint(j).x));
+				preferences.addValue("y", static_cast<int>(m_vAreaPolygonsVector[i].getPoint(j).y));
 			preferences.popTag();
 		}
 		
@@ -683,6 +684,10 @@ preferences.saveFile("preferences.xml");
 //--------------------------------------------------------------
 void ofApp::loadPreferences(){
 	ofxXmlSettings preferences;
+	ofVec2f p;
+	int nbrPoints;
+	int nbrPolygons;
+
 	// If a preferences.xml file exists, load it
 	if (ofFile::doesFileExist("preferences.xml")){
 		preferences.load("preferences.xml");
@@ -692,15 +697,39 @@ void ofApp::loadPreferences(){
 		m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
 		m_iFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
 		
-		int nbrPolygons = preferences.getNumTags("AreaPolygon");
+		nbrPolygons = preferences.getNumTags("AreaPolygon");
+		ofLogVerbose("loadPreferences") << "load of " << nbrPolygons << " polygons";
+
 		for (int i = 0; i < nbrPolygons; ++i){
-			preferences.pushTag("AreaPolygon");
-			int nbrPoints = preferences.getNumTags("Point");
-				ofVec2f p;
-			p.x = preferences.getValue("x",0); 
-			p.y = preferences.getValue("y", 0);
+			preferences.pushTag("AreaPolygon",i);
+
+			nbrPoints = preferences.getNumTags("Point");
+			ofLogVerbose("loadPreferences") << "load of " << nbrPoints << " points";
+
+			for (int j = 0; j < nbrPoints; j++){
+				preferences.pushTag("Point",j);
+
+				p.x = preferences.getValue("x", 0);
+				p.y = preferences.getValue("y", 0);
+				
+				if (j == 0){
+					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y)));
+				}
+				else{
+					m_vAreaPolygonsVector[i].addPoint(ofVec2f(p.x, p.y));
+				}
+				
+				ofLogVerbose("loadPreferences") << "x = " << p.x;
+				ofLogVerbose("loadPreferences") << "y = " << p.y;
+
+				preferences.popTag();
+			}
+			m_vAreaPolygonsVector[i].complete();
 			preferences.popTag();
 		}
 		preferences.popTag();
+	}
+	else{
+		ofLogNotice("Preferences file did not load..");
 	}
 }
