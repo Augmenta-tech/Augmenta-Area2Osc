@@ -78,6 +78,7 @@ void ofApp::init(){
 	m_bEditMode = false;
 	m_iNumberOfAreaPolygons = 0;
 	m_iRadiusClosePolyZone = 30;
+	m_oOldMousePosition = ofVec2f(0,0);
     m_vMyVec = ofVec3f(1,2,3);
     
     //--------------------------------------------
@@ -332,38 +333,38 @@ void ofApp::keyPressed(int key){
 
 	
 	//Move the selected polygon
-			if (m_bSelectMode){
-		case OF_KEY_LEFT:
-			ofLogVerbose("keyPressed", "go left !");
-			if (m_iIndicePolygonSelected != -1){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveLeft();
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-			}
-			break;
+		if (m_bSelectMode){
+			case OF_KEY_LEFT:
+				ofLogVerbose("keyPressed", "go left !");
+				if (m_iIndicePolygonSelected != -1){
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveLeft();
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+				}
+				break;
 
-		case OF_KEY_RIGHT:
-			ofLogVerbose("keyPressed", "go right !");
-			if (m_iIndicePolygonSelected != -1){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveRight();
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-			}
-			break;
+			case OF_KEY_RIGHT:
+				ofLogVerbose("keyPressed", "go right !");
+				if (m_iIndicePolygonSelected != -1){
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveRight();
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+				}
+				break;
 
-		case OF_KEY_UP:
-			ofLogVerbose("keyPressed", "go up !");
-			if (m_iIndicePolygonSelected != -1){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveUp();
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-			}
-			break;
+			case OF_KEY_UP:
+				ofLogVerbose("keyPressed", "go up !");
+				if (m_iIndicePolygonSelected != -1){
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveUp();
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+				}
+				break;
 
-		case OF_KEY_DOWN:
-			ofLogVerbose("keyPressed", "go down !");
-			if (m_iIndicePolygonSelected != -1){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveDown();
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-			}
-			break;
+			case OF_KEY_DOWN:
+				ofLogVerbose("keyPressed", "go down !");
+				if (m_iIndicePolygonSelected != -1){
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveDown();
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+				}
+				break;
 		}
         default:
             break;
@@ -390,11 +391,23 @@ void ofApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-	
+
+	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
+
+	if (button == 1){
+		if (!m_bEditMode){
+			if (m_bSelectMode){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+			}
+		}
+	}
+	m_oOldMousePosition = ofVec2f(x, y);
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
+	m_oOldMousePosition = ofVec2f(x, y);
 	
 	if (button == 0 && !m_bSelectMode){
 		//One AreaPolygon is not finish

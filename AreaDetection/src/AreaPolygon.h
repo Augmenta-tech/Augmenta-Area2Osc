@@ -38,6 +38,8 @@ public:
 	void moveRight();
 	void moveUp();
 	void moveDown();
+	void move(float a_iX, float a_iY);
+
 
 private:
 	vector<ofVec2f> m_vVectorPoints;

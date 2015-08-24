@@ -1,6 +1,6 @@
 #include "AreaPolygon.h"
 
-#define MOVE_STEP 0.05
+#define MOVE_STEP 0.01
 
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint){
 	m_oPointsColor = ofColor::lightBlue;
@@ -165,6 +165,17 @@ void AreaPolygon::moveUp(){
 	for (int i = 0; i < m_vVectorPoints.size(); ++i){
 		if (m_vVectorPoints[i].y - MOVE_STEP > 0){
 			m_vVectorPoints[i].y = m_vVectorPoints[i].y - MOVE_STEP;
+		}
+	}
+}
+
+void AreaPolygon::move(float a_iX, float a_iY){
+	for (int i = 0; i < m_vVectorPoints.size(); ++i){
+		if ((m_vVectorPoints[i].x - a_iX) > 0 && (m_vVectorPoints[i].x - a_iX) < 1){
+			m_vVectorPoints[i].x = m_vVectorPoints[i].x - a_iX;
+		}
+		if ((m_vVectorPoints[i].y - a_iY) > 0 && (m_vVectorPoints[i].y - a_iY) < 1){
+			m_vVectorPoints[i].y = m_vVectorPoints[i].y - a_iY;
 		}
 	}
 }

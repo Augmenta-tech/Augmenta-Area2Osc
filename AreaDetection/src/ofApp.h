@@ -92,6 +92,7 @@ private:
 	int m_iNumberOfAreaPolygons;
 	int m_iIndicePolygonSelected;
 	vector<AreaPolygon> m_vAreaPolygonsVector;
+	ofVec2f m_oOldMousePosition;
 
     // Gui panel
     ofxPanel m_gui;
