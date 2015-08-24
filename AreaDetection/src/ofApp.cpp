@@ -70,10 +70,12 @@ void ofApp::init(){
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
     
     // GUI default value (settings.xml)
+	m_bSelectMode = false;
+	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
 	m_bRedondanteMode = true;
-	m_bIsCreating = false;
+	m_bEditMode = false;
 	m_iNumberOfAreaPolygons = 0;
 	m_iRadiusClosePolyZone = 30;
     m_vMyVec = ofVec3f(1,2,3);
@@ -104,10 +106,18 @@ void ofApp::update(){
 
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
-	for (size_t i = 0; i < m_vAreaPolygonsVector.size(); i++){
+	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
 		m_vAreaPolygonsVector[i].setRadius(m_fPointRadius);
 		m_vAreaPolygonsVector[i].setLinesWidth(m_iLinesWidthSlider);
 	}
+
+	//Update Colision
+	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
+		if (m_vAreaPolygonsVector[i].isCompleted()){
+			m_vAreaPolygonsVector[i].setPeopleInside(people);
+		}
+	}
+	
 }
 
 //_______________________________________________________________
@@ -116,39 +126,35 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::drawAreaPolygons(){
-	m_fbo.begin();
-	ofClear(ofColor::black); // Clear FBO content to black
-	ofEnableDepthTest();
-
 	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
 		m_vAreaPolygonsVector[i].draw(m_iFboWidth,m_iFboHeight);
 	}
-
-	ofDisableDepthTest();
-	m_fbo.end();
 }
 
 //--------------------------------------------------------------
 void ofApp::drawAugmentaPeople(){
 	ofPoint centroid;
 	ofPushStyle();
-	ofSetColor(ofColor::red);
+	ofSetColor(ofColor(255,0,0,155));
 	for (int i = 0; i<people.size(); i++){
-
 		centroid = people[i]->centroid;
-		centroid.x *= m_iFboWidth;
-		centroid.y *= m_iFboWidth;
-
-		ofCircle(centroid, 10);
+		ofCircle(centroid.x * m_iFboWidth, centroid.y * m_iFboHeight, 10);
 	}
 	ofPopStyle();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  	
+	m_fbo.begin();
+	ofClear(ofColor::black); // Clear FBO content to black
+	ofEnableDepthTest();
+	drawAugmentaPeople();
 	drawAreaPolygons();
 	
+
+	ofDisableDepthTest();
+	m_fbo.end();
+
 	sendVisuals(); // Remove this line if you don't need it !
     
     // Draw interface
@@ -299,8 +305,13 @@ void ofApp::keyPressed(int key){
 		case 'R':
 			//Delete all AreaPolygons
 			ofLogNotice("keyPressed", "All AreaPolygons are now deleted ");
+			if (m_bSelectMode){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+				m_iIndicePolygonSelected = -1;
+				m_bSelectMode = false;
+			}
 			m_vAreaPolygonsVector.clear();
-			m_bIsCreating = false;
+			m_bEditMode = false;
 			break;
 
 		case 'Z':
@@ -308,11 +319,52 @@ void ofApp::keyPressed(int key){
 			//Delete Last AreaPolygon
 			ofLogNotice("keyPressed", "Last AreaPolygon is now deleted ");
 			if (m_vAreaPolygonsVector.size() >= 1){
+				if (m_bSelectMode){
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+					m_iIndicePolygonSelected = -1;
+					m_bSelectMode = false;
+				}			
+				m_bEditMode = false;
 				m_vAreaPolygonsVector.pop_back();
-				m_bIsCreating = false;
+				
 			}
 			break;
 
+	
+	//Move the selected polygon
+			if (m_bSelectMode){
+		case OF_KEY_LEFT:
+			ofLogVerbose("keyPressed", "go left !");
+			if (m_iIndicePolygonSelected != -1){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveLeft();
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+			}
+			break;
+
+		case OF_KEY_RIGHT:
+			ofLogVerbose("keyPressed", "go right !");
+			if (m_iIndicePolygonSelected != -1){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveRight();
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+			}
+			break;
+
+		case OF_KEY_UP:
+			ofLogVerbose("keyPressed", "go up !");
+			if (m_iIndicePolygonSelected != -1){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveUp();
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+			}
+			break;
+
+		case OF_KEY_DOWN:
+			ofLogVerbose("keyPressed", "go down !");
+			if (m_iIndicePolygonSelected != -1){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveDown();
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+			}
+			break;
+		}
         default:
             break;
     }
@@ -343,19 +395,19 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-
-	if(button == 0){
+	
+	if (button == 0 && !m_bSelectMode){
 		//One AreaPolygon is not finish
-		if (m_bIsCreating){
+		if (m_bEditMode){
 			//Is closing the poly
 
 			ofVec2f temp = m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getPoint(0);
 			temp.x = temp.x * m_iFboWidth;
 			temp.y = temp.y * m_iFboHeight;
 
-			if (temp.distance(ofVec2f(x,y))<m_iRadiusClosePolyZone){
+			if (temp.distance(ofVec2f(x, y)) < m_iRadiusClosePolyZone){
 				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
-				m_bIsCreating = false;
+				m_bEditMode = false;
 			}
 			//Create another point
 			else{
@@ -367,23 +419,52 @@ void ofApp::mousePressed(int x, int y, int button){
 		else{
 
 			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight)));
-			m_bIsCreating = true;
+			m_bEditMode = true;
 
 		}
 	}
-	if (button == 2){
+	if (button == 2 && !m_bSelectMode){
 		//One AreaPolygon is not finish
-		if (m_bIsCreating){
+		if (m_bEditMode){
 			if (m_vAreaPolygonsVector[m_vAreaPolygonsVector.size() - 1].removeLastPoint()){}
 			else{
 				m_vAreaPolygonsVector.pop_back();
-				m_bIsCreating = false;
+				m_bEditMode = false;
 			}
 		}
-
-		//Every AreaPolygons are completed
-		else{
-
+	}
+	
+	if (button == 1){
+		if (!m_bEditMode){
+			if(!m_bSelectMode){
+				for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
+					if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
+						//We enter in selection mode
+						m_iIndicePolygonSelected = i;
+						m_vAreaPolygonsVector[i].hasBeenSelected(true);
+						m_bSelectMode = true;
+						break;//because we only want one selectd poly
+					}
+				}
+			}
+			else{
+				if (m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
+					//We leave the selection mode
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+					m_iIndicePolygonSelected = -1;
+					m_bSelectMode = false;
+				}
+				else{
+					for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
+						if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
+							//We change the selected poly
+							m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+							m_iIndicePolygonSelected = i;
+							m_vAreaPolygonsVector[i].hasBeenSelected(true);
+						}
+					}
+				}
+			}
 		}
 	}
 }

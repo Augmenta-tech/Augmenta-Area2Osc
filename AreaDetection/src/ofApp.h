@@ -87,8 +87,10 @@ private:
 	vector<Augmenta::Person*> people;
 
 	//Parameters AreaEditor
-	bool m_bIsCreating;
+	bool m_bEditMode;
+	bool m_bSelectMode;
 	int m_iNumberOfAreaPolygons;
+	int m_iIndicePolygonSelected;
 	vector<AreaPolygon> m_vAreaPolygonsVector;
 
     // Gui panel
