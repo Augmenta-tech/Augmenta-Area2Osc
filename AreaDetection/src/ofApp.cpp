@@ -409,7 +409,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 void ofApp::mousePressed(int x, int y, int button){
 	m_oOldMousePosition = ofVec2f(x, y);
 	
-	if (button == 0 && !m_bSelectMode){
+	if (button == 0 && !m_bSelectMode && !isInsideAPolygon(ofVec2f(x, y))){
 		//One AreaPolygon is not finish
 		if (m_bEditMode){
 			//Is closing the poly
@@ -430,10 +430,8 @@ void ofApp::mousePressed(int x, int y, int button){
 
 		//Every AreaPolygons are completed
 		else{
-
 			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight)));
 			m_bEditMode = true;
-
 		}
 	}
 	if (button == 2 && !m_bSelectMode){
@@ -483,8 +481,39 @@ void ofApp::mousePressed(int x, int y, int button){
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
+bool ofApp::isInsideAPolygon(ofVec2f a_oPoint){
+	//We don't count the last poly because it his in construction
+	if (m_bEditMode){ 
+		for (int i = 0; i < m_vAreaPolygonsVector.size()-1; i++){
+			if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(a_oPoint.x) / m_iFboWidth, static_cast<float>(a_oPoint.y) / m_iFboHeight))){
+				return true;
+			}
+		}
+		return false;
+	}
+	else{
+		for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
+			if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(a_oPoint.x) / m_iFboWidth, static_cast<float>(a_oPoint.y) / m_iFboHeight))){
+				return true;
+			}
+		}
+		return false;
+	}
+}
 
+//--------------------------------------------------------------
+void ofApp::mouseReleased(int x, int y, int button){
+	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
+
+	if (button == 1){
+		if (!m_bEditMode){
+			if (m_bSelectMode){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+			}
+		}
+	}
+	m_oOldMousePosition = ofVec2f(x, y);
 }
 
 //_______________________________________________________________

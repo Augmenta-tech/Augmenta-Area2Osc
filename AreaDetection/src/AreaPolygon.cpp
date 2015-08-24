@@ -169,6 +169,7 @@ void AreaPolygon::moveUp(){
 	}
 }
 
+//--------------------------------------------------------------
 void AreaPolygon::move(float a_iX, float a_iY){
 	for (int i = 0; i < m_vVectorPoints.size(); ++i){
 		if ((m_vVectorPoints[i].x - a_iX) > 0 && (m_vVectorPoints[i].x - a_iX) < 1){

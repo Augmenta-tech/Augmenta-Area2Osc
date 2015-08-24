@@ -72,6 +72,7 @@ private:
     int m_iFboWidth;
     int m_iFboHeight;
 
+	bool isInsideAPolygon(ofVec2f a_oPoint);
     
     // OSC
     ofxOscReceiver m_oscReceiver;
