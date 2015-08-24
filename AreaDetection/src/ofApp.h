@@ -7,7 +7,7 @@
 #include "ofxGui.h"
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
-//#include "ofxAugmenta.h"
+#include "ofxAugmenta.h"
 
 
 
@@ -52,6 +52,7 @@ private:
     // Only draw final output visuals - no GUI, no debug visuals, only content that can be seen by spectator
     void drawVisuals();
 	void drawAreaPolygons();
+	void drawAugmentaPeople();
     // Draw the interface of your app : visuals, GUI, debug content...
     void drawInterface();
     // Minimalist interface with black screen and some information
@@ -70,19 +71,21 @@ private:
     ofFbo m_fbo;
     int m_iFboWidth;
     int m_iFboHeight;
-    // Camera used to render visuals
-    ofEasyCam m_myCam;
+
     
     // OSC
     ofxOscReceiver m_oscReceiver;
     ofxOscSender m_oscSender;
-    string m_sOscPortDisplayMessage;
-    
+    string m_sOscPortDisplayMessage;   
     int m_iOscReceiverPort;
     int m_iOscSenderPort;
     string m_sOscSenderHost;
     string m_sReceiverOscDisplay;
-    
+
+	//Augmenta
+	Augmenta::Receiver AugmentaReceiver;
+	vector<Augmenta::Person*> people;
+
 	//Parameters AreaEditor
 	bool m_bIsCreating;
 	int m_iNumberOfAreaPolygons;
