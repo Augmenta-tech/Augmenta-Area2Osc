@@ -23,7 +23,7 @@ void ofApp::setup(){
 
     // Important : call those function AFTER init,
     // because init() will define all default values
-    setupPreferences();
+   // setupPreferences();
     setupGUI();
     setupOSC();
     
@@ -57,7 +57,7 @@ void ofApp::init(){
     m_bLogToFile = false;
     m_iFboWidth = ofGetWidth();
     m_iFboHeight = ofGetHeight();
-    m_iOscReceiverPort = 12000;
+    m_iOscReceiverPort = 12001;
     m_iOscSenderPort = 12000;
     m_sOscSenderHost = "127.0.0.1";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
@@ -114,7 +114,7 @@ void ofApp::drawAreaPolygons(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     
- //   drawVisuals(); // Draw visuals (in a FBO)
+	//drawVisuals(); // Draw visuals (in a FBO)
 	
 	drawAreaPolygons();
 
@@ -219,8 +219,9 @@ void ofApp::drawHiddenInterface(){
                        "\n[h] to unhide interface\n" \
                        "[ctrl+s] / [cmd+s] to save settings\n" \
                        "[ctrl+l] / [cmd+l] to load last saved settings\n" \
-                       "[left click] to move the 3D camera\n" \
-                       "[right click] to zoom with 3D camera\n\n" \
+                       "[z] / [Z] to delete the last polygon created or the current polygon\n" \
+                       "[r] / [R] to delete all the polygons you have created\n" \
+					   "[right click] to delete the last point created\n\n" \
                        "---------------------------------------\n" \
                        "\nTo optimize performance : \n\n" \
                        "  - Stay in this hidden interface mode\n" \
@@ -355,7 +356,7 @@ void ofApp::mousePressed(int x, int y, int button){
 		//One AreaPolygon is not finish
 		if (m_bIsCreating){
 			//Is closing the poly
-			if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getFirstpoint().distance(ofVec2f(x,y))<m_iRadiusClosePolyZone){
+			if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getPoint(0).distance(ofVec2f(x,y))<m_iRadiusClosePolyZone){
 				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
 				m_bIsCreating = false;
 			}
@@ -427,11 +428,9 @@ void ofApp::setupPreferences(){
         preferences.addValue("HideInterface", m_bHideInterface);
         preferences.addValue("LogToFile", m_bLogToFile);
         preferences.addValue("FboWidth", m_iFboWidth);
-        preferences.addValue("FboHeight", m_iFboHeight);
-        preferences.popTag();
-        preferences.saveFile("preferences.xml");
-    }
-    
+        preferences.addValue("FboHeight", m_iFboHeight);   				
+	}
+	preferences.saveFile("preferences.xml");
     // Setup log output here because m_bLogToFile variable has just been loaded above from preferences.xml
     if(m_bLogToFile){
         ofLogToFile("../../../" +
@@ -449,7 +448,7 @@ void ofApp::setupGUI(){
     
     // Setup GUI panel
     m_gui.setup();
-    m_gui.setName("Preferences");
+    m_gui.setName("GUI Parameters");
     
     // Add content to GUI panel
     m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
@@ -641,7 +640,67 @@ void ofApp::exit(){
 	*/
 
 	m_gui.saveToFile("autosave.xml");
-
+	savePreferences();
 	// Remove listener because instance of our gui button will be deleted
 	m_bResetSettings.removeListener(this, &ofApp::reset);
+}
+
+//--------------------------------------------------------------
+void ofApp::savePreferences(){
+
+ofxXmlSettings preferences;
+preferences.addTag("Settings");
+preferences.pushTag("Settings");
+preferences.addValue("HideInterface", m_bHideInterface);
+preferences.addValue("LogToFile", m_bLogToFile);
+preferences.addValue("FboWidth", m_iFboWidth);
+preferences.addValue("FboHeight", m_iFboHeight);
+	preferences.addTag("AreaPolygon");
+for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
+
+	preferences.pushTag("AreaPolygon");
+			
+		for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){
+			preferences.addTag("Point");
+			preferences.pushTag("Point", j);
+				preferences.addValue("x", m_vAreaPolygonsVector[i].getPoint(j).x);
+				preferences.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
+			preferences.popTag();
+		}
+		
+		preferences.addTag("Osc");
+		preferences.pushTag("Osc");
+			preferences.addValue("In", "/area" + ofToString(i) + "/personEntered");
+			preferences.addValue("Out", "/area" + ofToString(i) + "/personLeaved");
+		preferences.popTag();
+	preferences.popTag();
+}
+preferences.popTag();
+	
+preferences.saveFile("preferences.xml");
+}
+
+//--------------------------------------------------------------
+void ofApp::loadPreferences(){
+	ofxXmlSettings preferences;
+	// If a preferences.xml file exists, load it
+	if (ofFile::doesFileExist("preferences.xml")){
+		preferences.load("preferences.xml");
+		preferences.pushTag("Settings");
+		m_bHideInterface = preferences.getValue("HideInterface", m_bHideInterface);
+		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
+		m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
+		m_iFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
+		
+		int nbrPolygons = preferences.getNumTags("AreaPolygon");
+		for (int i = 0; i < nbrPolygons; ++i){
+			preferences.pushTag("AreaPolygon");
+			int nbrPoints = preferences.getNumTags("Point");
+				ofVec2f p;
+			p.x = preferences.getValue("x",0); 
+			p.y = preferences.getValue("y", 0);
+			preferences.popTag();
+		}
+		preferences.popTag();
+	}
 }

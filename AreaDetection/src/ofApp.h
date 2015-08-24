@@ -33,6 +33,9 @@ public:
 	    
     void saveSettings();
     void loadSettings();
+	void savePreferences();
+	void loadPreferences();
+
     
 private:
     

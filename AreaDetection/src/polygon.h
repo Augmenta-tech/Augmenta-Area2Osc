@@ -16,8 +16,9 @@ public:
 	inline void setColorCircle(ofColor a_oCircleColor){ m_oPointsColor = a_oCircleColor; };
 	inline void setColorLines(ofColor a_oLineColor){ m_oLinesColor = a_oLineColor; };
 	inline void setLinesWidth(int a_iWidth){ m_iLinesWidth = a_iWidth; };
-	inline ofVec2f getFirstpoint(){ return m_vVectorPoints[0]; };
 	inline void complete(){ m_bIsFinished = true; };
+	inline int getSize(){ return m_vVectorPoints.size(); };
+	inline ofVec2f getPoint(int a_iIndice){ return m_vVectorPoints[a_iIndice]; };
 
 	void save();
 	void load();
