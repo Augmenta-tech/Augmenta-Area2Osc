@@ -612,36 +612,8 @@ void ofApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
 	m_oOldMousePosition = ofVec2f(x, y);
-	
-	if (button == 0 && !m_bSelectMode && !isInsideAPolygon(ofVec2f(x, y))){
-		//One AreaPolygon is not finish
-		if (m_bEditMode){
-			//Is closing the poly
+	bool isLastPoint = false;
 
-			ofVec2f temp = m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getPoint(0);
-			temp.x = temp.x * m_iFboWidth;
-			temp.y = temp.y * m_iFboHeight;
-
-			if (temp.distance(ofVec2f(x, y)) < m_iRadiusClosePolyZone){
-				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
-				m_bEditMode = false;
-				checkingForSameName();
-				if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getSize() <= 2){
-					m_vAreaPolygonsVector.pop_back();
-				}
-			}
-			//Create another point
-			else{
-				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].addPoint(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
-			}
-		}
-
-		//Every AreaPolygons are completed
-		else{
-			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight),people,m_vAreaPolygonsVector.size()));
-			m_bEditMode = true;
-		}
-	}
 	if (button == 2 && !m_bSelectMode){
 		//One AreaPolygon is not finish
 		if (m_bEditMode){
@@ -656,7 +628,40 @@ void ofApp::mousePressed(int x, int y, int button){
 	}
 	
 	if (button == 0){
-		if (!m_bEditMode){
+		//Creation of poly
+		if (!m_bSelectMode && !isInsideAPolygon(ofVec2f(x, y))){
+			//One AreaPolygon is not finish
+			if (m_bEditMode){
+				//Is closing the poly
+
+				ofVec2f temp = m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getPoint(0);
+				temp.x = temp.x * m_iFboWidth;
+				temp.y = temp.y * m_iFboHeight;
+
+				if (temp.distance(ofVec2f(x, y)) < m_iRadiusClosePolyZone){
+					m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
+					m_bEditMode = false;
+					checkingForSameName();
+					if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getSize() <= 2){
+						m_vAreaPolygonsVector.pop_back();
+					}
+					isLastPoint = true;
+				}
+				//Create another point
+				else{
+					m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].addPoint(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
+				}
+			}
+
+			//Every AreaPolygons are completed
+			else{
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people, m_vAreaPolygonsVector.size()));
+				m_bEditMode = true;
+			}
+		}
+
+		//Selection
+		if (!m_bEditMode && !isLastPoint){
 			if(!m_bSelectMode){
 				for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
 					if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
@@ -715,15 +720,25 @@ void ofApp::saveSettings(){
     
     // Save GUI parameters
     m_gui.saveToFile("settings.xml");
+	savePreferences(); 
 }
 
 //--------------------------------------------------------------
 void ofApp::loadSettings(){
-    
     // Load saved settings
     if(ofFile::doesFileExist("settings.xml")){
         m_gui.loadFromFile("settings.xml");
     }
+	if (ofFile::doesFileExist("preferences.xml")){
+		if (m_bSelectMode){
+			m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+			m_iIndicePolygonSelected = -1;
+			m_bSelectMode = false;
+		}
+		m_vAreaPolygonsVector.clear();
+		m_bEditMode = false;
+		loadPreferences();
+	}
 }
 
 //--------------------------------------------------------------
@@ -738,23 +753,26 @@ void ofApp::savePreferences(){
 	preferences.addValue("FboHeight", m_iFboHeight);
 
 	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
-		preferences.addTag("AreaPolygon");
-		preferences.pushTag("AreaPolygon", i);
+		if (m_vAreaPolygonsVector[i].isCompleted()){
 
-		for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){
-			preferences.addTag("Point");
-			preferences.pushTag("Point", j);
-			preferences.addValue("x", m_vAreaPolygonsVector[i].getPoint(j).x);
-			preferences.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
+			preferences.addTag("AreaPolygon");
+			preferences.pushTag("AreaPolygon", i);
+
+			for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){
+				preferences.addTag("Point");
+				preferences.pushTag("Point", j);
+				preferences.addValue("x", m_vAreaPolygonsVector[i].getPoint(j).x);
+				preferences.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
+				preferences.popTag();
+			}
+
+			preferences.addTag("Osc");
+			preferences.pushTag("Osc");
+			preferences.addValue("In", m_vAreaPolygonsVector[i].getInOsc());
+			preferences.addValue("Out", m_vAreaPolygonsVector[i].getOutOsc());
+			preferences.popTag();
 			preferences.popTag();
 		}
-
-		preferences.addTag("Osc");
-		preferences.pushTag("Osc");
-		preferences.addValue("In", m_vAreaPolygonsVector[i].getInOsc());
-		preferences.addValue("Out", m_vAreaPolygonsVector[i].getOutOsc());
-		preferences.popTag();
-		preferences.popTag();
 	}
 	preferences.popTag();
 
