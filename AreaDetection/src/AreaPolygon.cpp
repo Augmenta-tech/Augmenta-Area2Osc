@@ -31,7 +31,7 @@ void AreaPolygon::drawPeopleInside(int width, int height){
 
 //--------------------------------------------------------------
 void AreaPolygon::drawPeopleMovement(int width, int height){
-	if (m_iPeopleMovement != 0){
+	if (m_iPeopleMovement != 0 && m_bIsFinished){
 		if (m_iPeopleMovement > 0){
 			ofLogVerbose(ofToString(m_iPeopleMovement) + " people just entered");
 		}
@@ -88,7 +88,6 @@ void AreaPolygon::draw(int width,int height){
 	}
 	ofPopStyle();
 	drawPeopleInside(width,height);
-	drawPeopleMovement(width, height);
 }
 
 //--------------------------------------------------------------

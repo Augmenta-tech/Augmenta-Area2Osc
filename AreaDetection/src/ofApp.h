@@ -98,9 +98,11 @@ private:
 
     // Gui panel
     ofxPanel m_gui;
+
     // Gui content ----------------
     ofxLabel m_sFramerate;
 	ofxLabel m_sNumberOfAreaPolygons;
+
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     // Parameters group to organize your parameters
     ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;
@@ -114,7 +116,8 @@ private:
 	ofxIntSlider m_iRadiusClosePolyZone;
 
 	// Gui parameters inside m_ThirdGroup
-    ofxVec3Slider m_vMyVec;
+	ofxLabel m_sEditMode;
+	ofxLabel m_sSelectionMode;
     // --------- End of Gui content	
     
     #ifdef WIN32

@@ -82,7 +82,10 @@ void ofApp::init(){
 	m_iNumberOfAreaPolygons = 0;
 	m_iRadiusClosePolyZone = 20;
 	m_oOldMousePosition = ofVec2f(0,0);
-    m_vMyVec = ofVec3f(1,2,3);
+	if (m_bEditMode){ m_sEditMode = "ON"; }
+	else{ m_sEditMode = "OFF"; }
+	if (m_bSelectMode){ m_sSelectionMode = "ON"; }
+	else{ m_sSelectionMode = "OFF"; }
     
     //--------------------------------------------
 	//In case of reset
@@ -199,10 +202,17 @@ void ofApp::drawInterface(){
         m_fbo.draw(0, 0, ofGetHeight() * fFboRatio, ofGetHeight());
     }
     
-    // Update the UI element containing framerate
+    // Update the UI 
     m_sFramerate = ofToString(ofGetFrameRate());
 	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
-    m_gui.draw();
+	
+	if (m_bEditMode){m_sEditMode = "ON";}
+	else{m_sEditMode = "OFF";}
+	
+	if (m_bSelectMode){	m_sSelectionMode = "ON";}
+	else{m_sSelectionMode = "OFF";}
+	
+	m_gui.draw();
 }
 
 //--------------------------------------------------------------
@@ -223,7 +233,7 @@ void ofApp::drawHiddenInterface(){
                        "\n[h] to unhide interface\n" \
                        "[ctrl+s] / [cmd+s] to save settings\n" \
                        "[ctrl+l] / [cmd+l] to load last saved settings\n" \
-                       "[z] / [Z] to delete the last polygon created or the current polygon\n" \
+                       "[ctrl+z] to delete the last polygon created or the current polygon\n" \
                        "[r] / [R] to delete all the polygons you have created\n" \
 					   "[del] to delete the selected polygon\n" \
 					   "[right click] to delete the last point created\n" \
@@ -575,6 +585,8 @@ void ofApp::setupGUI(){
     // Add content to GUI panel
     m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
 	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
+	m_gui.add(m_sEditMode.setup("Edit mode", m_sEditMode));
+	m_gui.add(m_sSelectionMode.setup("Selection mode", m_sSelectionMode));
     m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
   
 	// guiFirstGroup parameters ---------------------------
@@ -592,10 +604,9 @@ void ofApp::setupGUI(){
     m_gui.add(m_guiSecondGroup);
    
 	// guiThirdGroup parameters ---------------------------
-    string sThirdGroupName = "Third Group";
+    string sThirdGroupName = "3";
     m_guiThirdGroup.setName(sThirdGroupName);
-    m_guiThirdGroup.add((m_vMyVec.setup("My Vector", m_vMyVec, ofVec3f(0,0,0), ofVec3f(3,3,3)))->getParameter());
-    m_gui.add(m_guiThirdGroup);
+	m_gui.add(m_guiThirdGroup);
 
     // You can add colors to your GUI groups to identify them easily
     // Example of beautiful colors you can use : salmon, orange, darkSeaGreen, teal, cornflowerBlue...
@@ -786,28 +797,52 @@ void ofApp::receiveOSC(){
 
 //--------------------------------------------------------------
 void ofApp::sendOSC(){
-    
-    // Create a new message
-    ofxOscMessage m;
-		
-	for (int i = 0; i < m_iNumberOfAreaPolygons; ++i)
-	{
-		if (m_vAreaPolygonsVector[i].getPeopleMovement() > 0){
-			if (m_bRedondanteMode){
-				// Create a first dataset
-				m.setAddress("/AreaPolygon" + ofToString(i) + "/personEntered");
-				m_oscSender.sendMessage(m); // Send it
-				m.clear(); // Clear message to be able to reuse it
-				std::cout << "/AreaPolygon" + ofToString(i) + "/personEntered" << std::endl;
+// Create a new message
+ofxOscMessage m;
+	if (m_bRedondanteMode){	
+		for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
+			if (m_vAreaPolygonsVector[i].isCompleted()){
+				if (m_vAreaPolygonsVector[i].getPeopleMovement() > 0){		
+					// Create a first dataset
+					m.setAddress("/AreaPolygon" + ofToString(i) + "/personEntered");
+					for (int j = 0; j < m_vAreaPolygonsVector[i].getPeopleMovement(); j++){
+						m_oscSender.sendMessage(m); // Send it
+						std::cout << "/AreaPolygon" + ofToString(i) + "/personEntered" << std::endl;
+					}
+					m.clear(); // Clear message to be able to reuse it
+				}
+				if (m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
+					// Create a second dataset
+					m.setAddress("/AreaPolygon" + ofToString(i) + "/personWillLeave");
+					for (int j = 0; j < abs(m_vAreaPolygonsVector[i].getPeopleMovement()); j++){
+						m_oscSender.sendMessage(m); // Send it
+						std::cout << "/AreaPolygon" + ofToString(i) + "/personWillLeave" << std::endl;
+					}
+					m.clear(); // Clear message to be able to reuse it
+				}
 			}
 		}
-		if (m_vAreaPolygonsVector[i].getPeopleMovement()< 0){
-			if (m_bRedondanteMode){
-				// Create a second dataset
-				m.setAddress("/AreaPolygon" + ofToString(i) + "/personWillLeave");
-				m_oscSender.sendMessage(m); // Send it
-				m.clear(); // Clear message to be able to reuse it
-				std::cout << "/AreaPolygon" + ofToString(i) + "/personWillLeave" << std::endl;
+	}
+	else{//Non redondant mode 
+		for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
+			if (m_vAreaPolygonsVector[i].isCompleted()){
+				//We can work on this polygon
+				if (m_vAreaPolygonsVector[i].getPeopleinside() == 0 
+					&& m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
+					//X->0
+					m.setAddress("/AreaPolygon" + ofToString(i) + "/personWillLeave");
+					m_oscSender.sendMessage(m); // Send it
+					m.clear(); // Clear message to be able to reuse it
+					std::cout << "/AreaPolygon" + ofToString(i) + "/personWillLeave" << std::endl;
+				}
+				if (m_vAreaPolygonsVector[i].getPeopleinside() != 0 
+					&& m_vAreaPolygonsVector[i].getPeopleinside() == m_vAreaPolygonsVector[i].getPeopleMovement()){
+					//0->X
+					m.setAddress("/AreaPolygon" + ofToString(i) + "/personEntered");
+					m_oscSender.sendMessage(m); // Send it
+					m.clear(); // Clear message to be able to reuse it
+					std::cout << "/AreaPolygon" + ofToString(i) + "/personEntered" << std::endl;
+				}
 			}
 		}
 	}
