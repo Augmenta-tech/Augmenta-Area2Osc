@@ -11,8 +11,10 @@
 class AreaPolygon {
 public:
 
-	AreaPolygon(ofVec2f a_oFirstPoint);
+	//Construction
+	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople);
 
+	//Inline
 	inline void setRadius(float a_fRadius){ m_fRadius = a_fRadius; };
 	inline void setColorCircle(ofColor a_oCircleColor){ m_oPointsColor = a_oCircleColor; };
 	inline void setColorLines(ofColor a_oLineColor){ m_oLinesColor = a_oLineColor; };
@@ -21,33 +23,45 @@ public:
 	inline int getSize(){ return m_vVectorPoints.size(); };
 	inline ofVec2f getPoint(int a_iIndice){ return m_vVectorPoints[a_iIndice]; };
 	inline void hasBeenSelected(bool a_bSelected){ m_bSelected = a_bSelected; };
+	inline int getPeopleMovement(){ return m_iPeopleMovement; };
+	inline int getPeopleinside(){ return m_iPeopleInside; };
 
+	//Save & Load
 	void save();
 	void load();
-
+		
+	//Draw
 	void draw(int width, int height); 
 	void drawPeopleInside(int width, int height);
-	void setPeopleInside(vector<Augmenta::Person*> a_vPeople);
-	void setPolygonCentroid();
-	void complete();
-	void addPoint(ofVec2f a_oPoint);
-	bool removeLastPoint();
-	bool isPointInPolygon(ofVec2f a_oPersonPosition);
-	
+	void drawPeopleMovement(int width, int height);
+
+	//Move Poly
 	void moveLeft();
 	void moveRight();
 	void moveUp();
 	void moveDown();
 	void move(float a_iX, float a_iY);
 
+	void update(vector<Augmenta::Person*> a_vPeople);
+	void setPeopleInside(vector<Augmenta::Person*> a_vPeople);
+	void setPolygonCentroid();
+	void complete();
+	void addPoint(ofVec2f a_oPoint);
+	bool removeLastPoint();
+	bool isPointInPolygon(ofVec2f a_oPersonPosition);
 
 private:
+
 	vector<ofVec2f> m_vVectorPoints;
 	bool m_bIsFinished;
 	int m_iPeopleInside;
+	int m_iOldPeopleInside;
 	bool m_bSelected;
 	ofVec2f m_oCentroid;
+	int m_iPeopleMovement;
 
+
+	//Design
 	ofColor m_oPointsColor;
 	ofColor m_oLinesColor;
 	ofColor m_oCompletedColor;

@@ -86,6 +86,7 @@ private:
 	//Augmenta
 	Augmenta::Receiver AugmentaReceiver;
 	vector<Augmenta::Person*> people;
+	string m_sAugmentaOscDiplay;
 
 	//Parameters AreaEditor
 	bool m_bEditMode;

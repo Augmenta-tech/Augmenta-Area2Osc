@@ -1,6 +1,7 @@
 #include "ofApp.h"
 
 #define APP_NAME "AreaDetection"
+#define AUGMENTA_OSC_PORT 12002
 
 //_______________________________________________________________
 //_____________________________SETUP_____________________________
@@ -57,7 +58,8 @@ void ofApp::init(){
     //--------------------------------------------
     
 	//Augmenta
-	AugmentaReceiver.connect(12002);
+	AugmentaReceiver.connect(AUGMENTA_OSC_PORT);
+	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(AUGMENTA_OSC_PORT) + "\n";
 
     // App default values (preferences.xml)
     m_bHideInterface = false;
@@ -70,18 +72,23 @@ void ofApp::init(){
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
     
     // GUI default value (settings.xml)
-	m_bSelectMode = false;
+	
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
 	m_bRedondanteMode = true;
 	m_bEditMode = false;
+	m_bSelectMode = false;
 	m_iNumberOfAreaPolygons = 0;
-	m_iRadiusClosePolyZone = 30;
+	m_iRadiusClosePolyZone = 20;
 	m_oOldMousePosition = ofVec2f(0,0);
     m_vMyVec = ofVec3f(1,2,3);
     
     //--------------------------------------------
+	//In case of reset
+	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
+		m_vAreaPolygonsVector[i].hasBeenSelected(false);
+	}
 
 }
 
@@ -98,10 +105,6 @@ void ofApp::reset(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    // Do some OSC stuff ...
-	// receiveOSC();
-	// sendOSC();
-	
 	//Update Augmenta
 	people = AugmentaReceiver.getPeople();
 
@@ -115,10 +118,13 @@ void ofApp::update(){
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
 		if (m_vAreaPolygonsVector[i].isCompleted()){
-			m_vAreaPolygonsVector[i].setPeopleInside(people);
+			m_vAreaPolygonsVector[i].update(people);
 		}
 	}
 	
+	//Osc
+	sendOSC();
+	receiveOSC();
 }
 
 //_______________________________________________________________
@@ -211,14 +217,19 @@ void ofApp::drawHiddenInterface(){
     ofDrawBitmapString("FPS: " +
                        ofToString(ofGetFrameRate()) + "\n" +
                        m_sReceiverOscDisplay +
-                       "Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n\n" +
+					   "Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n" + m_sAugmentaOscDiplay
+					   +"\n" +
                        "---------------------------------------\n"
                        "\n[h] to unhide interface\n" \
                        "[ctrl+s] / [cmd+s] to save settings\n" \
                        "[ctrl+l] / [cmd+l] to load last saved settings\n" \
                        "[z] / [Z] to delete the last polygon created or the current polygon\n" \
                        "[r] / [R] to delete all the polygons you have created\n" \
-					   "[right click] to delete the last point created\n\n" \
+					   "[del] to delete the selected polygon\n" \
+					   "[right click] to delete the last point created\n" \
+					   "[left click] to create a new point or polygon\n" \
+					   "[center click] inside a polygon to select it /outside a polygon to deselect it \n\n" \
+
                        "---------------------------------------\n" \
                        "\nTo optimize performance : \n\n" \
                        "  - Stay in this hidden interface mode\n" \
@@ -230,14 +241,13 @@ void ofApp::drawHiddenInterface(){
     ofPopStyle();
 }
 
-
 //_______________________________________________________________
 //_____________________________INPUT_____________________________
 //_______________________________________________________________
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    
+
     switch(key){
             
         // Modifier keys
@@ -272,7 +282,7 @@ void ofApp::keyPressed(int key){
             if(m_iModifierKey == OF_KEY_CONTROL || m_iModifierKey == OF_KEY_COMMAND){
                 // Save settings
                 saveSettings();
-                ofLogNotice("keyPressed", "Settings have been successfully saved ");
+				ofLogVerbose("keyPressed", "Settings have been successfully saved ");
             }
             break;
             
@@ -282,30 +292,54 @@ void ofApp::keyPressed(int key){
             if(m_iModifierKey == OF_KEY_CONTROL || m_iModifierKey == OF_KEY_COMMAND){
                 // Load settings
                 loadSettings();
-                ofLogNotice("keyPressed", "Settings have been successfully loaded ");
+				ofLogVerbose("keyPressed", "Settings have been successfully loaded ");
             }
             break;
             
-        #ifdef WIN32
-            
+        #ifdef WIN32         
         case 19:
             // CTRL+S or CMD+S
             saveSettings();
-            ofLogNotice("keyPressed", "Settings have been successfully saved ");
+			ofLogVerbose("keyPressed", "Settings have been successfully saved ");
             break;
             
         case 12:
             // CTRL+L or CMD+L
             loadSettings();
-            ofLogNotice("keyPressed", "Settings have been successfully loaded ");
+			ofLogVerbose("keyPressed", "Settings have been successfully loaded ");
             break;
+
+		case 26:
+			if (m_vAreaPolygonsVector.size() >= 1){
+				if (m_bSelectMode){
+					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+					m_iIndicePolygonSelected = -1;
+					m_bSelectMode = false;
+				}
+				m_bEditMode = false;
+				m_vAreaPolygonsVector.pop_back();
+				ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
+			}
+			break;
             
         #endif
 
+		//Delete the selected poly
+		case OF_KEY_DEL :			
+		case OF_KEY_BACKSPACE :
+			if (m_vAreaPolygonsVector.size() >= 1){
+				if (m_bSelectMode && !m_bEditMode){
+					m_vAreaPolygonsVector.erase(m_vAreaPolygonsVector.begin() + m_iIndicePolygonSelected);
+					m_iIndicePolygonSelected = -1;
+					m_bSelectMode = false;		
+					ofLogVerbose("keyPressed", "The selected polygon is now deleted");
+				}
+			}
+			break;
+
+		//Delete all AreaPolygons
 		case 'r':
-		case 'R':
-			//Delete all AreaPolygons
-			ofLogNotice("keyPressed", "All AreaPolygons are now deleted ");
+		case 'R':			
 			if (m_bSelectMode){
 				m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
 				m_iIndicePolygonSelected = -1;
@@ -313,56 +347,56 @@ void ofApp::keyPressed(int key){
 			}
 			m_vAreaPolygonsVector.clear();
 			m_bEditMode = false;
+			ofLogVerbose("keyPressed", "All AreaPolygons are now deleted ");
 			break;
 
-		case 'Z':
-		case 'z':
-			//Delete Last AreaPolygon
-			ofLogNotice("keyPressed", "Last AreaPolygon is now deleted ");
+		//Delete Last AreaPolygon
+		/*case 'Z':
+		case 'z':		
 			if (m_vAreaPolygonsVector.size() >= 1){
 				if (m_bSelectMode){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
 					m_iIndicePolygonSelected = -1;
 					m_bSelectMode = false;
-				}			
-				m_bEditMode = false;
-				m_vAreaPolygonsVector.pop_back();
-				
+				} 
+					m_bEditMode = false;
+					m_vAreaPolygonsVector.pop_back();
+					ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
 			}
 			break;
+	*/
 
-	
 	//Move the selected polygon
 		if (m_bSelectMode){
 			case OF_KEY_LEFT:
-				ofLogVerbose("keyPressed", "go left !");
 				if (m_iIndicePolygonSelected != -1){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveLeft();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+					ofLogVerbose("keyPressed", "go left !");
 				}
 				break;
 
 			case OF_KEY_RIGHT:
-				ofLogVerbose("keyPressed", "go right !");
 				if (m_iIndicePolygonSelected != -1){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveRight();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+					ofLogVerbose("keyPressed", "go right !");
 				}
 				break;
 
 			case OF_KEY_UP:
-				ofLogVerbose("keyPressed", "go up !");
 				if (m_iIndicePolygonSelected != -1){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveUp();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+					ofLogVerbose("keyPressed", "go up !");
 				}
 				break;
 
-			case OF_KEY_DOWN:
-				ofLogVerbose("keyPressed", "go down !");
+			case OF_KEY_DOWN:			
 				if (m_iIndicePolygonSelected != -1){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveDown();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+					ofLogVerbose("keyPressed", "go down !");
 				}
 				break;
 		}
@@ -433,14 +467,16 @@ void ofApp::mousePressed(int x, int y, int button){
 
 		//Every AreaPolygons are completed
 		else{
-			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight)));
+			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight),people));
 			m_bEditMode = true;
 		}
 	}
 	if (button == 2 && !m_bSelectMode){
 		//One AreaPolygon is not finish
 		if (m_bEditMode){
-			if (m_vAreaPolygonsVector[m_vAreaPolygonsVector.size() - 1].removeLastPoint()){}
+			if (m_vAreaPolygonsVector[m_vAreaPolygonsVector.size() - 1].removeLastPoint()){
+				//if the value return by the remove last point value 
+			}
 			else{
 				m_vAreaPolygonsVector.pop_back();
 				m_bEditMode = false;
@@ -462,20 +498,21 @@ void ofApp::mousePressed(int x, int y, int button){
 				}
 			}
 			else{
-				if (m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
+				if (!m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
 					//We leave the selection mode
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
 					m_iIndicePolygonSelected = -1;
 					m_bSelectMode = false;
-				}
-				else{
+
+					//We change the selected poly
 					for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
-						if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
-							//We change the selected poly
-							m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+						if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){						
 							m_iIndicePolygonSelected = i;
 							m_vAreaPolygonsVector[i].hasBeenSelected(true);
+							m_bSelectMode = true;
+							break;//because we only want one selectd poly
 						}
+
 					}
 				}
 			}
@@ -697,7 +734,7 @@ void ofApp::loadPreferences(){
 				p.y = preferences.getValue("y", 0.0f);
 
 				if (j == 0){
-					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y)));
+					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y),people));
 				}
 				else{
 					m_vAreaPolygonsVector[i].addPoint(ofVec2f(p.x, p.y));
@@ -741,44 +778,10 @@ void ofApp::receiveOSC(){
         ofxOscMessage m;
         m_oscReceiver.getNextMessage(&m);
         
-        // Parse your messages here
-        
-        // First message example
-        if(m.getAddress() == "/my/first/address" || m.getAddress() == "/my/first/address/"){    // can be useful to check both, in case you don't know exactly what is sent by your sender
-            int iMyInt = m.getArgAsInt32(0);
-            float fMyFloat = m.getArgAsFloat(1);
-        }
-        // Second message example
-        else if(m.getAddress() == "/my/second/address" || m.getAddress() == "/my/second/address/"){
-            string sMyString = m.getArgAsString(0);
-        } else{
-            
-            // Unrecognized message: display a log output
-            string sMsg;
-            sMsg = m.getAddress();
-            sMsg += " ";
-            for(int i = 0; i < m.getNumArgs(); i++){
-                // get the argument type
-                sMsg += m.getArgTypeName(i);
-                sMsg += ":";
-                // display the argument - make sure we get the right type
-                if(m.getArgType(i) == OFXOSC_TYPE_INT32){
-                    sMsg += ofToString(m.getArgAsInt32(i));
-                }
-                else if(m.getArgType(i) == OFXOSC_TYPE_FLOAT){
-                    sMsg += ofToString(m.getArgAsFloat(i));
-                }
-                else if(m.getArgType(i) == OFXOSC_TYPE_STRING){
-                    sMsg += m.getArgAsString(i);
-                }
-                else{
-                    sMsg += "unknown";
-                }
-                sMsg += " ";
-            }
-            ofLogNotice("receiveOSC"," Unknown OSC message : " + sMsg);
-        }
-    }
+		std::cout << m.getAddress() << std::endl;
+
+        ofLogNotice("receiveOSC"," Unknown OSC message ");
+   }
 }
 
 //--------------------------------------------------------------
@@ -786,31 +789,33 @@ void ofApp::sendOSC(){
     
     // Create a new message
     ofxOscMessage m;
-    
-    // Create a first dataset
-    m.setAddress("/my/first/address");
-    m.addFloatArg(m_vMyVec->x);
-    m_oscSender.sendMessage(m); // Send it
-    m.clear(); // Clear message to be able to reuse it
-    
-    // Create a second dataset
-    m.setAddress("/my/second/address");
-    m.addStringArg("I am a string flying through OSC !");
-    m_oscSender.sendMessage(m); // Send it
+		
+	for (int i = 0; i < m_iNumberOfAreaPolygons; ++i)
+	{
+		if (m_vAreaPolygonsVector[i].getPeopleMovement() > 0){
+			if (m_bRedondanteMode){
+				// Create a first dataset
+				m.setAddress("/AreaPolygon" + ofToString(i) + "/personEntered");
+				m_oscSender.sendMessage(m); // Send it
+				m.clear(); // Clear message to be able to reuse it
+				std::cout << "/AreaPolygon" + ofToString(i) + "/personEntered" << std::endl;
+			}
+		}
+		if (m_vAreaPolygonsVector[i].getPeopleMovement()< 0){
+			if (m_bRedondanteMode){
+				// Create a second dataset
+				m.setAddress("/AreaPolygon" + ofToString(i) + "/personWillLeave");
+				m_oscSender.sendMessage(m); // Send it
+				m.clear(); // Clear message to be able to reuse it
+				std::cout << "/AreaPolygon" + ofToString(i) + "/personWillLeave" << std::endl;
+			}
+		}
+	}
 }
 
 //_______________________________________________________________
 //_____________________________EXIT_______________________________
 //_______________________________________________________________
-
-//--------------------------------------------------------------
-void ofApp::deleteNotCompletedPolygons(){
-	/*
-	if (!m_vAreaPolygonsVector[m_vAreaPolygonsVector.size()-1].isCompleted()){
-			m_vAreaPolygonsVector.pop_back();
-		}
-		*/
-}
 
 //--------------------------------------------------------------
 void ofApp::exit(){
@@ -824,7 +829,6 @@ void ofApp::exit(){
 	Parameters are saved in another file that the one used in saveSettings() function
 	to prevent saving wrong parameters if application quit unexpectedly.
 	*/
-	deleteNotCompletedPolygons();
 	m_gui.saveToFile("autosave.xml");
 	savePreferences();
 	// Remove listener because instance of our gui button will be deleted
