@@ -12,7 +12,7 @@ class AreaPolygon {
 public:
 
 	//Construction
-	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople);
+	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndiceInPolygonsVector);
 
 	//Inline
 	inline void setRadius(float a_fRadius){ m_fRadius = a_fRadius; };
@@ -24,11 +24,13 @@ public:
 	inline ofVec2f getPoint(int a_iIndice){ return m_vVectorPoints[a_iIndice]; };
 	inline void hasBeenSelected(bool a_bSelected){ m_bSelected = a_bSelected; };
 	inline int getPeopleMovement(){ return m_iPeopleMovement; };
-	inline int getPeopleinside(){ return m_iPeopleInside; };
+	inline int getPeopleInside(){ return m_iPeopleInside; };
+	inline string getInOsc(){ return m_sInOsc; };
+	inline string getOutOsc(){ return m_sOutOsc; };
 
-	//Save & Load
-	void save();
-	void load();
+
+	//Load
+	void loadOscMessage(string m_aInOsc, string m_aOutOsc);
 		
 	//Draw
 	void draw(int width, int height); 
@@ -59,13 +61,16 @@ private:
 	bool m_bSelected;
 	ofVec2f m_oCentroid;
 	int m_iPeopleMovement;
-
+	int m_iIdInPolygonsVector;
+	string m_sInOsc;
+	string m_sOutOsc;
 
 	//Design
 	ofColor m_oPointsColor;
 	ofColor m_oLinesColor;
 	ofColor m_oCompletedColor;
 	ofColor m_oSelectedColor;
+	ofColor m_oNotEmptyColor;
 	float m_fRadius;
 	int m_iLinesWidth;
 

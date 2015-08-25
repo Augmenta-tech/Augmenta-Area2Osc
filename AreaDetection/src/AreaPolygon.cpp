@@ -4,19 +4,29 @@
 
 #define MOVE_STEP 0.01
 
-AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople){
+AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndiceInPolygonsVector){
 	m_oPointsColor = ofColor::lightBlue;
 	m_oLinesColor = ofColor::white;
 	m_oCompletedColor = ofColor::paleVioletRed;
 	m_oSelectedColor = ofColor::red;
+	m_oNotEmptyColor = ofColor::forestGreen;
 	m_iLinesWidth = 2;
 	m_fRadius = 20;
 	m_bIsFinished = false;
 	setPeopleInside(a_vPeople);
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
+	m_iIdInPolygonsVector = a_iIndiceInPolygonsVector;
+	m_sInOsc = "/area" + ofToString(m_iIdInPolygonsVector) + "/personEntered";
+	m_sOutOsc = "/area" + ofToString(m_iIdInPolygonsVector) + "/personWillLeave";
 
 	addPoint(a_oFirstPoint);
+}
+
+//--------------------------------------------------------------
+void AreaPolygon::loadOscMessage(string m_aInOsc, string m_aOutOsc){
+	m_sInOsc = m_aInOsc;
+	m_sOutOsc = m_aOutOsc;
 }
 
 //--------------------------------------------------------------
@@ -60,6 +70,9 @@ void AreaPolygon::draw(int width,int height){
 				
 		if (m_bSelected){
 			ofSetColor(m_oSelectedColor);
+		}
+		else if (m_iPeopleInside > 0){
+			ofSetColor(m_oNotEmptyColor);
 		}
 		else{
 			ofSetColor(m_oCompletedColor);

@@ -79,7 +79,7 @@ void ofApp::init(){
 	m_bRedondanteMode = true;
 	m_bEditMode = false;
 	m_bSelectMode = false;
-	m_iNumberOfAreaPolygons = 0;
+	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
 	m_iRadiusClosePolyZone = 20;
 	m_oOldMousePosition = ofVec2f(0,0);
 	if (m_bEditMode){ m_sEditMode = "ON"; }
@@ -88,7 +88,13 @@ void ofApp::init(){
 	else{ m_sSelectionMode = "OFF"; }
     
     //--------------------------------------------
+
 	//In case of reset
+	if (m_iNumberOfAreaPolygons >= 1){
+		if (!m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].isCompleted()){
+			m_vAreaPolygonsVector.pop_back();
+		}
+	}
 	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
 		m_vAreaPolygonsVector[i].hasBeenSelected(false);
 	}
@@ -319,6 +325,8 @@ void ofApp::keyPressed(int key){
 			ofLogVerbose("keyPressed", "Settings have been successfully loaded ");
             break;
 
+			//CTRL + Z
+			//Delete Last AreaPolygon
 		case 26:
 			if (m_vAreaPolygonsVector.size() >= 1){
 				if (m_bSelectMode){
@@ -335,7 +343,7 @@ void ofApp::keyPressed(int key){
         #endif
 
 		//Delete the selected poly
-		case OF_KEY_DEL :			
+	/*	case OF_KEY_DEL :			
 		case OF_KEY_BACKSPACE :
 			if (m_vAreaPolygonsVector.size() >= 1){
 				if (m_bSelectMode && !m_bEditMode){
@@ -346,7 +354,7 @@ void ofApp::keyPressed(int key){
 				}
 			}
 			break;
-
+		*/
 		//Delete all AreaPolygons
 		case 'r':
 		case 'R':			
@@ -359,22 +367,6 @@ void ofApp::keyPressed(int key){
 			m_bEditMode = false;
 			ofLogVerbose("keyPressed", "All AreaPolygons are now deleted ");
 			break;
-
-		//Delete Last AreaPolygon
-		/*case 'Z':
-		case 'z':		
-			if (m_vAreaPolygonsVector.size() >= 1){
-				if (m_bSelectMode){
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
-					m_iIndicePolygonSelected = -1;
-					m_bSelectMode = false;
-				} 
-					m_bEditMode = false;
-					m_vAreaPolygonsVector.pop_back();
-					ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
-			}
-			break;
-	*/
 
 	//Move the selected polygon
 		if (m_bSelectMode){
@@ -477,7 +469,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 		//Every AreaPolygons are completed
 		else{
-			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight),people));
+			m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight),people,m_vAreaPolygonsVector.size()));
 			m_bEditMode = true;
 		}
 	}
@@ -679,6 +671,15 @@ void ofApp::saveSettings(){
 }
 
 //--------------------------------------------------------------
+void ofApp::loadSettings(){
+    
+    // Load saved settings
+    if(ofFile::doesFileExist("settings.xml")){
+        m_gui.loadFromFile("settings.xml");
+    }
+}
+
+//--------------------------------------------------------------
 void ofApp::savePreferences(){
 
 	ofxXmlSettings preferences;
@@ -703,8 +704,8 @@ void ofApp::savePreferences(){
 
 		preferences.addTag("Osc");
 		preferences.pushTag("Osc");
-		preferences.addValue("In", "/area" + ofToString(i) + "/personEntered");
-		preferences.addValue("Out", "/area" + ofToString(i) + "/personLeaved");
+		preferences.addValue("In", m_vAreaPolygonsVector[i].getInOsc());
+		preferences.addValue("Out", m_vAreaPolygonsVector[i].getOutOsc());
 		preferences.popTag();
 		preferences.popTag();
 	}
@@ -745,7 +746,7 @@ void ofApp::loadPreferences(){
 				p.y = preferences.getValue("y", 0.0f);
 
 				if (j == 0){
-					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y),people));
+					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y),people,m_vAreaPolygonsVector.size()));
 				}
 				else{
 					m_vAreaPolygonsVector[i].addPoint(ofVec2f(p.x, p.y));
@@ -757,6 +758,12 @@ void ofApp::loadPreferences(){
 				preferences.popTag();
 			}
 			m_vAreaPolygonsVector[i].complete();
+
+				preferences.pushTag("Osc");
+				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(i) + "/personEntered"),
+														preferences.getValue("Out", "/area" + ofToString(i) + "/personWillLeave"));
+				preferences.popTag();
+
 			preferences.popTag();
 		}
 		preferences.popTag();
@@ -764,15 +771,6 @@ void ofApp::loadPreferences(){
 	else{
 		ofLogNotice("Preferences file did not load..");
 	}
-}
-
-//--------------------------------------------------------------
-void ofApp::loadSettings(){
-    
-    // Load saved settings
-    if(ofFile::doesFileExist("settings.xml")){
-        m_gui.loadFromFile("settings.xml");
-    }
 }
 
 //_______________________________________________________________
@@ -804,19 +802,19 @@ ofxOscMessage m;
 			if (m_vAreaPolygonsVector[i].isCompleted()){
 				if (m_vAreaPolygonsVector[i].getPeopleMovement() > 0){		
 					// Create a first dataset
-					m.setAddress("/AreaPolygon" + ofToString(i) + "/personEntered");
+					m.setAddress(m_vAreaPolygonsVector[i].getInOsc());
 					for (int j = 0; j < m_vAreaPolygonsVector[i].getPeopleMovement(); j++){
 						m_oscSender.sendMessage(m); // Send it
-						std::cout << "/AreaPolygon" + ofToString(i) + "/personEntered" << std::endl;
+						std::cout << m_vAreaPolygonsVector[i].getInOsc() << std::endl;
 					}
 					m.clear(); // Clear message to be able to reuse it
 				}
 				if (m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
 					// Create a second dataset
-					m.setAddress("/AreaPolygon" + ofToString(i) + "/personWillLeave");
+					m.setAddress(m_vAreaPolygonsVector[i].getOutOsc());
 					for (int j = 0; j < abs(m_vAreaPolygonsVector[i].getPeopleMovement()); j++){
 						m_oscSender.sendMessage(m); // Send it
-						std::cout << "/AreaPolygon" + ofToString(i) + "/personWillLeave" << std::endl;
+						std::cout << m_vAreaPolygonsVector[i].getOutOsc() << std::endl;
 					}
 					m.clear(); // Clear message to be able to reuse it
 				}
@@ -827,21 +825,21 @@ ofxOscMessage m;
 		for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
 			if (m_vAreaPolygonsVector[i].isCompleted()){
 				//We can work on this polygon
-				if (m_vAreaPolygonsVector[i].getPeopleinside() == 0 
+				if (m_vAreaPolygonsVector[i].getPeopleInside() == 0 
 					&& m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
 					//X->0
-					m.setAddress("/AreaPolygon" + ofToString(i) + "/personWillLeave");
+					m.setAddress("/area" + ofToString(i) + "/personWillLeave");
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
-					std::cout << "/AreaPolygon" + ofToString(i) + "/personWillLeave" << std::endl;
+					std::cout << "/area" + ofToString(i) + "/personWillLeave" << std::endl;
 				}
-				if (m_vAreaPolygonsVector[i].getPeopleinside() != 0 
-					&& m_vAreaPolygonsVector[i].getPeopleinside() == m_vAreaPolygonsVector[i].getPeopleMovement()){
+				if (m_vAreaPolygonsVector[i].getPeopleInside() != 0 
+					&& m_vAreaPolygonsVector[i].getPeopleInside() == m_vAreaPolygonsVector[i].getPeopleMovement()){
 					//0->X
-					m.setAddress("/AreaPolygon" + ofToString(i) + "/personEntered");
+					m.setAddress("/area" + ofToString(i) + "/personEntered");
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
-					std::cout << "/AreaPolygon" + ofToString(i) + "/personEntered" << std::endl;
+					std::cout << "/area" + ofToString(i) + "/personEntered" << std::endl;
 				}
 			}
 		}
