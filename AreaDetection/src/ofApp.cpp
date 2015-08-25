@@ -245,7 +245,6 @@ void ofApp::update(){
 		m_oToggleClearAll = false;
 	}
 
-
 	//Update Augmenta
 	people = AugmentaReceiver.getPeople();
 
@@ -397,7 +396,7 @@ void ofApp::drawHiddenInterface(){
     
     ofPushStyle();
     ofSetColor(ofColor::white);
-    
+
     ofDrawBitmapString("FPS: " +
                        ofToString(ofGetFrameRate()) + "\n" +
                        m_sReceiverOscDisplay +
@@ -411,15 +410,16 @@ void ofApp::drawHiddenInterface(){
                        "[r] / [R] to delete all the polygons you have created\n" \
 					   "[del] to delete the selected polygon\n" \
 					   "[right click] to delete the last point created\n" \
-					   "[left click] to create a new point or polygon\n" \
-					   "[center click] inside a polygon to select it /outside a polygon to deselect it \n\n" \
+					   "[left click] inside a polygon to select it /outside a polygon to deselect it\n" \
+					   "[left click] to create a new point or polygon\n\n" 				  
 
                        "---------------------------------------\n" \
                        "\nTo optimize performance : \n\n" \
                        "  - Stay in this hidden interface mode\n" \
                        "  - Minimize this window\n" \
                        "\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
-                       "       To load the last saved settings, use [ctrl+l] / [cmd+l] or click on the GUI icon."
+                       "To load the last saved settings, use [ctrl+l] / [cmd+l] or click on the GUI icon.\n"\
+					   "[ctrl+s] and [ctrl+l] will also save and load the differents polygons."
                        ,20,20);
     
     ofPopStyle();
@@ -716,8 +716,7 @@ void ofApp::mouseReleased(int x, int y, int button){
 //_______________________________________________________________
 
 //--------------------------------------------------------------
-void ofApp::saveSettings(){
-    
+void ofApp::saveSettings(){    
     // Save GUI parameters
     m_gui.saveToFile("settings.xml");
 	savePreferences(); 
