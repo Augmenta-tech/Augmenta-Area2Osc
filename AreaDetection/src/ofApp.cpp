@@ -78,6 +78,8 @@ void ofApp::init(){
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
 	m_bRedondanteMode = true;
+	m_oToggleClearAll = false;
+	m_oToggleDeleteLastPoly = false;
 	m_bEditMode = false;
 	m_bSelectMode = false;
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
@@ -104,6 +106,108 @@ void ofApp::init(){
 }
 
 //--------------------------------------------------------------
+void ofApp::setupGUI(){
+
+	// Add listeners before setting up so the initial values are correct
+	// Listeners can be used to call a function when a UI element has changed.
+	// Don't forget to call ofRemoveListener before deleting any instance that is listening to an event, to prevent crashes. Here, we will call it in exit() method.
+	m_bResetSettings.addListener(this, &ofApp::reset);
+
+	// Setup GUI panel
+	m_gui.setup();
+	m_gui.setName("GUI Parameters");
+
+	// Add content to GUI panel
+	m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
+	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
+	m_gui.add(m_sEditMode.setup("Edit mode", m_sEditMode));
+	m_gui.add(m_sSelectionMode.setup("Selection mode", m_sSelectionMode));
+	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
+
+	// guiFirstGroup parameters ---------------------------
+	string sFirstGroupName = "Design";
+	m_guiFirstGroup.setName(sFirstGroupName);     // Name the group of parameters (important if you want to apply color to your GUI)
+	m_guiFirstGroup.add((m_fPointRadius.setup("Circles Radius", m_fPointRadius, 10, 50))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
+	m_guiFirstGroup.add((m_iLinesWidthSlider.setup("lines Width", m_iLinesWidthSlider, 1, 10))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
+	m_gui.add(m_guiFirstGroup);     // When all parameters of the group are set up, add the group to the gui panel.
+
+	// guiSecondGroup parameters ---------------------------
+	string sSecondGroupName = "Parameters";
+	m_guiSecondGroup.setName(sSecondGroupName);
+	m_guiSecondGroup.add((m_bRedondanteMode.setup("Enable redondante mode", m_bRedondanteMode))->getParameter());
+	m_guiSecondGroup.add((m_iRadiusClosePolyZone.setup("Closing radius", m_iRadiusClosePolyZone, 20, 50))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
+	m_gui.add(m_guiSecondGroup);
+
+	// guiThirdGroup parameters ---------------------------
+	string sThirdGroupName = "Delete";
+	m_guiThirdGroup.setName(sThirdGroupName);
+	m_guiThirdGroup.add((m_oToggleClearAll.setup("Delete all polygones", m_oToggleClearAll))->getParameter());
+	m_guiThirdGroup.add((m_oToggleDeleteLastPoly.setup("Delete last polygone", m_oToggleDeleteLastPoly))->getParameter());
+	m_gui.add(m_guiThirdGroup);
+
+	// You can add colors to your GUI groups to identify them easily
+	// Example of beautiful colors you can use : salmon, orange, darkSeaGreen, teal, cornflowerBlue...
+	m_gui.getGroup(sFirstGroupName).setHeaderBackgroundColor(ofColor::salmon);    // Parameter group must be get with its name defined in setupGUI()
+	m_gui.getGroup(sFirstGroupName).setBorderColor(ofColor::salmon);
+	m_gui.getGroup(sSecondGroupName).setHeaderBackgroundColor(ofColor::orange);
+	m_gui.getGroup(sSecondGroupName).setBorderColor(ofColor::orange);
+	m_gui.getGroup(sThirdGroupName).setHeaderBackgroundColor(ofColor::cornflowerBlue);
+	m_gui.getGroup(sThirdGroupName).setBorderColor(ofColor::cornflowerBlue);
+
+	// Load autosave settings
+	if (ofFile::doesFileExist("autosave.xml")){
+		m_gui.loadFromFile("autosave.xml");
+	}
+}
+
+//--------------------------------------------------------------
+void ofApp::setupOSC(){
+
+	ofxXmlSettings settings;
+	bool bNeedToSaveSettings = false;
+
+	// If a file settings exists, load values saved ; else, take default values
+	if (ofFile::doesFileExist("preferences.xml")){
+		settings.load("preferences.xml");
+		if (settings.tagExists("OSC")){
+			settings.pushTag("OSC");
+			m_iOscReceiverPort = settings.getValue("ReceiverPort", m_iOscReceiverPort);
+			m_iOscSenderPort = settings.getValue("SenderPort", m_iOscSenderPort);
+			m_sOscSenderHost = settings.getValue("SenderHost", m_sOscSenderHost);
+			settings.popTag();
+		}
+		else{
+			bNeedToSaveSettings = true;
+		}
+	}
+	else{
+		bNeedToSaveSettings = true;
+	}
+
+	if (bNeedToSaveSettings){
+		settings.addTag("OSC");
+		settings.pushTag("OSC");
+		settings.setValue("ReceiverPort", m_iOscReceiverPort);
+		settings.setValue("SenderPort", m_iOscSenderPort);
+		settings.setValue("SenderHost", m_sOscSenderHost);
+		settings.popTag();
+		settings.saveFile("preferences.xml");
+	}
+
+	m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
+
+	try{
+		m_oscReceiver.setup(m_iOscReceiverPort);
+	}
+	catch (std::exception&e){
+		ofLogWarning("setupOSC") << "Error : " << ofToString(e.what());
+		m_sReceiverOscDisplay = "\n/!\\ ERROR : Could not bind to OSC port " + ofToString(m_iOscReceiverPort) + " !\n\n";
+	}
+
+	m_oscSender.setup(m_sOscSenderHost, m_iOscSenderPort);
+}
+
+//--------------------------------------------------------------
 void ofApp::reset(){
     
     init();
@@ -115,7 +219,33 @@ void ofApp::reset(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    
+	
+	if (m_oToggleDeleteLastPoly){
+		if (m_vAreaPolygonsVector.size() >= 1){
+			if (m_bSelectMode){
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+				m_iIndicePolygonSelected = -1;
+				m_bSelectMode = false;
+			}
+			m_bEditMode = false;
+			m_vAreaPolygonsVector.pop_back();
+			ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
+		}
+		m_oToggleDeleteLastPoly = false;
+	}
+	if (m_oToggleClearAll){
+		if (m_bSelectMode){
+			m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+			m_iIndicePolygonSelected = -1;
+			m_bSelectMode = false;
+		}
+		m_vAreaPolygonsVector.clear();
+		m_bEditMode = false;
+		ofLogVerbose("keyPressed", "All AreaPolygons are now deleted ");
+		m_oToggleClearAll = false;
+	}
+
+
 	//Update Augmenta
 	people = AugmentaReceiver.getPeople();
 
@@ -468,7 +598,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
 
-	if (button == 1){
+	if (button == 0){
 		if (!m_bEditMode){
 			if (m_bSelectMode){
 				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
@@ -525,7 +655,7 @@ void ofApp::mousePressed(int x, int y, int button){
 		}
 	}
 	
-	if (button == 1){
+	if (button == 0){
 		if (!m_bEditMode){
 			if(!m_bSelectMode){
 				for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
@@ -565,7 +695,7 @@ void ofApp::mousePressed(int x, int y, int button){
 void ofApp::mouseReleased(int x, int y, int button){
 	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
 
-	if (button == 1){
+	if (button == 0){
 		if (!m_bEditMode){
 			if (m_bSelectMode){
 				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
@@ -574,107 +704,6 @@ void ofApp::mouseReleased(int x, int y, int button){
 		}
 	}
 	m_oOldMousePosition = ofVec2f(x, y);
-}
-
-//_______________________________________________________________
-//_____________________________SETUP_____________________________
-//_______________________________________________________________
-
-//--------------------------------------------------------------
-void ofApp::setupGUI(){
-    
-    // Add listeners before setting up so the initial values are correct
-    // Listeners can be used to call a function when a UI element has changed.
-    // Don't forget to call ofRemoveListener before deleting any instance that is listening to an event, to prevent crashes. Here, we will call it in exit() method.
-    m_bResetSettings.addListener(this, &ofApp::reset);
-    
-    // Setup GUI panel
-    m_gui.setup();
-    m_gui.setName("GUI Parameters");
-    
-    // Add content to GUI panel
-    m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
-	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
-	m_gui.add(m_sEditMode.setup("Edit mode", m_sEditMode));
-	m_gui.add(m_sSelectionMode.setup("Selection mode", m_sSelectionMode));
-    m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
-  
-	// guiFirstGroup parameters ---------------------------
-    string sFirstGroupName = "Design";
-    m_guiFirstGroup.setName(sFirstGroupName);     // Name the group of parameters (important if you want to apply color to your GUI)
-	m_guiFirstGroup.add((m_fPointRadius.setup("Circles Radius", m_fPointRadius, 10, 50))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
-	m_guiFirstGroup.add((m_iLinesWidthSlider.setup("lines Width", m_iLinesWidthSlider, 1, 10))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
-	m_gui.add(m_guiFirstGroup);     // When all parameters of the group are set up, add the group to the gui panel.
- 
-	// guiSecondGroup parameters ---------------------------
-    string sSecondGroupName = "Parameters";
-    m_guiSecondGroup.setName(sSecondGroupName);
-	m_guiSecondGroup.add((m_bRedondanteMode.setup("Enable redondante mode", m_bRedondanteMode))->getParameter());
-	m_guiSecondGroup.add((m_iRadiusClosePolyZone.setup("Closing radius", m_iRadiusClosePolyZone, 20, 50))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
-    m_gui.add(m_guiSecondGroup);
-   
-	// guiThirdGroup parameters ---------------------------
-    string sThirdGroupName = "3";
-    m_guiThirdGroup.setName(sThirdGroupName);
-	m_gui.add(m_guiThirdGroup);
-
-    // You can add colors to your GUI groups to identify them easily
-    // Example of beautiful colors you can use : salmon, orange, darkSeaGreen, teal, cornflowerBlue...
-    m_gui.getGroup(sFirstGroupName).setHeaderBackgroundColor(ofColor::salmon);    // Parameter group must be get with its name defined in setupGUI()
-    m_gui.getGroup(sFirstGroupName).setBorderColor(ofColor::salmon);
-    m_gui.getGroup(sSecondGroupName).setHeaderBackgroundColor(ofColor::orange);
-    m_gui.getGroup(sSecondGroupName).setBorderColor(ofColor::orange);
-    m_gui.getGroup(sThirdGroupName).setHeaderBackgroundColor(ofColor::cornflowerBlue);
-    m_gui.getGroup(sThirdGroupName).setBorderColor(ofColor::cornflowerBlue);
-    
-    // Load autosave settings
-    if(ofFile::doesFileExist("autosave.xml")){
-        m_gui.loadFromFile("autosave.xml");
-    }
-}
-
-//--------------------------------------------------------------
-void ofApp::setupOSC(){
-    
-    ofxXmlSettings settings;
-    bool bNeedToSaveSettings = false;
-    
-    // If a file settings exists, load values saved ; else, take default values
-    if(ofFile::doesFileExist("preferences.xml")){
-        settings.load("preferences.xml");
-        if(settings.tagExists("OSC")){
-            settings.pushTag("OSC");
-            m_iOscReceiverPort = settings.getValue("ReceiverPort", m_iOscReceiverPort);
-            m_iOscSenderPort = settings.getValue("SenderPort", m_iOscSenderPort);
-            m_sOscSenderHost = settings.getValue("SenderHost", m_sOscSenderHost);
-            settings.popTag();
-        } else{
-            bNeedToSaveSettings = true;
-        }
-    } else{
-        bNeedToSaveSettings = true;
-    }
-    
-    if(bNeedToSaveSettings){
-        settings.addTag("OSC");
-        settings.pushTag("OSC");
-        settings.setValue("ReceiverPort", m_iOscReceiverPort);
-        settings.setValue("SenderPort", m_iOscSenderPort);
-        settings.setValue("SenderHost", m_sOscSenderHost);
-        settings.popTag();
-        settings.saveFile("preferences.xml");
-    }
-
-    m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
-    
-    try{
-        m_oscReceiver.setup(m_iOscReceiverPort);
-    } catch (std::exception&e){
-        ofLogWarning("setupOSC") << "Error : " << ofToString(e.what());
-        m_sReceiverOscDisplay = "\n/!\\ ERROR : Could not bind to OSC port " + ofToString(m_iOscReceiverPort) + " !\n\n";
-    }
-    
-    m_oscSender.setup(m_sOscSenderHost, m_iOscSenderPort);
 }
 
 //_______________________________________________________________

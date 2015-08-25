@@ -103,9 +103,11 @@ private:
     // Gui content ----------------
     ofxLabel m_sFramerate;
 	ofxLabel m_sNumberOfAreaPolygons;
-
+	ofxLabel m_sEditMode;
+	ofxLabel m_sSelectionMode;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
-    // Parameters group to organize your parameters
+    
+	// Parameters group to organize your parameters
     ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;
     
 	// Gui parameters inside m_guiFirstGroup
@@ -117,8 +119,8 @@ private:
 	ofxIntSlider m_iRadiusClosePolyZone;
 
 	// Gui parameters inside m_ThirdGroup
-	ofxLabel m_sEditMode;
-	ofxLabel m_sSelectionMode;
+	ofxToggle m_oToggleClearAll;
+	ofxToggle m_oToggleDeleteLastPoly;
     // --------- End of Gui content	
     
     #ifdef WIN32

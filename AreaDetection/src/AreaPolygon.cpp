@@ -2,7 +2,7 @@
 #include "ofUtils.h"
 
 
-#define MOVE_STEP 0.01
+#define MOVE_STEP 0.001
 
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndiceInPolygonsVector){
 	m_oPointsColor = ofColor::lightBlue;
