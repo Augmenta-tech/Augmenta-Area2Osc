@@ -31,7 +31,8 @@ void ofApp::setup(){
     setupGUI();
     setupOSC();
 	loadPreferences();
-    
+	checkingForSameName();
+
     /*
      
      Visuals will be drawn in a FBO for several reasons :
@@ -86,7 +87,7 @@ void ofApp::init(){
 	else{ m_sEditMode = "OFF"; }
 	if (m_bSelectMode){ m_sSelectionMode = "ON"; }
 	else{ m_sSelectionMode = "OFF"; }
-    
+
     //--------------------------------------------
 
 	//In case of reset
@@ -98,6 +99,7 @@ void ofApp::init(){
 	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
 		m_vAreaPolygonsVector[i].hasBeenSelected(false);
 	}
+
 
 }
 
@@ -134,6 +136,42 @@ void ofApp::update(){
 	//Osc
 	sendOSC();
 	receiveOSC();
+}
+
+//--------------------------------------------------------------
+void ofApp::checkingForSameName(){
+	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
+		for (int j = 0; j < m_vAreaPolygonsVector.size();++j){
+			if ( i != j && 
+				(m_vAreaPolygonsVector[i].getInOsc() == m_vAreaPolygonsVector[j].getInOsc()
+				|| m_vAreaPolygonsVector[i].getOutOsc() == m_vAreaPolygonsVector[j].getOutOsc())){
+				m_vAreaPolygonsVector[j].loadOscMessage("/area" + ofToString(j) + "/personEntered", "/area" + ofToString(j) + "/personWillLeave");
+				m_vAreaPolygonsVector[i].loadOscMessage("/area" + ofToString(i) + "/personEntered", "/area" + ofToString(i) + "/personWillLeave");
+				ofLogNotice("Same name find! Renaming polygons message");
+			}
+		}
+	}
+}
+
+//--------------------------------------------------------------
+bool ofApp::isInsideAPolygon(ofVec2f a_oPoint){
+	//We don't count the last poly because it his in construction
+	if (m_bEditMode){
+		for (int i = 0; i < m_vAreaPolygonsVector.size() - 1; i++){
+			if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(a_oPoint.x) / m_iFboWidth, static_cast<float>(a_oPoint.y) / m_iFboHeight))){
+				return true;
+			}
+		}
+		return false;
+	}
+	else{
+		for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
+			if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(a_oPoint.x) / m_iFboWidth, static_cast<float>(a_oPoint.y) / m_iFboHeight))){
+				return true;
+			}
+		}
+		return false;
+	}
 }
 
 //_______________________________________________________________
@@ -343,7 +381,7 @@ void ofApp::keyPressed(int key){
         #endif
 
 		//Delete the selected poly
-	/*	case OF_KEY_DEL :			
+		case OF_KEY_DEL :			
 		case OF_KEY_BACKSPACE :
 			if (m_vAreaPolygonsVector.size() >= 1){
 				if (m_bSelectMode && !m_bEditMode){
@@ -354,7 +392,7 @@ void ofApp::keyPressed(int key){
 				}
 			}
 			break;
-		*/
+		
 		//Delete all AreaPolygons
 		case 'r':
 		case 'R':			
@@ -457,6 +495,7 @@ void ofApp::mousePressed(int x, int y, int button){
 			if (temp.distance(ofVec2f(x, y)) < m_iRadiusClosePolyZone){
 				m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
 				m_bEditMode = false;
+				checkingForSameName();
 				if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getSize() <= 2){
 					m_vAreaPolygonsVector.pop_back();
 				}
@@ -519,27 +558,6 @@ void ofApp::mousePressed(int x, int y, int button){
 				}
 			}
 		}
-	}
-}
-
-//--------------------------------------------------------------
-bool ofApp::isInsideAPolygon(ofVec2f a_oPoint){
-	//We don't count the last poly because it his in construction
-	if (m_bEditMode){ 
-		for (int i = 0; i < m_vAreaPolygonsVector.size()-1; i++){
-			if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(a_oPoint.x) / m_iFboWidth, static_cast<float>(a_oPoint.y) / m_iFboHeight))){
-				return true;
-			}
-		}
-		return false;
-	}
-	else{
-		for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
-			if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(a_oPoint.x) / m_iFboWidth, static_cast<float>(a_oPoint.y) / m_iFboHeight))){
-				return true;
-			}
-		}
-		return false;
 	}
 }
 
