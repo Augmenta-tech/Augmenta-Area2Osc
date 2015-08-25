@@ -51,6 +51,7 @@ public:
 	void addPoint(ofVec2f a_oPoint);
 	bool removeLastPoint();
 	bool isPointInPolygon(ofVec2f a_oPersonPosition);
+	
 
 private:
 

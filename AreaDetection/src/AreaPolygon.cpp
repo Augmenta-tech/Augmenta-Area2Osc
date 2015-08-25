@@ -36,7 +36,9 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 
 //--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){	
-	ofDrawBitmapString(ofToString(m_iPeopleInside),ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
+	ofDrawBitmapString("In Message = " + m_sInOsc, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
+	ofDrawBitmapString("Out Message = " + m_sOutOsc, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
+	ofDrawBitmapString("People inside = " + ofToString(m_iPeopleInside),ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
 }
 
 //--------------------------------------------------------------

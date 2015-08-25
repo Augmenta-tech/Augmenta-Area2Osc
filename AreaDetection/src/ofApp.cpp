@@ -805,7 +805,7 @@ ofxOscMessage m;
 					m.setAddress(m_vAreaPolygonsVector[i].getInOsc());
 					for (int j = 0; j < m_vAreaPolygonsVector[i].getPeopleMovement(); j++){
 						m_oscSender.sendMessage(m); // Send it
-						std::cout << m_vAreaPolygonsVector[i].getInOsc() << std::endl;
+						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOsc();
 					}
 					m.clear(); // Clear message to be able to reuse it
 				}
@@ -814,7 +814,7 @@ ofxOscMessage m;
 					m.setAddress(m_vAreaPolygonsVector[i].getOutOsc());
 					for (int j = 0; j < abs(m_vAreaPolygonsVector[i].getPeopleMovement()); j++){
 						m_oscSender.sendMessage(m); // Send it
-						std::cout << m_vAreaPolygonsVector[i].getOutOsc() << std::endl;
+						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOsc();
 					}
 					m.clear(); // Clear message to be able to reuse it
 				}
@@ -828,18 +828,18 @@ ofxOscMessage m;
 				if (m_vAreaPolygonsVector[i].getPeopleInside() == 0 
 					&& m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
 					//X->0
-					m.setAddress("/area" + ofToString(i) + "/personWillLeave");
+					m.setAddress(m_vAreaPolygonsVector[i].getOutOsc());
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
-					std::cout << "/area" + ofToString(i) + "/personWillLeave" << std::endl;
+					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOsc();
 				}
 				if (m_vAreaPolygonsVector[i].getPeopleInside() != 0 
 					&& m_vAreaPolygonsVector[i].getPeopleInside() == m_vAreaPolygonsVector[i].getPeopleMovement()){
 					//0->X
-					m.setAddress("/area" + ofToString(i) + "/personEntered");
+					m.setAddress(m_vAreaPolygonsVector[i].getInOsc());
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
-					std::cout << "/area" + ofToString(i) + "/personEntered" << std::endl;
+					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOsc();
 				}
 			}
 		}
