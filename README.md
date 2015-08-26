@@ -1,57 +1,8 @@
-﻿# OfxTemplate
+﻿# augmenta-area2osc
 
-OfxTemplate is our set of simple internal codebases for Openframeworks containing all the libs and examples code to get started in most THÉORIZ cases. It does send OSC, receive OSC, and draw and send some visuals to Syphon/Spout.
-
-MySketch
-
-- A test application to check if OSC, Syphon and Spout work correctly on a machine
-- A simple codebase for a new project, with coding guidelines and instructions to follow
-
-MyStateMachineSketch
-
-- A structured codebase including a stateMachine to be able to achieve multiple "MySketch" in one application
-
-## How to start your new project with ofxTemplate
-
-- Download a zip of this repository (Don't clone it)
-
-- Choose your template and copy its directory in `$(OPENFRAMEWORKS_ROOT_FOLDER)/apps/your-project-folder`
-
-- You should have this `$(OPENFRAMEWORKS_ROOT_FOLDER)/apps/your-project-folder/mySketch` or `$(OPENFRAMEWORKS_ROOT_FOLDER)/apps/your-project-folder/myStateMachineSketch`
-
-- Rename your project
-	- Rename `mySketch` folder to your app name.
-
-	- Xcode
-		- In your app folder, launch the `mySketch.xcodeproj` file (don't rename it !).
-		- In the project navigator (left panel of the interface), click on mySketch, wait 2s, and then click again to rename it to your app name. A pop-up may ask you if you want to rename the projects content items. Select all items and click rename. Then Click on disable for the snapshot window.
-		- In the toolbar, click on "mySketch Debug" (just next to the "play" button in the top-left corner) and click on "Manage Schemes".
-		- In the pop-up window, there is the different schemes. Replace "mySketch" by your app name.
-		- Restart Xcode to be sure all changes are taken into account.
-		- If you already have an icon, replace the two `icon.icns` file in the repository. To create an icon, use `Icon composer` with a 512x512 png.
-	- Visual Studio
-		- Open the solution file `mySketch.sln`
-		- In Visual Studio, in the solution explorer (the right panel), right click on the solution, select Rename and enter your app name. If the Solution Explorer panel is closed, go to the View menu to open it, or press Ctrl+Alt+L.
-		- Just under the solution, right click on the "mySketch" project, select Rename and enter your app name.
-		- Save your changes with Save All entry under File menu.
-		- Close Visual Studio.
-		- Open the `mySketch.vcxproj` with a text editor (notepad, sublime text...), and use Find function to replace all "mySketch" occurences by your app name.
-		- Save changes and close the file.
-		- Rename `mySketch.vcxproj` file by your app name.
-		- Rename `mySketch.vcxproj.filters` file by your app name.
-		- Open the `.sln` file with a text editor (notepad, sublime text...), and use Find function to replace all "mySketch" occurences by your app name.
-		- Save changes and close the file.
-		- Delete the `mySketch.sdf` file (a new file will be created when you will restart Visual Studio)
-		- You can now reopen your solution in Visual Studio. 
-		- In the Solution Explorer, if the openFrameworksLib project appear in bold, right click on your app project and select "Set as StartUp Project".
-
-- In `src/ofApp.cpp`, replace the APP_NAME macro value by your app name.
-- Carefully read and update every `README.md` chapter with the correct data and remove this chapter once you are done.
-- Now coding can start ! Every instructions and explanations are in the code :)
+augmenta-area2osc allows you to easly create polygons which will refer to detection zone. Osc messages will be sent for every person entering or leaving the zone.
 
 ## Use
-
-### MySketch
 
 #### First Group
 
@@ -68,26 +19,6 @@ My Vector : This is madness, you can change x y z coordinates of a vector, makin
 #### Mouse clics
 
 Use left clic and right clic to move and zoom on your cube, this does affect the 3D camera, not the real size of the cube.
-
-### MyStateMachineSketch
-
-#### First sketch?
-
-##### First Group
-
-TODO !
-
-##### Second Group
-
-#### Second sketch?
-
-##### First Group
-
-TODO !
-
-##### Second Group
-
-## Dev env
 
 ### System
 

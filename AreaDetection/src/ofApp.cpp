@@ -218,8 +218,7 @@ void ofApp::reset(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	std::cout << " id = " << m_iId << std::endl;
-
+	
 	if (m_oToggleDeleteLastPoly){
 		if (m_vAreaPolygonsVector.size() >= 1){
 			if (m_bSelectMode){
