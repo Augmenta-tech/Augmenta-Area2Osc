@@ -1,7 +1,7 @@
 #include "ofApp.h"
 
 #define APP_NAME "AreaDetection"
-#define AUGMENTA_OSC_PORT 12002
+#define RADIUS_CLOSING_ZONE 15
 
 //_______________________________________________________________
 //_____________________________SETUP_____________________________
@@ -28,7 +28,7 @@ void ofApp::setup(){
 
     // Important : call those function AFTER init,
     // because init() will define all default values
-	m_iId = 0;
+	m_iNextFeeId = 0;
     setupGUI();
     setupOSC();
 	loadPreferences();
@@ -58,21 +58,22 @@ void ofApp::init(){
     // Change default values here.
     //--------------------------------------------
     
-	//Augmenta
-	AugmentaReceiver.connect(AUGMENTA_OSC_PORT);
-	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(AUGMENTA_OSC_PORT) + "\n";
+	
 
     // App default values (preferences.xml)
     m_bHideInterface = false;
     m_bLogToFile = false;
     m_iFboWidth = ofGetWidth();
     m_iFboHeight = ofGetHeight();
-    m_iOscReceiverPort = 12001;
+    m_iOscReceiverPort = 12002;
     m_iOscSenderPort = 12000;
     m_sOscSenderHost = "127.0.0.1";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
+
+	//Augmenta
+	AugmentaReceiver.connect(m_iOscReceiverPort);
+	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
     
-	
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
@@ -82,13 +83,8 @@ void ofApp::init(){
 	m_bEditMode = false;
 	m_bSelectMode = false;
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
-	m_iRadiusClosePolyZone = 20;
+	m_iRadiusClosePolyZone = RADIUS_CLOSING_ZONE;
 	m_oOldMousePosition = ofVec2f(0,0);
-
-	if (m_bEditMode){ m_sEditMode = "ON"; }
-	else{ m_sEditMode = "OFF"; }
-	if (m_bSelectMode){ m_sSelectionMode = "ON"; }
-	else{ m_sSelectionMode = "OFF"; }
 
     //--------------------------------------------
 	//In case of reset
@@ -119,30 +115,21 @@ void ofApp::setupGUI(){
 	// Add content to GUI panel
 	m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
 	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
-	m_gui.add(m_sEditMode.setup("Edit mode", m_sEditMode));
-	m_gui.add(m_sSelectionMode.setup("Selection mode", m_sSelectionMode));
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
 
 	// guiFirstGroup parameters ---------------------------
-	string sFirstGroupName = "Design";
+	string sFirstGroupName = "Polygons";
 	m_guiFirstGroup.setName(sFirstGroupName);     // Name the group of parameters (important if you want to apply color to your GUI)
-	m_guiFirstGroup.add((m_fPointRadius.setup("Circles Radius", m_fPointRadius, 10, 50))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
-	m_guiFirstGroup.add((m_iLinesWidthSlider.setup("lines Width", m_iLinesWidthSlider, 1, 10))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
+	m_guiFirstGroup.add((m_oToggleClearAll.setup("Delete all polygons", m_oToggleClearAll))->getParameter());
+	m_guiFirstGroup.add((m_oToggleDeleteLastPoly.setup("Delete last polygon", m_oToggleDeleteLastPoly))->getParameter());
 	m_gui.add(m_guiFirstGroup);     // When all parameters of the group are set up, add the group to the gui panel.
 
 	// guiSecondGroup parameters ---------------------------
-	string sSecondGroupName = "Parameters";
+	string sSecondGroupName = "OSC";
 	m_guiSecondGroup.setName(sSecondGroupName);
-	m_guiSecondGroup.add((m_bRedondanteMode.setup("Enable redondante mode", m_bRedondanteMode))->getParameter());
-	m_guiSecondGroup.add((m_iRadiusClosePolyZone.setup("Closing radius", m_iRadiusClosePolyZone, 20, 50))->getParameter());    // Setup parameter : args = name, default, min, max ; default argument value has been set in init(), so take the variable itself as argument.
+	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
-	// guiThirdGroup parameters ---------------------------
-	string sThirdGroupName = "Delete";
-	m_guiThirdGroup.setName(sThirdGroupName);
-	m_guiThirdGroup.add((m_oToggleClearAll.setup("Delete all polygones", m_oToggleClearAll))->getParameter());
-	m_guiThirdGroup.add((m_oToggleDeleteLastPoly.setup("Delete last polygone", m_oToggleDeleteLastPoly))->getParameter());
-	m_gui.add(m_guiThirdGroup);
 
 	// You can add colors to your GUI groups to identify them easily
 	// Example of beautiful colors you can use : salmon, orange, darkSeaGreen, teal, cornflowerBlue...
@@ -150,8 +137,6 @@ void ofApp::setupGUI(){
 	m_gui.getGroup(sFirstGroupName).setBorderColor(ofColor::salmon);
 	m_gui.getGroup(sSecondGroupName).setHeaderBackgroundColor(ofColor::orange);
 	m_gui.getGroup(sSecondGroupName).setBorderColor(ofColor::orange);
-	m_gui.getGroup(sThirdGroupName).setHeaderBackgroundColor(ofColor::cornflowerBlue);
-	m_gui.getGroup(sThirdGroupName).setBorderColor(ofColor::cornflowerBlue);
 
 	// Load autosave settings
 	if (ofFile::doesFileExist("autosave.xml")){
@@ -218,6 +203,7 @@ void ofApp::reset(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+	//std::cout << "id = " << m_iNextFeeId << std::endl;
 	
 	if (m_oToggleDeleteLastPoly){
 		if (m_vAreaPolygonsVector.size() >= 1){
@@ -228,7 +214,7 @@ void ofApp::update(){
 			}
 			m_bEditMode = false;
 			m_vAreaPolygonsVector.pop_back();
-			ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
+			ofLogVerbose("update", "Last AreaPolygon is now deleted ");
 		}
 		m_oToggleDeleteLastPoly = false;
 	}
@@ -240,8 +226,9 @@ void ofApp::update(){
 		}
 		m_vAreaPolygonsVector.clear();
 		m_bEditMode = false;
-		ofLogVerbose("keyPressed", "All AreaPolygons are now deleted ");
+		ofLogVerbose("update", "All AreaPolygons are now deleted ");
 		m_oToggleClearAll = false;
+		m_iNextFeeId = 0;
 	}
 
 	//Update Augmenta
@@ -249,10 +236,6 @@ void ofApp::update(){
 
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
-	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
-		m_vAreaPolygonsVector[i].setRadius(m_fPointRadius);
-		m_vAreaPolygonsVector[i].setLinesWidth(m_iLinesWidthSlider);
-	}
 
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
@@ -263,22 +246,6 @@ void ofApp::update(){
 	
 	//Osc
 	sendOSC();
-	receiveOSC();
-}
-
-//--------------------------------------------------------------
-void ofApp::checkingForSameName(){
-	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
-		for (int j = 0; j < m_vAreaPolygonsVector.size();++j){
-			if ( i != j && 
-				(m_vAreaPolygonsVector[i].getInOsc() == m_vAreaPolygonsVector[j].getInOsc()
-				|| m_vAreaPolygonsVector[i].getOutOsc() == m_vAreaPolygonsVector[j].getOutOsc())){
-				m_vAreaPolygonsVector[j].loadOscMessage("/area" + ofToString(j) + "/personEntered", "/area" + ofToString(j) + "/personWillLeave");
-				m_vAreaPolygonsVector[i].loadOscMessage("/area" + ofToString(i) + "/personEntered", "/area" + ofToString(i) + "/personWillLeave");
-				ofLogNotice("Same name find! Renaming polygons message");
-			}
-		}
-	}
 }
 
 //--------------------------------------------------------------
@@ -378,13 +345,7 @@ void ofApp::drawInterface(){
     m_sFramerate = ofToString(ofGetFrameRate());
 	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
 	
-	if (m_bEditMode){m_sEditMode = "ON";}
-	else{m_sEditMode = "OFF";}
-	
-	if (m_bSelectMode){	m_sSelectionMode = "ON";}
-	else{m_sSelectionMode = "OFF";}
-	
-	m_gui.draw();
+		m_gui.draw();
 }
 
 //--------------------------------------------------------------
@@ -398,27 +359,25 @@ void ofApp::drawHiddenInterface(){
 
     ofDrawBitmapString("FPS: " +
                        ofToString(ofGetFrameRate()) + "\n" +
-                       m_sReceiverOscDisplay +
 					   "Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n" + m_sAugmentaOscDiplay
 					   +"\n" +
                        "---------------------------------------\n"
                        "\n[h] to unhide interface\n" \
-                       "[ctrl+s] / [cmd+s] to save settings\n" \
-                       "[ctrl+l] / [cmd+l] to load last saved settings\n" \
+                       "[ctrl+s] / [cmd+s] to save settings and the currents polygons\n" \
+                       "[ctrl+l] / [cmd+l] to load last saved settings and polygons\n" \
                        "[ctrl+z] to delete the last polygon created or the current polygon\n" \
                        "[r] / [R] to delete all the polygons you have created\n" \
-					   "[del] to delete the selected polygon\n" \
+					   "[del] / [backSpace] to delete the selected polygon\n" \
+					   "[left click] to create a new point or polygon\n" \
 					   "[right click] to delete the last point created\n" \
-					   "[left click] inside a polygon to select it /outside a polygon to deselect it\n" \
-					   "[left click] to create a new point or polygon\n\n" 				  
+					   "[left click] inside a polygon to select it /outside a polygon to deselect it\n\n" 			  			  
 
                        "---------------------------------------\n" \
                        "\nTo optimize performance : \n\n" \
                        "  - Stay in this hidden interface mode\n" \
                        "  - Minimize this window\n" \
                        "\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
-                       "To load the last saved settings, use [ctrl+l] / [cmd+l] or click on the GUI icon.\n"\
-					   "[ctrl+s] and [ctrl+l] will also save and load the differents polygons."
+                    
                        ,20,20);
     
     ofPopStyle();
@@ -533,6 +492,7 @@ void ofApp::keyPressed(int key){
 			m_vAreaPolygonsVector.clear();
 			m_bEditMode = false;
 			ofLogVerbose("keyPressed", "All AreaPolygons are now deleted ");
+			m_iNextFeeId = 0;
 			break;
 
 	//Move the selected polygon
@@ -640,7 +600,6 @@ void ofApp::mousePressed(int x, int y, int button){
 				if (temp.distance(ofVec2f(x, y)) < m_iRadiusClosePolyZone){
 					m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
 					m_bEditMode = false;
-					checkingForSameName();
 					if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getSize() <= 2){
 						m_vAreaPolygonsVector.pop_back();
 					}
@@ -654,8 +613,8 @@ void ofApp::mousePressed(int x, int y, int button){
 
 			//Every AreaPolygons are completed
 			else{
-				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people,m_iId));
-				m_iId++;
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people,m_iNextFeeId));
+				m_iNextFeeId++;
 				m_bEditMode = true;
 			}
 		}
@@ -750,7 +709,7 @@ void ofApp::savePreferences(){
 	preferences.addValue("LogToFile", m_bLogToFile);
 	preferences.addValue("FboWidth", m_iFboWidth);
 	preferences.addValue("FboHeight", m_iFboHeight);
-	preferences.addValue("Id", m_iId);
+	preferences.addValue("NextFeeId", m_iNextFeeId);
 
 
 	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
@@ -795,7 +754,7 @@ void ofApp::loadPreferences(){
 		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
 		m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
 		m_iFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
-		m_iId = preferences.getValue("Id", m_iId);
+		m_iNextFeeId = preferences.getValue("NextFeeId", m_iNextFeeId);
 
 		nbrPolygons = preferences.getNumTags("AreaPolygon");
 		ofLogVerbose("loadPreferences") << "load of " << nbrPolygons << " polygons";
@@ -828,15 +787,15 @@ void ofApp::loadPreferences(){
 			m_vAreaPolygonsVector[i].complete();
 
 				preferences.pushTag("Osc");
-				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(m_iId) + "/personEntered"),
-														preferences.getValue("Out", "/area" + ofToString(m_iId) + "/personWillLeave"));
+				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(m_iNextFeeId) + "/personEntered"),
+														preferences.getValue("Out", "/area" + ofToString(m_iNextFeeId) + "/personWillLeave"));
 				preferences.popTag();
 
 			preferences.popTag();
 		}
 		preferences.popTag();
 
-		if (m_iId < m_vAreaPolygonsVector.size()){
+		if (m_iNextFeeId < m_vAreaPolygonsVector.size()){
 			ofLogError("Problem detected in the naming of the polygons..");
 		}
 	}
@@ -848,22 +807,6 @@ void ofApp::loadPreferences(){
 //_______________________________________________________________
 //_____________________________OSC_______________________________
 //_______________________________________________________________
-
-//--------------------------------------------------------------
-void ofApp::receiveOSC(){
-    
-    // Get OSC data
-    while(m_oscReceiver.hasWaitingMessages()){
-        
-        // Get the next message
-        ofxOscMessage m;
-        m_oscReceiver.getNextMessage(&m);
-        
-		std::cout << m.getAddress() << std::endl;
-
-        ofLogNotice("receiveOSC"," Unknown OSC message ");
-   }
-}
 
 //--------------------------------------------------------------
 void ofApp::sendOSC(){

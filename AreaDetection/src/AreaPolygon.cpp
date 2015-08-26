@@ -3,6 +3,9 @@
 
 
 #define MOVE_STEP 0.001
+#define LINES_WIDTH 2
+#define CIRCLE_RADIUS 5
+
 
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople,int a_iIndice){
 	m_oPointsColor = ofColor::lightBlue;
@@ -10,8 +13,8 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	m_oCompletedColor = ofColor::paleVioletRed;
 	m_oSelectedColor = ofColor::red;
 	m_oNotEmptyColor = ofColor::forestGreen;
-	m_iLinesWidth = 2;
-	m_fRadius = 20;
+	m_iLinesWidth = LINES_WIDTH;
+	m_fRadius = CIRCLE_RADIUS;
 	m_bIsFinished = false;
 	setPeopleInside(a_vPeople);
 	m_iOldPeopleInside=m_iPeopleInside;
@@ -35,9 +38,9 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 
 //--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){	
-	ofDrawBitmapString("In Message = " + m_sInOsc, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
-	ofDrawBitmapString("Out Message = " + m_sOutOsc, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
-	ofDrawBitmapString("People inside = " + ofToString(m_iPeopleInside),ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
+	ofDrawBitmapString("In :" + m_sInOsc, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
+	ofDrawBitmapString("Out :" + m_sOutOsc, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
+	ofDrawBitmapString("People :" + ofToString(m_iPeopleInside),ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
 }
 
 //--------------------------------------------------------------

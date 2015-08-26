@@ -46,7 +46,6 @@ private:
 	void setupOSC();
     void setupGUI();
     
-    void receiveOSC();
     void sendOSC();
     
     // Only draw final output visuals - no GUI, no debug visuals, only content that can be seen by spectator
@@ -73,7 +72,6 @@ private:
     int m_iFboHeight;
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
-	void checkingForSameName();
 
     // OSC
     ofxOscReceiver m_oscReceiver;
@@ -90,7 +88,7 @@ private:
 	string m_sAugmentaOscDiplay;
 
 	//Parameters AreaEditor
-	int m_iId;
+	int m_iNextFeeId;
 	bool m_bEditMode;
 	bool m_bSelectMode;
 	int m_iNumberOfAreaPolygons;
@@ -104,12 +102,10 @@ private:
     // Gui content ----------------
     ofxLabel m_sFramerate;
 	ofxLabel m_sNumberOfAreaPolygons;
-	ofxLabel m_sEditMode;
-	ofxLabel m_sSelectionMode;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     
 	// Parameters group to organize your parameters
-    ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;
+	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup;
     
 	// Gui parameters inside m_guiFirstGroup
     ofxFloatSlider m_fPointRadius;
@@ -117,7 +113,7 @@ private:
 
     // Gui parameters inside m_guiSecondGroup
     ofxToggle m_bRedondanteMode;
-	ofxIntSlider m_iRadiusClosePolyZone;
+	int m_iRadiusClosePolyZone;
 
 	// Gui parameters inside m_ThirdGroup
 	ofxToggle m_oToggleClearAll;

@@ -15,10 +15,6 @@ public:
 	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice);
 
 	//Inline
-	inline void setRadius(float a_fRadius){ m_fRadius = a_fRadius; };
-	inline void setColorCircle(ofColor a_oCircleColor){ m_oPointsColor = a_oCircleColor; };
-	inline void setColorLines(ofColor a_oLineColor){ m_oLinesColor = a_oLineColor; };
-	inline void setLinesWidth(int a_iWidth){ m_iLinesWidth = a_iWidth; };
 	inline bool isCompleted(){ return m_bIsFinished; };
 	inline int getSize(){ return m_vVectorPoints.size(); };
 	inline ofVec2f getPoint(int a_iIndice){ return m_vVectorPoints[a_iIndice]; };
