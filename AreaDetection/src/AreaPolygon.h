@@ -12,7 +12,7 @@ class AreaPolygon {
 public:
 
 	//Construction
-	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndiceInPolygonsVector);
+	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice);
 
 	//Inline
 	inline void setRadius(float a_fRadius){ m_fRadius = a_fRadius; };
@@ -27,7 +27,6 @@ public:
 	inline int getPeopleInside(){ return m_iPeopleInside; };
 	inline string getInOsc(){ return m_sInOsc; };
 	inline string getOutOsc(){ return m_sOutOsc; };
-
 
 	//Load
 	void loadOscMessage(string m_aInOsc, string m_aOutOsc);
@@ -52,7 +51,6 @@ public:
 	bool removeLastPoint();
 	bool isPointInPolygon(ofVec2f a_oPersonPosition);
 	
-
 private:
 
 	vector<ofVec2f> m_vVectorPoints;
@@ -62,7 +60,6 @@ private:
 	bool m_bSelected;
 	ofVec2f m_oCentroid;
 	int m_iPeopleMovement;
-	int m_iIdInPolygonsVector;
 	string m_sInOsc;
 	string m_sOutOsc;
 

@@ -4,7 +4,7 @@
 
 #define MOVE_STEP 0.001
 
-AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndiceInPolygonsVector){
+AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople,int a_iIndice){
 	m_oPointsColor = ofColor::lightBlue;
 	m_oLinesColor = ofColor::white;
 	m_oCompletedColor = ofColor::paleVioletRed;
@@ -16,9 +16,8 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	setPeopleInside(a_vPeople);
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
-	m_iIdInPolygonsVector = a_iIndiceInPolygonsVector;
-	m_sInOsc = "/area" + ofToString(m_iIdInPolygonsVector) + "/personEntered";
-	m_sOutOsc = "/area" + ofToString(m_iIdInPolygonsVector) + "/personWillLeave";
+	m_sInOsc = "/area" + ofToString(a_iIndice) + "/personEntered";
+	m_sOutOsc = "/area" + ofToString(a_iIndice) + "/personWillLeave";
 
 	addPoint(a_oFirstPoint);
 }

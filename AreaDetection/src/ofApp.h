@@ -90,6 +90,7 @@ private:
 	string m_sAugmentaOscDiplay;
 
 	//Parameters AreaEditor
+	int m_iId;
 	bool m_bEditMode;
 	bool m_bSelectMode;
 	int m_iNumberOfAreaPolygons;

@@ -28,11 +28,11 @@ void ofApp::setup(){
 
     // Important : call those function AFTER init,
     // because init() will define all default values
+	m_iId = 0;
     setupGUI();
     setupOSC();
 	loadPreferences();
-	checkingForSameName();
-
+	
     /*
      
      Visuals will be drawn in a FBO for several reasons :
@@ -72,7 +72,6 @@ void ofApp::init(){
     m_sOscSenderHost = "127.0.0.1";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
     
-    // GUI default value (settings.xml)
 	
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
@@ -85,13 +84,13 @@ void ofApp::init(){
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
 	m_iRadiusClosePolyZone = 20;
 	m_oOldMousePosition = ofVec2f(0,0);
+
 	if (m_bEditMode){ m_sEditMode = "ON"; }
 	else{ m_sEditMode = "OFF"; }
 	if (m_bSelectMode){ m_sSelectionMode = "ON"; }
 	else{ m_sSelectionMode = "OFF"; }
 
     //--------------------------------------------
-
 	//In case of reset
 	if (m_iNumberOfAreaPolygons >= 1){
 		if (!m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].isCompleted()){
@@ -219,7 +218,8 @@ void ofApp::reset(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	
+	std::cout << " id = " << m_iId << std::endl;
+
 	if (m_oToggleDeleteLastPoly){
 		if (m_vAreaPolygonsVector.size() >= 1){
 			if (m_bSelectMode){
@@ -655,7 +655,8 @@ void ofApp::mousePressed(int x, int y, int button){
 
 			//Every AreaPolygons are completed
 			else{
-				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people, m_vAreaPolygonsVector.size()));
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people,m_iId));
+				m_iId++;
 				m_bEditMode = true;
 			}
 		}
@@ -750,6 +751,8 @@ void ofApp::savePreferences(){
 	preferences.addValue("LogToFile", m_bLogToFile);
 	preferences.addValue("FboWidth", m_iFboWidth);
 	preferences.addValue("FboHeight", m_iFboHeight);
+	preferences.addValue("Id", m_iId);
+
 
 	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
 		if (m_vAreaPolygonsVector[i].isCompleted()){
@@ -793,6 +796,7 @@ void ofApp::loadPreferences(){
 		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
 		m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
 		m_iFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
+		m_iId = preferences.getValue("Id", m_iId);
 
 		nbrPolygons = preferences.getNumTags("AreaPolygon");
 		ofLogVerbose("loadPreferences") << "load of " << nbrPolygons << " polygons";
@@ -810,7 +814,8 @@ void ofApp::loadPreferences(){
 				p.y = preferences.getValue("y", 0.0f);
 
 				if (j == 0){
-					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y),people,m_vAreaPolygonsVector.size()));
+					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y),people,0));
+
 				}
 				else{
 					m_vAreaPolygonsVector[i].addPoint(ofVec2f(p.x, p.y));
@@ -824,13 +829,17 @@ void ofApp::loadPreferences(){
 			m_vAreaPolygonsVector[i].complete();
 
 				preferences.pushTag("Osc");
-				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(i) + "/personEntered"),
-														preferences.getValue("Out", "/area" + ofToString(i) + "/personWillLeave"));
+				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(m_iId) + "/personEntered"),
+														preferences.getValue("Out", "/area" + ofToString(m_iId) + "/personWillLeave"));
 				preferences.popTag();
 
 			preferences.popTag();
 		}
 		preferences.popTag();
+
+		if (m_iId < m_vAreaPolygonsVector.size()){
+			ofLogError("Problem detected in the naming of the polygons..");
+		}
 	}
 	else{
 		ofLogNotice("Preferences file did not load..");
