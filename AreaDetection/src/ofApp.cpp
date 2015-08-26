@@ -25,6 +25,9 @@ void ofApp::setup(){
     // Init function is used to set default variables that can be changed.
     // For example, GUI variables or preferences.xml variables.
     init();
+	
+	//Augmenta
+	AugmentaReceiver.connect(m_iOscReceiverPort);
 
     // Important : call those function AFTER init,
     // because init() will define all default values
@@ -53,12 +56,21 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::init(){
-    
+   
+	//--------------------------------------------
+	//In case of reset
+	if (m_vAreaPolygonsVector.size() > 0){
+		if (!m_vAreaPolygonsVector[m_vAreaPolygonsVector.size() - 1].isCompleted()){
+			m_vAreaPolygonsVector.pop_back();
+		}
+	}
+	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
+		m_vAreaPolygonsVector[i].hasBeenSelected(false);
+	}
+
     //--------------------------------------------
     // Change default values here.
     //--------------------------------------------
-    
-	
 
     // App default values (preferences.xml)
     m_bHideInterface = false;
@@ -70,8 +82,6 @@ void ofApp::init(){
     m_sOscSenderHost = "127.0.0.1";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
 
-	//Augmenta
-	AugmentaReceiver.connect(m_iOscReceiverPort);
 	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
     
 	m_iIndicePolygonSelected = -1;
@@ -85,18 +95,6 @@ void ofApp::init(){
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
 	m_iRadiusClosePolyZone = RADIUS_CLOSING_ZONE;
 	m_oOldMousePosition = ofVec2f(0,0);
-
-    //--------------------------------------------
-	//In case of reset
-	if (m_iNumberOfAreaPolygons >= 1){
-		if (!m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].isCompleted()){
-			m_vAreaPolygonsVector.pop_back();
-		}
-	}
-	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
-		m_vAreaPolygonsVector[i].hasBeenSelected(false);
-	}
-
 
 }
 
@@ -284,7 +282,7 @@ void ofApp::drawAreaPolygons(){
 void ofApp::drawAugmentaPeople(){
 	ofPoint centroid;
 	ofPushStyle();
-	ofSetColor(ofColor(255,0,0,155));
+	ofSetColor(ofColor(243,80,64));
 	for (int i = 0; i<people.size(); i++){
 		centroid = people[i]->centroid;
 		ofCircle(centroid.x * m_iFboWidth, centroid.y * m_iFboHeight, 10);
