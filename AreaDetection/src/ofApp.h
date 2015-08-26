@@ -52,6 +52,8 @@ private:
     void drawVisuals();
 	void drawAreaPolygons();
 	void drawAugmentaPeople();
+	void fboSizeHaveChanged(int a_iNewWidth, int a_iNewHeight);
+
     // Draw the interface of your app : visuals, GUI, debug content...
     void drawInterface();
     // Minimalist interface with black screen and some information
@@ -88,7 +90,7 @@ private:
 	string m_sAugmentaOscDiplay;
 
 	//Parameters AreaEditor
-	int m_iNextFeeId;
+	int m_iNextFreeId;
 	bool m_bEditMode;
 	bool m_bSelectMode;
 	int m_iNumberOfAreaPolygons;

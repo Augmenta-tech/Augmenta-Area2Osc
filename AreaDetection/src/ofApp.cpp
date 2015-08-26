@@ -31,13 +31,13 @@ void ofApp::setup(){
 
     // Important : call those function AFTER init,
     // because init() will define all default values
-	m_iNextFeeId = 0;
+	m_iNextFreeId = 0;
     setupGUI();
     setupOSC();
 	loadPreferences();
-	
+
+
     /*
-     
      Visuals will be drawn in a FBO for several reasons :
      - We need a texture reference to send our visuals with Syphon or Spout outside the app
      - You can draw visuals larger than your app or screen resolution
@@ -79,7 +79,7 @@ void ofApp::init(){
     m_iFboHeight = ofGetHeight();
     m_iOscReceiverPort = 12002;
     m_iOscSenderPort = 12000;
-    m_sOscSenderHost = "127.0.0.1";
+    m_sOscSenderHost = "192.168.1.13";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
 
 	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
@@ -191,7 +191,6 @@ void ofApp::setupOSC(){
 
 //--------------------------------------------------------------
 void ofApp::reset(){
-    
     init();
 }
 
@@ -201,8 +200,9 @@ void ofApp::reset(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	//std::cout << "id = " << m_iNextFeeId << std::endl;
-	
+	ofSetWindowShape(m_iFboWidth,m_iFboHeight);
+
+
 	if (m_oToggleDeleteLastPoly){
 		if (m_vAreaPolygonsVector.size() >= 1){
 			if (m_bSelectMode){
@@ -226,7 +226,7 @@ void ofApp::update(){
 		m_bEditMode = false;
 		ofLogVerbose("update", "All AreaPolygons are now deleted ");
 		m_oToggleClearAll = false;
-		m_iNextFeeId = 0;
+		m_iNextFreeId = 0;
 	}
 
 	//Update Augmenta
@@ -244,6 +244,15 @@ void ofApp::update(){
 	
 	//Osc
 	sendOSC();
+}
+
+//--------------------------------------------------------------
+void ofApp::fboSizeHaveChanged(int a_iNewWidth, int a_iNewHeight){
+	if (m_iFboWidth != a_iNewWidth || m_iFboHeight != a_iNewHeight){
+		m_iFboWidth = a_iNewWidth;
+		m_iFboHeight = a_iNewHeight;
+		m_fbo.allocate(m_iFboWidth, m_iFboHeight, GL_RGBA);
+	}
 }
 
 //--------------------------------------------------------------
@@ -282,7 +291,7 @@ void ofApp::drawAreaPolygons(){
 void ofApp::drawAugmentaPeople(){
 	ofPoint centroid;
 	ofPushStyle();
-	ofSetColor(ofColor(243,80,64));
+	ofSetColor(ofColor(93,224,133));
 	for (int i = 0; i<people.size(); i++){
 		centroid = people[i]->centroid;
 		ofCircle(centroid.x * m_iFboWidth, centroid.y * m_iFboHeight, 10);
@@ -293,7 +302,7 @@ void ofApp::drawAugmentaPeople(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 	m_fbo.begin();
-	ofClear(ofColor::black); // Clear FBO content to black
+	ofClear(ofColor(52,53,46)); // Clear FBO content to black
 	ofEnableDepthTest();
 	drawAugmentaPeople();
 	drawAreaPolygons();
@@ -390,6 +399,14 @@ void ofApp::keyPressed(int key){
 
     switch(key){
             
+		//test resize
+	case 'a':
+		fboSizeHaveChanged(800,600);
+	break;
+	case 'q':
+		fboSizeHaveChanged(1024,768);
+		break;
+
         // Modifier keys
         case OF_KEY_SHIFT:
             m_iModifierKey = OF_KEY_SHIFT;
@@ -490,7 +507,7 @@ void ofApp::keyPressed(int key){
 			m_vAreaPolygonsVector.clear();
 			m_bEditMode = false;
 			ofLogVerbose("keyPressed", "All AreaPolygons are now deleted ");
-			m_iNextFeeId = 0;
+			m_iNextFreeId = 0;
 			break;
 
 	//Move the selected polygon
@@ -611,8 +628,8 @@ void ofApp::mousePressed(int x, int y, int button){
 
 			//Every AreaPolygons are completed
 			else{
-				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people,m_iNextFeeId));
-				m_iNextFeeId++;
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people,m_iNextFreeId));
+				m_iNextFreeId++;
 				m_bEditMode = true;
 			}
 		}
@@ -707,7 +724,7 @@ void ofApp::savePreferences(){
 	preferences.addValue("LogToFile", m_bLogToFile);
 	preferences.addValue("FboWidth", m_iFboWidth);
 	preferences.addValue("FboHeight", m_iFboHeight);
-	preferences.addValue("NextFeeId", m_iNextFeeId);
+	preferences.addValue("NextFreeId", m_iNextFreeId);
 
 
 	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
@@ -726,8 +743,8 @@ void ofApp::savePreferences(){
 
 			preferences.addTag("Osc");
 			preferences.pushTag("Osc");
-			preferences.addValue("In", m_vAreaPolygonsVector[i].getInOsc());
-			preferences.addValue("Out", m_vAreaPolygonsVector[i].getOutOsc());
+				preferences.addValue("In", m_vAreaPolygonsVector[i].getInOscAll());
+				preferences.addValue("Out", m_vAreaPolygonsVector[i].getOutOscAll());
 			preferences.popTag();
 			preferences.popTag();
 		}
@@ -752,7 +769,7 @@ void ofApp::loadPreferences(){
 		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
 		m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
 		m_iFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
-		m_iNextFeeId = preferences.getValue("NextFeeId", m_iNextFeeId);
+		m_iNextFreeId = preferences.getValue("NextFreeId", m_iNextFreeId);
 
 		nbrPolygons = preferences.getNumTags("AreaPolygon");
 		ofLogVerbose("loadPreferences") << "load of " << nbrPolygons << " polygons";
@@ -785,15 +802,15 @@ void ofApp::loadPreferences(){
 			m_vAreaPolygonsVector[i].complete();
 
 				preferences.pushTag("Osc");
-				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(m_iNextFeeId) + "/personEntered"),
-														preferences.getValue("Out", "/area" + ofToString(m_iNextFeeId) + "/personWillLeave"));
+				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(m_iNextFreeId) + "/personEntered"),
+														preferences.getValue("Out", "/area" + ofToString(m_iNextFreeId) + "/personWillLeave"));
 				preferences.popTag();
 
 			preferences.popTag();
 		}
 		preferences.popTag();
 
-		if (m_iNextFeeId < m_vAreaPolygonsVector.size()){
+		if (m_iNextFreeId < m_vAreaPolygonsVector.size()){
 			ofLogError("Problem detected in the naming of the polygons..");
 		}
 	}
@@ -815,19 +832,21 @@ ofxOscMessage m;
 			if (m_vAreaPolygonsVector[i].isCompleted()){
 				if (m_vAreaPolygonsVector[i].getPeopleMovement() > 0){		
 					// Create a first dataset
-					m.setAddress(m_vAreaPolygonsVector[i].getInOsc());
+					m = m_vAreaPolygonsVector[i].getInOscMessage();
+					m.setAddress(m_vAreaPolygonsVector[i].getInOscAdress());
 					for (int j = 0; j < m_vAreaPolygonsVector[i].getPeopleMovement(); j++){
 						m_oscSender.sendMessage(m); // Send it
-						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOsc();
+						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOscAdress();
 					}
 					m.clear(); // Clear message to be able to reuse it
 				}
 				if (m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
 					// Create a second dataset
-					m.setAddress(m_vAreaPolygonsVector[i].getOutOsc());
+					m = m_vAreaPolygonsVector[i].getOutOscMessage();
+					m.setAddress(m_vAreaPolygonsVector[i].getOutOscAdress());
 					for (int j = 0; j < abs(m_vAreaPolygonsVector[i].getPeopleMovement()); j++){
 						m_oscSender.sendMessage(m); // Send it
-						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOsc();
+						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOscAdress();
 					}
 					m.clear(); // Clear message to be able to reuse it
 				}
@@ -841,18 +860,20 @@ ofxOscMessage m;
 				if (m_vAreaPolygonsVector[i].getPeopleInside() == 0 
 					&& m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
 					//X->0
-					m.setAddress(m_vAreaPolygonsVector[i].getOutOsc());
+					m = m_vAreaPolygonsVector[i].getOutOscMessage();
+					m.setAddress(m_vAreaPolygonsVector[i].getOutOscAdress());
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
-					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOsc();
+					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOscAdress();
 				}
 				if (m_vAreaPolygonsVector[i].getPeopleInside() != 0 
 					&& m_vAreaPolygonsVector[i].getPeopleInside() == m_vAreaPolygonsVector[i].getPeopleMovement()){
 					//0->X
-					m.setAddress(m_vAreaPolygonsVector[i].getInOsc());
+					m = m_vAreaPolygonsVector[i].getInOscMessage();
+					m.setAddress(m_vAreaPolygonsVector[i].getInOscAdress());
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
-					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOsc();
+					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOscAdress();
 				}
 			}
 		}
