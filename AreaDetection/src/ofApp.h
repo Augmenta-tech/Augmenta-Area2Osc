@@ -74,6 +74,7 @@ private:
     int m_iFboHeight;
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
+    void deleteLastPolygon();
 
     // OSC
     ofxOscReceiver m_oscReceiver;

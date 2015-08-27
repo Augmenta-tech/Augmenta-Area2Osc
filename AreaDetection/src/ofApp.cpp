@@ -390,6 +390,20 @@ void ofApp::drawHiddenInterface(){
     ofPopStyle();
 }
 
+void ofApp::deleteLastPolygon() {
+    
+    if (m_vAreaPolygonsVector.size() >= 1){
+        if (m_bSelectMode){
+            m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+            m_iIndicePolygonSelected = -1;
+            m_bSelectMode = false;
+        }
+        m_bEditMode = false;
+        m_vAreaPolygonsVector.pop_back();
+        ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
+    }
+}
+
 //_______________________________________________________________
 //_____________________________INPUT_____________________________
 //_______________________________________________________________
@@ -397,6 +411,7 @@ void ofApp::drawHiddenInterface(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
 
+    cout << "key : " << key << endl;
     switch(key){
             
 		//test resize
@@ -442,6 +457,14 @@ void ofApp::keyPressed(int key){
 				ofLogVerbose("keyPressed", "Settings have been successfully saved ");
             }
             break;
+        
+        case 'z':
+        case 'Z':
+            // CTRL+Z or CMD+Z
+            if(m_iModifierKey == OF_KEY_CONTROL || m_iModifierKey == OF_KEY_COMMAND){
+                deleteLastPolygon();
+            }
+            break;
             
         case 'l':
         case 'L':
@@ -453,7 +476,6 @@ void ofApp::keyPressed(int key){
             }
             break;
             
-        #ifdef WIN32         
         case 19:
             // CTRL+S or CMD+S
             saveSettings();
@@ -469,19 +491,8 @@ void ofApp::keyPressed(int key){
 			//CTRL + Z
 			//Delete Last AreaPolygon
 		case 26:
-			if (m_vAreaPolygonsVector.size() >= 1){
-				if (m_bSelectMode){
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
-					m_iIndicePolygonSelected = -1;
-					m_bSelectMode = false;
-				}
-				m_bEditMode = false;
-				m_vAreaPolygonsVector.pop_back();
-				ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
-			}
+            deleteLastPolygon();
 			break;
-            
-        #endif
 
 		//Delete the selected poly
 		case OF_KEY_DEL :			
@@ -510,7 +521,7 @@ void ofApp::keyPressed(int key){
 			m_iNextFreeId = 0;
 			break;
 
-	//Move the selected polygon
+        //Move the selected polygon
 		if (m_bSelectMode){
 			case OF_KEY_LEFT:
 				if (m_iIndicePolygonSelected != -1){
