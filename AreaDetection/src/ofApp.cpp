@@ -1,7 +1,7 @@
 #include "ofApp.h"
 
 #define APP_NAME "Augmenta area2OSC"
-#define RADIUS_CLOSING_ZONE 15
+
 
 //_______________________________________________________________
 //_____________________________SETUP_____________________________
@@ -93,7 +93,7 @@ void ofApp::init(){
 	m_bEditMode = false;
 	m_bSelectMode = false;
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
-	m_iRadiusClosePolyZone = RADIUS_CLOSING_ZONE;
+	m_iRadiusClosePolyZone = 15;
 	m_oOldMousePosition = ofVec2f(0,0);
 
 }

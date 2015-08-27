@@ -3,23 +3,19 @@
 #include <locale>
 
 
-#define MOVE_STEP 0.001
-#define LINES_WIDTH 3
-#define CIRCLE_RADIUS 5
-
-
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople,int a_iIndice){
 	m_oPointsColor = ofColor(246,128,248,200);
 	m_oLinesColor = ofColor(237,232,229,200);
 	m_oCompletedColor = ofColor(255, 166, 70,200);
 	m_oLinesCompletedColor = ofColor(243,80,64,200);
 	m_oNotEmptyColor = ofColor(243,80,64,200);
-	m_iLinesWidth = LINES_WIDTH;
-	m_fRadius = CIRCLE_RADIUS;
+	m_iLinesWidth = 3;
+	m_fRadius = 5;
 	m_bIsFinished = false;
 	setPeopleInside(a_vPeople);
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
+	m_fMoveIncremente = 0.001;
 	m_vInOsc.push_back("/area" + ofToString(a_iIndice) + "/personEntered");
 	m_vOutOsc.push_back("/area" + ofToString(a_iIndice) + "/personWillLeave");
 
@@ -278,13 +274,13 @@ bool AreaPolygon::removeLastPoint(){
 void AreaPolygon::moveDown(){
 	bool isMovePossible = true;
 	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].y + MOVE_STEP > 1.0){
+		if (m_vVectorPoints[i].y + m_fMoveIncremente > 1.0){
 			isMovePossible = false;
 		}
 	}
 	if (isMovePossible){
 		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].y = m_vVectorPoints[i].y + MOVE_STEP;
+			m_vVectorPoints[i].y = m_vVectorPoints[i].y + m_fMoveIncremente;
 		}
 	}
 }
@@ -293,13 +289,13 @@ void AreaPolygon::moveDown(){
 void AreaPolygon::moveLeft(){
 	bool isMovePossible= true;
 	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].x - MOVE_STEP < 0){
+		if (m_vVectorPoints[i].x - m_fMoveIncremente < 0){
 			isMovePossible = false;
 		}
 	}
 	if (isMovePossible){
 		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].x = m_vVectorPoints[i].x - MOVE_STEP;
+			m_vVectorPoints[i].x = m_vVectorPoints[i].x - m_fMoveIncremente;
 		}
 	}
 }
@@ -308,13 +304,13 @@ void AreaPolygon::moveLeft(){
 void AreaPolygon::moveRight(){
 	bool isMovePossible = true;
 	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].x + MOVE_STEP > 1.0){
+		if (m_vVectorPoints[i].x + m_fMoveIncremente > 1.0){
 			isMovePossible = false;
 		}
 	}
 	if (isMovePossible){
 		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].x = m_vVectorPoints[i].x + MOVE_STEP;
+			m_vVectorPoints[i].x = m_vVectorPoints[i].x + m_fMoveIncremente;
 		}
 	}
 }
@@ -323,13 +319,13 @@ void AreaPolygon::moveRight(){
 void AreaPolygon::moveUp(){
 	bool isMovePossible = true;
 	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].y - MOVE_STEP < 0){
+		if (m_vVectorPoints[i].y - m_fMoveIncremente < 0){
 			isMovePossible = false;
 		}
 	}
 	if (isMovePossible){
 		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].y = m_vVectorPoints[i].y - MOVE_STEP;
+			m_vVectorPoints[i].y = m_vVectorPoints[i].y - m_fMoveIncremente;
 		}
 	}
 }

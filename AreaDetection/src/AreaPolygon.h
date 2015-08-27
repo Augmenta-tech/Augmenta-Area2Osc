@@ -67,6 +67,7 @@ private:
 	vector<string> m_vOutOsc;
 	ofxOscMessage m_oOscMessageIn;
 	ofxOscMessage m_oOscMessageOut;
+	float m_fMoveIncremente;
 
 	//Design
 	ofColor m_oPointsColor;

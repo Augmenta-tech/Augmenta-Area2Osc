@@ -100,6 +100,8 @@ private:
 	int m_iIndicePolygonSelected;
 	vector<AreaPolygon> m_vAreaPolygonsVector;
 	ofVec2f m_oOldMousePosition;
+	int m_iRadiusClosePolyZone;
+	
 
     // Gui panel
     ofxPanel m_gui;
@@ -118,7 +120,6 @@ private:
 
     // Gui parameters inside m_guiSecondGroup
     ofxToggle m_bRedondanteMode;
-	int m_iRadiusClosePolyZone;
 
 	// Gui parameters inside m_ThirdGroup
 	ofxToggle m_oToggleClearAll;
