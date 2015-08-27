@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-               BuildableName = "mySketch.app"
-               BlueprintName = "mySketch"
-               ReferencedContainer = "container:mySketch.xcodeproj">
+               BuildableName = "augmenta-area2osc.app"
+               BlueprintName = "augmenta-area2osc"
+               ReferencedContainer = "container:augmenta-area2osc.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "mySketch.app"
-            BlueprintName = "mySketch"
-            ReferencedContainer = "container:mySketch.xcodeproj">
+            BuildableName = "augmenta-area2osc.app"
+            BlueprintName = "augmenta-area2osc"
+            ReferencedContainer = "container:augmenta-area2osc.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </TestAction>
@@ -53,9 +53,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "mySketch.app"
-            BlueprintName = "mySketch"
-            ReferencedContainer = "container:mySketch.xcodeproj">
+            BuildableName = "augmenta-area2osc.app"
+            BlueprintName = "augmenta-area2osc"
+            ReferencedContainer = "container:augmenta-area2osc.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "mySketch.app"
-            BlueprintName = "mySketch"
-            ReferencedContainer = "container:mySketch.xcodeproj">
+            BuildableName = "augmenta-area2osc.app"
+            BlueprintName = "augmenta-area2osc"
+            ReferencedContainer = "container:augmenta-area2osc.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
