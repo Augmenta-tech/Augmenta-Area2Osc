@@ -45,71 +45,85 @@ string AreaPolygon::getOutOscAll(){
 }
 
 //--------------------------------------------------------------
-bool AreaPolygon::doesStringContainNumber(string a_sString){
-	for (int i = 0; i < 10; i++){
-		if (a_sString.find(ofToString(i)) != string::npos){
-			return true;
+bool AreaPolygon::doesStringContainOnlyNumber(string a_sString){
+		std::locale loc;
+	for (std::string::iterator it = a_sString.begin(); it != a_sString.end(); ++it)
+	{
+		if (!(!std::isalpha(*it, loc) && std::isalnum(*it, loc))){
+			return false;
 		}
 	}
-	return false;;
+	return true;
 }
 
 //--------------------------------------------------------------
-bool AreaPolygon::isAString(string s){
+bool AreaPolygon::containOnlyAlpha(string a_sString){
 	std::locale loc;
-	for (std::string::iterator it = s.begin(); it != s.end(); ++it)
+	for (std::string::iterator it = a_sString.begin(); it != a_sString.end(); ++it)
 	{
-		if (std::isalpha(*it, loc)){
-			return true;
+		if (!std::isalpha(*it, loc)){
+			return false;
 		}	
 	}
-return false;
+return true;
+}
+
+//--------------------------------------------------------------
+bool AreaPolygon::doesStringContainOnlyNumberAndOnePoint(string a_sString){
+	std::locale loc;
+	for (std::string::iterator it = a_sString.begin(); it != a_sString.end(); ++it)
+	{
+		if (!((!std::isalpha(*it, loc) && std::isalnum(*it,loc)) || *it == '.')){
+			return false;
+		}
+	}
+	std::count(a_sString.begin(), a_sString.end(), '.') == 1;
+	return true;
 }
 
 //--------------------------------------------------------------
 void AreaPolygon::loadOscMessage(string m_aInOsc, string m_aOutOsc){
 	m_vInOsc = ofSplitString(m_aInOsc, " ");
 	for (int i = 1; i < m_vInOsc.size(); i++){
-		if (isAString(m_vInOsc[i])){
+		if (containOnlyAlpha(m_vInOsc[i])){
 			// is a string 
 			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
 		}
-		else if (m_vInOsc[i].find(".") != string::npos){
+		else if (doesStringContainOnlyNumber(m_vInOsc[i])){
+			//is a int 
+			m_oOscMessageIn.addIntArg(ofToInt(m_vInOsc[i]));
+			}
+		else if (doesStringContainOnlyNumberAndOnePoint(m_vInOsc[i])){
 			//is a float
 			m_oOscMessageIn.addFloatArg(ofToFloat(m_vInOsc[i]));
 		}
-		else if (doesStringContainNumber(m_vInOsc[i])){
-			//is a int 
-			m_oOscMessageIn.addIntArg(ofToInt(m_vInOsc[i]));
-		}
 		else{
 			//Unknow type send as string
+			ofLogError("m_oOscMessageIn loaded an unknow variable as string");
 			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
 		}
 	}
 
 	m_vOutOsc = ofSplitString(m_aOutOsc, " ");
 	for (int i = 1; i < m_vOutOsc.size(); i++){
-		if (isAString(m_vOutOsc[i])){
+		if (containOnlyAlpha(m_vOutOsc[i])){
 			// is a string 
 			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
 		}
-		else if (m_vOutOsc[i].find(".") != string::npos){
-			//is a float
-			m_oOscMessageOut.addFloatArg(ofToFloat(m_vOutOsc[i]));
-		}
-		else if (doesStringContainNumber(m_vOutOsc[i])){
+		else if (doesStringContainOnlyNumber(m_vOutOsc[i])){
 			//is a int 
 			m_oOscMessageOut.addIntArg(ofToInt(m_vOutOsc[i]));
 		}
+		else if (doesStringContainOnlyNumberAndOnePoint(m_vOutOsc[i])){
+			//is a float
+			m_oOscMessageOut.addFloatArg(ofToFloat(m_vOutOsc[i]));
+		}
 		else{
 			//Unknow type send as string
+			ofLogError("m_oOscMessageOut loaded an unknow variable as string");
 			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
 		}
 	}
-
-	//m_sInOsc = m_aInOsc;
-	//m_sOutOsc = m_aOutOsc;
 }
 
 //--------------------------------------------------------------

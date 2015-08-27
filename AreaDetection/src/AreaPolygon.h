@@ -50,12 +50,10 @@ public:
 	void addPoint(ofVec2f a_oPoint);
 	bool removeLastPoint();
 	bool isPointInPolygon(ofVec2f a_oPersonPosition);
-	bool doesStringContainNumber(string a_sString);
-	bool isAString(string s);
-		
+	bool doesStringContainOnlyNumber(string a_sString);
+	bool containOnlyAlpha(string s);
+	bool doesStringContainOnlyNumberAndOnePoint(string s);
 
-
-	
 private:
 
 	vector<ofVec2f> m_vVectorPoints;
