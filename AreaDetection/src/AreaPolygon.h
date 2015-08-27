@@ -6,13 +6,28 @@
 #include "ofGraphics.h"
 #include "ofxAugmenta.h"
 
+class LeavingPerson{
 
+public:
+	LeavingPerson(unsigned long long a_ullTime,int a_iId){
+		m_ulLeavingTime = a_ullTime;
+		m_iId = a_iId;
+	}
+
+	inline unsigned long long getLeavingTime(){ return m_ulLeavingTime; };
+	inline int getId(){ return m_iId; };
+
+private:
+	unsigned long long m_ulLeavingTime;
+	int m_iId;
+
+};
 
 class AreaPolygon {
 public:
 
 	//Construction
-	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice);
+	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce);
 
 	//Inline
 	inline bool isCompleted(){ return m_bIsFinished; };
@@ -43,8 +58,8 @@ public:
 	void moveDown();
 	void move(float a_iX, float a_iY);
 
-	void update(vector<Augmenta::Person*> a_vPeople);
-	void setPeopleInside(vector<Augmenta::Person*> a_vPeople);
+	void update(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime);
+	void setPeopleInside(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime);
 	void setPolygonCentroid();
 	void complete();
 	void addPoint(ofVec2f a_oPoint);
@@ -68,6 +83,8 @@ private:
 	ofxOscMessage m_oOscMessageIn;
 	ofxOscMessage m_oOscMessageOut;
 	float m_fMoveIncremente;
+	vector<LeavingPerson> m_vWaitingToLeave;
+	vector<int> m_vIdPeopleInside;
 
 	//Design
 	ofColor m_oPointsColor;

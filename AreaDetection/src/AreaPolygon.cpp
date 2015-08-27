@@ -1,9 +1,10 @@
 #include "AreaPolygon.h"
 #include "ofUtils.h"
+#include <algorithm>
 #include <locale>
 
 
-AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople,int a_iIndice){
+AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce){
 	m_oPointsColor = ofColor(246,128,248,200);
 	m_oLinesColor = ofColor(237,232,229,200);
 	m_oCompletedColor = ofColor(255, 166, 70,200);
@@ -12,7 +13,7 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	m_iLinesWidth = 3;
 	m_fRadius = 5;
 	m_bIsFinished = false;
-	setPeopleInside(a_vPeople);
+	setPeopleInside(a_vPeople, m_iAntiBounce);
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
 	m_fMoveIncremente = 0.001;
@@ -73,7 +74,9 @@ bool AreaPolygon::doesStringContainOnlyNumberAndOnePoint(string a_sString){
 			return false;
 		}
 	}
-	std::count(a_sString.begin(), a_sString.end(), '.') == 1;
+	if (std::count(a_sString.begin(), a_sString.end(), '.') != 1){
+		return false;
+	}
 	return true;
 }
 
@@ -212,16 +215,56 @@ void AreaPolygon::draw(int width,int height){
 	drawPeopleInside(width,height);
 }
 
+
 //--------------------------------------------------------------
-void AreaPolygon::setPeopleInside(vector<Augmenta::Person*> people){
+void AreaPolygon::setPeopleInside(vector<Augmenta::Person*> people, int a_iBounceIntervalTime){
 	ofPoint centroid;
 	unsigned long long currentTime = ofGetElapsedTimeMillis();
+	vector<int> peopleInsideRightNow;
 	m_iPeopleInside = 0;
+
+	//Getting id of the persons whose inside
 	for (int i = 0; i < people.size(); i++){
 		if (isPointInPolygon(people[i]->centroid)){
-			m_iPeopleInside++;
+			peopleInsideRightNow.push_back(people[i]->pid);
 		}
 	}
+
+	//Add WaitingToLeave
+	for (int j = 0; j < m_vIdPeopleInside.size(); j++){
+		if (std::find(peopleInsideRightNow.begin(), peopleInsideRightNow.end(), m_vIdPeopleInside[j]) == peopleInsideRightNow.end()){
+			m_vWaitingToLeave.push_back(LeavingPerson(currentTime, m_vIdPeopleInside[j]));
+		}
+	}
+
+	//Suppression of doublons in waitingToleave
+	for (int j = 0; j < peopleInsideRightNow.size(); ++j){
+		for (int i = 0; i < m_vWaitingToLeave.size(); ++i){
+			if (m_vWaitingToLeave[i].getId() == peopleInsideRightNow[j]){
+				m_vWaitingToLeave.erase(m_vWaitingToLeave.begin() + i);
+				i--;
+			}
+		}
+	}
+
+	//Update of the people in waiting to leave list
+	for (int i = 0; i < m_vWaitingToLeave.size(); ++i){
+		if ((currentTime - m_vWaitingToLeave[i].getLeavingTime()) > a_iBounceIntervalTime){
+			m_vWaitingToLeave.erase(m_vWaitingToLeave.begin() + i);
+		}
+	}
+
+	//m_iPeopleInside = personns inside right now + people on the waiting to leave list 
+	m_iPeopleInside = m_vWaitingToLeave.size() + peopleInsideRightNow.size();
+
+	m_vIdPeopleInside.clear();
+	m_vIdPeopleInside.swap(peopleInsideRightNow);
+
+	/*	
+	std::cout << " people inside = " << m_iPeopleInside << std::endl;
+	std::cout << "m_vIdPeopleInside size = " << m_vIdPeopleInside.size() << std::endl;
+	std::cout << "m_vWaitingToLeave size = " << m_vWaitingToLeave.size() << std::endl;
+	*/
 }
 
 //--------------------------------------------------------------
@@ -357,10 +400,11 @@ void AreaPolygon::move(float a_iX, float a_iY){
 }
 
 //--------------------------------------------------------------
-void AreaPolygon::update(vector<Augmenta::Person*> a_vPeople){
+void AreaPolygon::update(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime){
 
-setPeopleInside(a_vPeople);
+setPeopleInside(a_vPeople, a_iBounceIntervalTime);
 m_iPeopleMovement= m_iPeopleInside - m_iOldPeopleInside;
 m_iOldPeopleInside = m_iPeopleInside;
 
 }
+

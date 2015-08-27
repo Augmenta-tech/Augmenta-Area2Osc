@@ -127,7 +127,7 @@ void ofApp::setupGUI(){
 	string sSecondGroupName = "OSC";
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
-	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce",100,1,400)->getParameter());
+	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce",100,1,5000)->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
 
@@ -204,7 +204,6 @@ void ofApp::reset(){
 void ofApp::update(){
 	ofSetWindowShape(m_iFboWidth,m_iFboHeight);
 
-
 	if (m_oToggleDeleteLastPoly){
 		deleteLastPolygon();
 		m_oToggleDeleteLastPoly = false;
@@ -218,14 +217,13 @@ void ofApp::update(){
 	m_oPeople = AugmentaReceiver.getPeople();
 	m_oActualScene = AugmentaReceiver.getScene();
 
-
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
 
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
 		if (m_vAreaPolygonsVector[i].isCompleted()){
-			m_vAreaPolygonsVector[i].update(m_oPeople);
+			m_vAreaPolygonsVector[i].update(m_oPeople, m_iAntiBounce);
 		}
 	}
 	
@@ -296,7 +294,6 @@ void ofApp::draw(){
 	drawAugmentaPeople();
 	drawAreaPolygons();
 	
-
 	ofDisableDepthTest();
 	m_fbo.end();
 
@@ -625,7 +622,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 			//Every AreaPolygons are completed
 			else{
-				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), m_oPeople, m_iNextFreeId));
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), m_oPeople, m_iNextFreeId,m_iAntiBounce));
 				m_iNextFreeId++;
 				m_bEditMode = true;
 			}
@@ -784,7 +781,7 @@ void ofApp::loadPreferences(){
 				p.y = preferences.getValue("y", 0.0f);
 
 				if (j == 0){
-					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y), m_oPeople, 0));
+					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y), m_oPeople, 0, m_iAntiBounce));
 
 				}
 				else{
