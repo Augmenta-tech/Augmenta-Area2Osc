@@ -2,6 +2,7 @@
 #define OF_APP_H
 
 #include "AreaPolygon.h"
+#include "AugmentaScene.h"
 
 #include "ofMain.h"
 #include "ofxGui.h"
@@ -86,8 +87,9 @@ private:
 
 	//Augmenta
 	Augmenta::Receiver AugmentaReceiver;
-	vector<Augmenta::Person*> people;
+	vector<Augmenta::Person*> m_oPeople;
 	string m_sAugmentaOscDiplay;
+	Augmenta::Scene* m_oActualScene;
 
 	//Parameters AreaEditor
 	int m_iNextFreeId;

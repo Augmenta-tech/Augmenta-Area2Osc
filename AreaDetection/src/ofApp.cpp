@@ -230,7 +230,9 @@ void ofApp::update(){
 	}
 
 	//Update Augmenta
-	people = AugmentaReceiver.getPeople();
+	m_oPeople = AugmentaReceiver.getPeople();
+	m_oActualScene = AugmentaReceiver.getScene();
+
 
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
@@ -238,7 +240,7 @@ void ofApp::update(){
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
 		if (m_vAreaPolygonsVector[i].isCompleted()){
-			m_vAreaPolygonsVector[i].update(people);
+			m_vAreaPolygonsVector[i].update(m_oPeople);
 		}
 	}
 	
@@ -291,16 +293,18 @@ void ofApp::drawAreaPolygons(){
 void ofApp::drawAugmentaPeople(){
 	ofPoint centroid;
 	ofPushStyle();
-	ofSetColor(ofColor(93,224,133));
-	for (int i = 0; i<people.size(); i++){
-		centroid = people[i]->centroid;
+	ofSetColor(ofColor(93,224,133,200));
+	for (int i = 0; i<m_oPeople.size(); i++){
+		centroid = m_oPeople[i]->centroid;
 		ofCircle(centroid.x * m_iFboWidth, centroid.y * m_iFboHeight, 10);
 	}
 	ofPopStyle();
 }
 
 //--------------------------------------------------------------
-void ofApp::draw(){
+void ofApp::draw(){	
+	fboSizeHaveChanged(m_oActualScene->width, m_oActualScene->height);
+
 	m_fbo.begin();
 	ofClear(ofColor(52,53,46)); // Clear FBO content to black
 	ofEnableDepthTest();
@@ -327,7 +331,7 @@ void ofApp::sendVisuals(){
     
     #ifdef WIN32
     // On Windows, use Spout
-    m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
+   // m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
     #elif MAC_OS_X_VERSION_10_6
     // On Mac OSX, use Syphon
     m_syphonServer.publishTexture(&m_fbo.getTextureReference());
@@ -628,7 +632,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 			//Every AreaPolygons are completed
 			else{
-				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), people,m_iNextFreeId));
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), m_oPeople, m_iNextFreeId));
 				m_iNextFreeId++;
 				m_bEditMode = true;
 			}
@@ -787,7 +791,7 @@ void ofApp::loadPreferences(){
 				p.y = preferences.getValue("y", 0.0f);
 
 				if (j == 0){
-					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y),people,0));
+					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y), m_oPeople, 0));
 
 				}
 				else{
