@@ -410,8 +410,7 @@ void ofApp::deleteLastPolygon() {
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
-    cout << "key : " << key << endl;
+ 
     switch(key){
             
 		//test resize
