@@ -215,6 +215,7 @@ void AreaPolygon::draw(int width,int height){
 //--------------------------------------------------------------
 void AreaPolygon::setPeopleInside(vector<Augmenta::Person*> people){
 	ofPoint centroid;
+	unsigned long long currentTime = ofGetElapsedTimeMillis();
 	m_iPeopleInside = 0;
 	for (int i = 0; i < people.size(); i++){
 		if (isPointInPolygon(people[i]->centroid)){

@@ -76,6 +76,7 @@ private:
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
     void deleteLastPolygon();
+	void deleteAllPolygon();
 
     // OSC
     ofxOscReceiver m_oscReceiver;
@@ -101,8 +102,9 @@ private:
 	vector<AreaPolygon> m_vAreaPolygonsVector;
 	ofVec2f m_oOldMousePosition;
 	int m_iRadiusClosePolyZone;
+	float m_fPointRadius;
+	int m_iLinesWidthSlider;
 	
-
     // Gui panel
     ofxPanel m_gui;
 
@@ -113,13 +115,10 @@ private:
     
 	// Parameters group to organize your parameters
 	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup;
-    
-	// Gui parameters inside m_guiFirstGroup
-    ofxFloatSlider m_fPointRadius;
-	ofxIntSlider m_iLinesWidthSlider;
 
     // Gui parameters inside m_guiSecondGroup
     ofxToggle m_bRedondanteMode;
+	ofxIntSlider m_iAntiBounce;
 
 	// Gui parameters inside m_ThirdGroup
 	ofxToggle m_oToggleClearAll;

@@ -95,6 +95,7 @@ void ofApp::init(){
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
 	m_iRadiusClosePolyZone = 15;
 	m_oOldMousePosition = ofVec2f(0,0);
+	m_iAntiBounce = 100;
 
 }
 
@@ -126,6 +127,7 @@ void ofApp::setupGUI(){
 	string sSecondGroupName = "OSC";
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
+	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce",100,1,400)->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
 
@@ -204,29 +206,12 @@ void ofApp::update(){
 
 
 	if (m_oToggleDeleteLastPoly){
-		if (m_vAreaPolygonsVector.size() >= 1){
-			if (m_bSelectMode){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
-				m_iIndicePolygonSelected = -1;
-				m_bSelectMode = false;
-			}
-			m_bEditMode = false;
-			m_vAreaPolygonsVector.pop_back();
-			ofLogVerbose("update", "Last AreaPolygon is now deleted ");
-		}
+		deleteLastPolygon();
 		m_oToggleDeleteLastPoly = false;
 	}
 	if (m_oToggleClearAll){
-		if (m_bSelectMode){
-			m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
-			m_iIndicePolygonSelected = -1;
-			m_bSelectMode = false;
-		}
-		m_vAreaPolygonsVector.clear();
-		m_bEditMode = false;
-		ofLogVerbose("update", "All AreaPolygons are now deleted ");
+		deleteAllPolygon();
 		m_oToggleClearAll = false;
-		m_iNextFreeId = 0;
 	}
 
 	//Update Augmenta
@@ -315,7 +300,7 @@ void ofApp::draw(){
 	ofDisableDepthTest();
 	m_fbo.end();
 
-	sendVisuals(); // Remove this line if you don't need it !
+	sendVisuals(); 
     
     // Draw interface
     if(m_bHideInterface){
@@ -388,12 +373,14 @@ void ofApp::drawHiddenInterface(){
                        "  - Stay in this hidden interface mode\n" \
                        "  - Minimize this window\n" \
                        "\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
-                    
+					   "The dimensions will be the same as the ones sent by Augmenta.\n" \
+
                        ,20,20);
     
     ofPopStyle();
 }
 
+//--------------------------------------------------------------
 void ofApp::deleteLastPolygon() {
     
     if (m_vAreaPolygonsVector.size() >= 1){
@@ -404,8 +391,21 @@ void ofApp::deleteLastPolygon() {
         }
         m_bEditMode = false;
         m_vAreaPolygonsVector.pop_back();
-        ofLogVerbose("keyPressed", "Last AreaPolygon is now deleted ");
+        ofLogVerbose("deleteLastPolygon", "Last AreaPolygon is now deleted ");
     }
+}
+
+//--------------------------------------------------------------
+void ofApp::deleteAllPolygon(){
+	if (m_bSelectMode){
+		m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
+		m_iIndicePolygonSelected = -1;
+		m_bSelectMode = false;
+	}
+	m_vAreaPolygonsVector.clear();
+	m_bEditMode = false;
+	m_iNextFreeId = 0;
+	ofLogVerbose("deleteAllPolygon", "All AreaPolygons are now deleted ");
 }
 
 //_______________________________________________________________
@@ -416,15 +416,6 @@ void ofApp::deleteLastPolygon() {
 void ofApp::keyPressed(int key){
  
     switch(key){
-            
-		//test resize
-	case 'a':
-		fboSizeHaveChanged(800,600);
-	break;
-	case 'q':
-		fboSizeHaveChanged(1024,768);
-		break;
-
         // Modifier keys
         case OF_KEY_SHIFT:
             m_iModifierKey = OF_KEY_SHIFT;
@@ -513,15 +504,7 @@ void ofApp::keyPressed(int key){
 		//Delete all AreaPolygons
 		case 'r':
 		case 'R':			
-			if (m_bSelectMode){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
-				m_iIndicePolygonSelected = -1;
-				m_bSelectMode = false;
-			}
-			m_vAreaPolygonsVector.clear();
-			m_bEditMode = false;
-			ofLogVerbose("keyPressed", "All AreaPolygons are now deleted ");
-			m_iNextFreeId = 0;
+			deleteAllPolygon();		
 			break;
 
         //Move the selected polygon
