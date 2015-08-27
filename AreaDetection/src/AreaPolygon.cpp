@@ -1,5 +1,6 @@
 #include "AreaPolygon.h"
 #include "ofUtils.h"
+#include <locale>
 
 
 #define MOVE_STEP 0.001
@@ -8,11 +9,11 @@
 
 
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople,int a_iIndice){
-	m_oPointsColor = ofColor(246,128,248);
-	m_oLinesColor = ofColor(237,232,229);
-	m_oCompletedColor = ofColor(255, 166, 70);
-	m_oLinesCompletedColor = ofColor(243,80,64);
-	m_oNotEmptyColor = ofColor(243,80,64);
+	m_oPointsColor = ofColor(246,128,248,200);
+	m_oLinesColor = ofColor(237,232,229,200);
+	m_oCompletedColor = ofColor(255, 166, 70,200);
+	m_oLinesCompletedColor = ofColor(243,80,64,200);
+	m_oNotEmptyColor = ofColor(243,80,64,200);
 	m_iLinesWidth = LINES_WIDTH;
 	m_fRadius = CIRCLE_RADIUS;
 	m_bIsFinished = false;
@@ -54,35 +55,55 @@ bool AreaPolygon::doesStringContainNumber(string a_sString){
 }
 
 //--------------------------------------------------------------
+bool AreaPolygon::isAString(string s){
+	std::locale loc;
+	for (std::string::iterator it = s.begin(); it != s.end(); ++it)
+	{
+		if (std::isalpha(*it, loc)){
+			return true;
+		}	
+	}
+return false;
+}
+
+//--------------------------------------------------------------
 void AreaPolygon::loadOscMessage(string m_aInOsc, string m_aOutOsc){
 	m_vInOsc = ofSplitString(m_aInOsc, " ");
 	for (int i = 1; i < m_vInOsc.size(); i++){
-		if (m_vInOsc[i].find(".") != string::npos){
+		if (isAString(m_vInOsc[i])){
+			// is a string 
+			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
+		}
+		else if (m_vInOsc[i].find(".") != string::npos){
 			//is a float
 			m_oOscMessageIn.addFloatArg(ofToFloat(m_vInOsc[i]));
 		}
 		else if (doesStringContainNumber(m_vInOsc[i])){
-			// is a int 
+			//is a int 
 			m_oOscMessageIn.addIntArg(ofToInt(m_vInOsc[i]));
 		}
 		else{
-			// is a string 
+			//Unknow type send as string
 			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
 		}
 	}
 
 	m_vOutOsc = ofSplitString(m_aOutOsc, " ");
 	for (int i = 1; i < m_vOutOsc.size(); i++){
-		if (m_vOutOsc[i].find(".") != string::npos){
+		if (isAString(m_vOutOsc[i])){
+			// is a string 
+			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
+		}
+		else if (m_vOutOsc[i].find(".") != string::npos){
 			//is a float
 			m_oOscMessageOut.addFloatArg(ofToFloat(m_vOutOsc[i]));
 		}
 		else if (doesStringContainNumber(m_vOutOsc[i])){
-			// is a int 
+			//is a int 
 			m_oOscMessageOut.addIntArg(ofToInt(m_vOutOsc[i]));
 		}
 		else{
-			// is a string 
+			//Unknow type send as string
 			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
 		}
 	}

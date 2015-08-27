@@ -51,6 +51,9 @@ public:
 	bool removeLastPoint();
 	bool isPointInPolygon(ofVec2f a_oPersonPosition);
 	bool doesStringContainNumber(string a_sString);
+	bool isAString(string s);
+		
+
 
 	
 private:
