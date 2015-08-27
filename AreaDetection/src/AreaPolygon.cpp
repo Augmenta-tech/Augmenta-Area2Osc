@@ -90,16 +90,20 @@ void AreaPolygon::loadOscMessage(string m_aInOsc, string m_aOutOsc){
 
 	m_vOutOsc = ofSplitString(m_aOutOsc, " ");
 	for (int i = 1; i < m_vOutOsc.size(); i++){
-		if (m_vOutOsc[i].find(".") != string::npos){
+		if (isAString(m_vOutOsc[i])){
+			// is a string 
+			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
+		}
+		else if (m_vOutOsc[i].find(".") != string::npos){
 			//is a float
 			m_oOscMessageOut.addFloatArg(ofToFloat(m_vOutOsc[i]));
 		}
 		else if (doesStringContainNumber(m_vOutOsc[i])){
-			// is a int 
+			//is a int 
 			m_oOscMessageOut.addIntArg(ofToInt(m_vOutOsc[i]));
 		}
 		else{
-			// is a string 
+			//Unknow type send as string
 			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
 		}
 	}
