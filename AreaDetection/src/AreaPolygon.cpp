@@ -116,9 +116,9 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 //--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){
 	if (m_bIsFinished){
-		ofDrawBitmapString("In :" + m_vInOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
-		ofDrawBitmapString("Out :" + m_vOutOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
-		ofDrawBitmapString("People :" + ofToString(m_iPeopleInside), ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
+		ofDrawBitmapString("[in] " + m_vInOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
+		ofDrawBitmapString("[out] " + m_vOutOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
+		ofDrawBitmapString("people : " + ofToString(m_iPeopleInside), ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
 	}
 }
 
@@ -232,8 +232,8 @@ bool AreaPolygon::isPointInPolygon(ofVec2f a_oPersonPosition) {
 	
 
 	for (i = 0; i<m_vVectorPoints.size(); i++) {
-		if ((m_vVectorPoints[i].y< a_oPersonPosition.y && m_vVectorPoints[j].y >= a_oPersonPosition.y
-			|| m_vVectorPoints[j].y< a_oPersonPosition.y && m_vVectorPoints[i].y >= a_oPersonPosition.y)
+		if (((m_vVectorPoints[i].y< a_oPersonPosition.y && m_vVectorPoints[j].y >= a_oPersonPosition.y)
+			|| (m_vVectorPoints[j].y< a_oPersonPosition.y && m_vVectorPoints[i].y >= a_oPersonPosition.y))
 			&& (m_vVectorPoints[i].x <= a_oPersonPosition.x || m_vVectorPoints[j].x <= a_oPersonPosition.x)) {
 			if (m_vVectorPoints[i].x + (a_oPersonPosition.y - m_vVectorPoints[i].y) / (m_vVectorPoints[j].y - m_vVectorPoints[i].y)*(m_vVectorPoints[j].x - m_vVectorPoints[i].x)<a_oPersonPosition.x) {
 				result = !result;
