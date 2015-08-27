@@ -1,6 +1,6 @@
 #include "ofApp.h"
 
-#define APP_NAME "AreaDetection"
+#define APP_NAME "Augmenta area2OSC"
 #define RADIUS_CLOSING_ZONE 15
 
 //_______________________________________________________________
