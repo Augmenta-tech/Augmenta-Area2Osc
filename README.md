@@ -24,7 +24,7 @@ Left click : inside a polygon to select it /outside a polygon to deselect it.
 
 Right click : to delete the last point created.
 
-#### KeyBorad
+#### Keyboard
 
 Ctrl+s / Cmd+s : To save settings and the currents polygons.
 
