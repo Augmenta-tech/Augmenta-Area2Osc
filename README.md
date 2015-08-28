@@ -4,21 +4,43 @@ augmenta-area2osc allows you to easly create polygons which will refer to detect
 
 ## Use
 
-#### First Group
+#### Polygons Group
 
-My Int : An awesome slider where you can change ... an int !
+Delete all polygons : Push button which delete all the polygons
 
-#### Second Group
+Delete last polygon : Push button which delete the last polygon created or the one you're currently creating
 
-My Bool : The best feature ! Transform your cube into a hulkish pale color !
+#### OSC Group
 
-#### Third Group
+Send all event : If the button is ticked all person coming in and person coming out event will be sent.If the button is not ticked only the first person coming in will send and the last person coming out.
 
-My Vector : This is madness, you can change x y z coordinates of a vector, making your cube moving !
+Anti bounce : Slider which represent the time in milliseconds, that will be waited once a person leaved a polygon to remove it definetly, (In the goal to avoid flickering when the person is on the edge of a polygon).
 
 #### Mouse clics
 
-Use left clic and right clic to move and zoom on your cube, this does affect the 3D camera, not the real size of the cube.
+Left click : to create a new point or polygon.
+
+Left click : inside a polygon to select it /outside a polygon to deselect it.
+
+Right click : to delete the last point created.
+
+#### KeyBorad
+
+Ctrl+s / Cmd+s : To save settings and the currents polygons.
+
+Ctrl+l / Cmd+l : To load last saved settings and polygons.
+
+Ctrl+z : To delete the last polygon created or the current polygon.
+
+R / r : To delete all the polygons you have created.
+
+Del / BackSpace : To delete the selected polygon.
+
+#### Note 
+
+Your settings are saved when the app quits and are loaded at startup. (autosave feature).
+
+The dimensions will be the same as the ones sent by Augmenta.
 
 ### System
 
