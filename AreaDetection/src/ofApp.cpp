@@ -99,7 +99,8 @@ void ofApp::init(){
 	m_iRadiusClosePolyZone = 15;
 	m_oOldMousePosition = ofVec2f(0,0);
 	m_iAntiBounce = 100;
-
+	m_fZoomCoef = 1.0;
+	m_sZoomFactor = ofToString(m_fZoomCoef);
 
 }
 
@@ -118,6 +119,7 @@ void ofApp::setupGUI(){
 	// Add content to GUI panel
 	m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
 	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
+	m_gui.add(m_sZoomFactor.setup("Zoom factor", m_sZoomFactor));	
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
 
 	// guiFirstGroup parameters ---------------------------
@@ -206,8 +208,8 @@ void ofApp::reset(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	ofSetWindowShape(m_iFboWidth,m_iFboHeight);
-
+	//test
+	ofSetWindowShape(m_iFboWidth* m_fZoomCoef, m_iFboHeight* m_fZoomCoef);
 	if (m_oToggleDeleteLastPoly){
 		deleteLastPolygon();
 		m_oToggleDeleteLastPoly = false;
@@ -223,7 +225,7 @@ void ofApp::update(){
 
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
-
+	m_sZoomFactor = ofToString(m_fZoomCoef);
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
 		if (m_vAreaPolygonsVector[i].isCompleted()){
@@ -238,7 +240,7 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::fboSizeHaveChanged(int a_iNewWidth, int a_iNewHeight){
 	if (m_iFboWidth != a_iNewWidth || m_iFboHeight != a_iNewHeight){
-			m_iFboWidth = a_iNewWidth;
+			m_iFboWidth = a_iNewWidth ;
 			m_iFboHeight = a_iNewHeight;
 			m_fbo.allocate(m_iFboWidth, m_iFboHeight, GL_RGBA);
 		}
@@ -272,7 +274,7 @@ bool ofApp::isInsideAPolygon(ofVec2f a_oPoint){
 //--------------------------------------------------------------
 void ofApp::drawAreaPolygons(){
 	for (int i = 0; i < m_vAreaPolygonsVector.size(); ++i){
-		m_vAreaPolygonsVector[i].draw(m_iFboWidth,m_iFboHeight);
+		m_vAreaPolygonsVector[i].draw(m_iFboWidth , m_iFboHeight );
 	}
 }
 
@@ -283,7 +285,7 @@ void ofApp::drawAugmentaPeople(){
 	ofSetColor(ofColor(93,224,133,200));
 	for (int i = 0; i<m_oPeople.size(); i++){
 		centroid = m_oPeople[i]->centroid;
-		ofCircle(centroid.x * m_iFboWidth, centroid.y * m_iFboHeight, 10);
+		ofCircle(centroid.x * m_iFboWidth , centroid.y * m_iFboHeight , 10);
 	}
 	ofPopStyle();
 }
@@ -295,10 +297,9 @@ void ofApp::draw(){
 
 	m_fbo.begin();
 	ofClear(ofColor(52,53,46)); // Clear FBO content to black
-	
 	ofEnableDepthTest();
-	drawAugmentaPeople();
 	
+	drawAugmentaPeople();
 	drawAreaPolygons();
 	
 	ofDisableDepthTest();
@@ -311,6 +312,7 @@ void ofApp::draw(){
         drawHiddenInterface();
     } else{
         drawInterface();
+		
     }
 }
 
@@ -320,7 +322,7 @@ void ofApp::sendVisuals(){
     
     #ifdef WIN32
     // On Windows, use Spout
-    m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
+	   m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
     #elif MAC_OS_X_VERSION_10_6
     // On Mac OSX, use Syphon
     m_syphonServer.publishTexture(&m_fbo.getTextureReference());
@@ -336,11 +338,11 @@ void ofApp::drawInterface(){
     // Show the FBO in the app window with right ratio
     float fFboRatio = (float) m_iFboWidth / (float) m_iFboHeight;
     if(fFboRatio > 1){
-        m_fbo.draw(0, 0, ofGetWidth(), ofGetWidth() / fFboRatio);
+		m_fbo.draw(0,0,m_oActualScene->width * m_fZoomCoef, m_oActualScene->height * m_fZoomCoef);
     } else {
-        m_fbo.draw(0, 0, ofGetHeight() * fFboRatio, ofGetHeight());
+		m_fbo.draw(0,0,m_oActualScene->width * m_fZoomCoef, m_oActualScene->height * m_fZoomCoef);
     }
-    
+
     // Update the UI 
     m_sFramerate = ofToString(ofGetFrameRate());
 	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
@@ -357,28 +359,37 @@ void ofApp::drawHiddenInterface(){
     ofPushStyle();
     ofSetColor(ofColor::white);
 
-    ofDrawBitmapString("FPS: " +
-                       ofToString(ofGetFrameRate()) + "\n" +
-					   "Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n" + m_sAugmentaOscDiplay
-					   +"\n" +
-                       "---------------------------------------\n"
-                       "\n[h] to unhide interface\n" \
-                       "[ctrl+s] / [cmd+s] to save settings and the currents polygons\n" \
-                       "[ctrl+l] / [cmd+l] to load last saved settings and polygons\n" \
-                       "[ctrl+z] to delete the last polygon created or the current polygon\n" \
-                       "[r] / [R] to delete all the polygons you have created\n" \
-					   "[del] / [backSpace] to delete the selected polygon\n" \
-					   "[left click] to create a new point or polygon\n" \
-					   "[right click] to delete the last point created\n" \
-					   "[left click] inside a polygon to select it /outside a polygon to deselect it\n\n" 			  			  
+	ofDrawBitmapString("FPS: " +
+		ofToString(ofGetFrameRate()) + "\n" +
+		"Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n" + m_sAugmentaOscDiplay
+		+ "\n" + "Window width: " + ofToString(AugmentaReceiver.getScene()->width * m_fZoomCoef) + "\n" +
+		"Window height: " + ofToString(AugmentaReceiver.getScene()->height * m_fZoomCoef) + "\n" +
+		"Fbo width: " + ofToString(AugmentaReceiver.getScene()->width) + "\n" +
+		"Fbo height: " + ofToString(AugmentaReceiver.getScene()->height) + "\n" +
+		"---------------------------------------\n"
+		"\n[h] to unhide interface\n" \
+		"[ctrl+s] / [cmd+s] to save settings and the currents polygons\n" \
+		"[ctrl+l] / [cmd+l] to load last saved settings and polygons\n" \
+		"[ctrl+z] to delete the last polygon created or the current polygon\n" \
+		"[r] / [R] to delete all the polygons you have created\n" \
+		"[del] / [backSpace] to delete the selected polygon\n" \
+		"[-] to zoom in (only for a better appreciation on the screen)\n" \
+		"[+] to zoom out (only for a better appreciation on the screen)\n" \
+		"[left click] to create a new point or polygon\n" \
+		"[right click] to delete the last point created\n" \
+		"[left click] inside a polygon to select it /outside a polygon to deselect it\n\n"
 
-                       "---------------------------------------\n" \
-                       "\nTo optimize performance : \n\n" \
-                       "  - Stay in this hidden interface mode\n" \
-                       "  - Minimize this window\n" \
-                       "\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
-					   "The dimensions will be the same as the ones sent by Augmenta.\n" \
-					   "You can change the osc messages of a polygon in the preferences.xml file."\
+		"---------------------------------------\n" \
+		"\nTo optimize performance : \n\n" \
+		"  - Stay in this hidden interface mode\n" \
+		"  - Minimize this window\n" \
+		"\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
+		"The dimensions will be the same as the ones sent by Augmenta.\n" \
+		"You can change the osc messages of a polygon in the preferences.xml file."\
+
+
+	
+
                        ,20,20);
     
     ofPopStyle();
@@ -434,6 +445,16 @@ void ofApp::keyPressed(int key){
             m_iModifierKey = OF_KEY_COMMAND;
             break;
             
+		case '+':
+			m_fZoomCoef = m_fZoomCoef * 2;
+			break;
+
+		case '-':
+			//if (!((m_fZoomCoef / 2) < 1)){
+				m_fZoomCoef = m_fZoomCoef / 2;
+			//}
+		break;
+
         // Other keys
         case 'f':
         case 'F':
@@ -562,7 +583,7 @@ void ofApp::keyReleased(int key){
         case OF_KEY_COMMAND:
             m_iModifierKey = -1;
             break;
-            
+           
         default:
             break;
     }
@@ -570,6 +591,8 @@ void ofApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
+	x = x / m_fZoomCoef;
+	y = y / m_fZoomCoef;
 
 	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
 
@@ -586,6 +609,9 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
+
+	x = x / m_fZoomCoef;
+	y = y / m_fZoomCoef;
 	m_oOldMousePosition = ofVec2f(x, y);
 	bool isLastPoint = false;
 
@@ -673,6 +699,9 @@ void ofApp::mousePressed(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
+	x = x / m_fZoomCoef;
+	y = y / m_fZoomCoef;
+
 	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
 
 	if (button == 0){
@@ -902,4 +931,3 @@ void ofApp::exit(){
 	// Remove listener because instance of our gui button will be deleted
 	m_bResetSettings.removeListener(this, &ofApp::reset);
 }
-

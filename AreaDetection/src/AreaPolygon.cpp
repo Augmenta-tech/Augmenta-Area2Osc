@@ -215,7 +215,6 @@ void AreaPolygon::draw(int width,int height){
 	drawPeopleInside(width,height);
 }
 
-
 //--------------------------------------------------------------
 void AreaPolygon::setPeopleInside(vector<Augmenta::Person*> people, int a_iBounceIntervalTime){
 	ofPoint centroid;

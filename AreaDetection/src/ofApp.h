@@ -71,8 +71,10 @@ private:
     
     // Fbo used to render visuals
     ofFbo m_fbo;
+	ofFbo m_oFboSent;
     int m_iFboWidth;
     int m_iFboHeight;
+	float m_fZoomCoef;
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
     void deleteLastPolygon();
@@ -110,6 +112,7 @@ private:
 
     // Gui content ----------------
     ofxLabel m_sFramerate;
+	ofxLabel m_sZoomFactor;
 	ofxLabel m_sNumberOfAreaPolygons;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     

@@ -36,6 +36,10 @@ R / r : To delete all the polygons you have created.
 
 Del / BackSpace : To delete the selected polygon.
 
+- : To zoom in (only for a better appreciation on the screen).
+
++ : To zoom out (only for a better appreciation on the screen).
+
 #### Note 
 
 Your settings are saved when the app quits and are loaded at startup. (autosave feature).
