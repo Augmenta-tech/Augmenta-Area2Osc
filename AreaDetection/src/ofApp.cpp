@@ -21,13 +21,15 @@ void ofApp::setup(){
     
     // Limit framerate to 60fps
     ofSetFrameRate(60);
-    
+
     // Init function is used to set default variables that can be changed.
     // For example, GUI variables or preferences.xml variables.
     init();
 	
 	//Augmenta
 	AugmentaReceiver.connect(m_iOscReceiverPort);
+	m_oPeople = AugmentaReceiver.getPeople();
+	m_oActualScene = AugmentaReceiver.getScene();
 
     // Important : call those function AFTER init,
     // because init() will define all default values
@@ -35,7 +37,8 @@ void ofApp::setup(){
     setupGUI();
     setupOSC();
 	loadPreferences();
-
+	m_iFboWidth = m_oActualScene->width;
+	m_iFboHeight = m_oActualScene->height;
 
     /*
      Visuals will be drawn in a FBO for several reasons :
@@ -47,7 +50,7 @@ void ofApp::setup(){
     
     // Allocating a FBO of the size defined in preferences.xml (default : window size), can be any size
 	m_fbo.allocate(m_iFboWidth,m_iFboHeight,GL_RGBA);
-    
+
     #if MAC_OS_X_VERSION_10_6
     // Setup Syphon output
     m_syphonServer.setName(APP_NAME);
@@ -77,9 +80,9 @@ void ofApp::init(){
     m_bLogToFile = false;
     m_iFboWidth = ofGetWidth();
     m_iFboHeight = ofGetHeight();
-    m_iOscReceiverPort = 12002;
+    m_iOscReceiverPort = 13000;
     m_iOscSenderPort = 12000;
-    m_sOscSenderHost = "192.168.1.13";
+    m_sOscSenderHost = "127.0.0.1";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
 
 	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
@@ -96,6 +99,7 @@ void ofApp::init(){
 	m_iRadiusClosePolyZone = 15;
 	m_oOldMousePosition = ofVec2f(0,0);
 	m_iAntiBounce = 100;
+
 
 }
 
@@ -127,7 +131,7 @@ void ofApp::setupGUI(){
 	string sSecondGroupName = "OSC";
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
-	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce",100,1,5000)->getParameter());
+	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce",100,1,400)->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
 
@@ -234,10 +238,10 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::fboSizeHaveChanged(int a_iNewWidth, int a_iNewHeight){
 	if (m_iFboWidth != a_iNewWidth || m_iFboHeight != a_iNewHeight){
-		m_iFboWidth = a_iNewWidth;
-		m_iFboHeight = a_iNewHeight;
-		m_fbo.allocate(m_iFboWidth, m_iFboHeight, GL_RGBA);
-	}
+			m_iFboWidth = a_iNewWidth;
+			m_iFboHeight = a_iNewHeight;
+			m_fbo.allocate(m_iFboWidth, m_iFboHeight, GL_RGBA);
+		}
 }
 
 //--------------------------------------------------------------
@@ -286,12 +290,15 @@ void ofApp::drawAugmentaPeople(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){	
+	
 	fboSizeHaveChanged(m_oActualScene->width, m_oActualScene->height);
 
 	m_fbo.begin();
 	ofClear(ofColor(52,53,46)); // Clear FBO content to black
+	
 	ofEnableDepthTest();
 	drawAugmentaPeople();
+	
 	drawAreaPolygons();
 	
 	ofDisableDepthTest();
@@ -313,7 +320,7 @@ void ofApp::sendVisuals(){
     
     #ifdef WIN32
     // On Windows, use Spout
-   // m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
+    m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
     #elif MAC_OS_X_VERSION_10_6
     // On Mac OSX, use Syphon
     m_syphonServer.publishTexture(&m_fbo.getTextureReference());
@@ -371,7 +378,7 @@ void ofApp::drawHiddenInterface(){
                        "  - Minimize this window\n" \
                        "\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
 					   "The dimensions will be the same as the ones sent by Augmenta.\n" \
-
+					   "You can change the osc messages of a polygon in the preferences.xml file."\
                        ,20,20);
     
     ofPopStyle();

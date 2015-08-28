@@ -40,7 +40,9 @@ Del / BackSpace : To delete the selected polygon.
 
 Your settings are saved when the app quits and are loaded at startup. (autosave feature).
 
-The dimensions will be the same as the ones sent by Augmenta.
+The dimensions of the application window will be the same as the ones sent by Augmenta.
+
+You can change the osc messages of a polygon in the preferences.xml file.
 
 ### System
 
