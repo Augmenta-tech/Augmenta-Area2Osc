@@ -9,36 +9,42 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    
-    // If we are building a debug binary, all the outputs will be shown
-    #ifdef DEBUG
-    ofSetLogLevel(OF_LOG_VERBOSE);
-    ofSetWindowTitle(APP_NAME"Debug");
-    #else
-    ofSetLogLevel(OF_LOG_NOTICE);
-    ofSetWindowTitle(APP_NAME);
-    #endif
-    
-    // Limit framerate to 60fps
-    ofSetFrameRate(60);
 
-    // Init function is used to set default variables that can be changed.
-    // For example, GUI variables or preferences.xml variables.
-    init();
-	
+	// If we are building a debug binary, all the outputs will be shown
+#ifdef DEBUG
+	ofSetLogLevel(OF_LOG_VERBOSE);
+	ofSetWindowTitle(APP_NAME"Debug");
+#else
+	ofSetLogLevel(OF_LOG_NOTICE);
+	ofSetWindowTitle(APP_NAME);
+#endif
+
+	// Limit framerate to 60fps
+	ofSetFrameRate(60);
+
+	// Init function is used to set default variables that can be changed.
+	// For example, GUI variables or preferences.xml variables.
+	init();
+
 	//Augmenta
 	AugmentaReceiver.connect(m_iOscReceiverPort);
 	m_oPeople = AugmentaReceiver.getPeople();
 	m_oActualScene = AugmentaReceiver.getScene();
 
-    // Important : call those function AFTER init,
-    // because init() will define all default values
+	// Important : call those function AFTER init,
+	// because init() will define all default values
 	m_iNextFreeId = 0;
-    setupGUI();
-    setupOSC();
+	setupGUI();
+	setupOSC();
 	loadPreferences();
-	m_iFboWidth = m_oActualScene->width;
-	m_iFboHeight = m_oActualScene->height;
+
+	if (m_oActualScene->width == 0 || m_oActualScene->height == 0){
+		m_iFboWidth = 1024;
+		m_iFboHeight = 768;
+	}else{
+		m_iFboWidth = m_oActualScene->width;
+		m_iFboHeight = m_oActualScene->height;
+	}
 
     /*
      Visuals will be drawn in a FBO for several reasons :
@@ -78,8 +84,8 @@ void ofApp::init(){
     // App default values (preferences.xml)
     m_bHideInterface = false;
     m_bLogToFile = false;
-    m_iFboWidth = ofGetWidth();
-    m_iFboHeight = ofGetHeight();
+    m_iFboWidth = 1024;
+    m_iFboHeight = 768;
     m_iOscReceiverPort = 13000;
     m_iOscSenderPort = 12000;
     m_sOscSenderHost = "127.0.0.1";
@@ -100,8 +106,12 @@ void ofApp::init(){
 	m_oOldMousePosition = ofVec2f(0,0);
 	m_iAntiBounce = 100;
 	m_fZoomCoef = 1.0;
-	m_sZoomFactor = ofToString(m_fZoomCoef);
+	m_bSendFbo = false;
+	m_sScreenResolution = ofToString(m_iWidthRender) +" x "+ ofToString(m_iHeightRender);
+	m_sSendFboResolution = ofToString(m_iFboWidth) + " x " + ofToString(m_iFboHeight);
 
+
+	
 }
 
 //--------------------------------------------------------------
@@ -117,9 +127,11 @@ void ofApp::setupGUI(){
 	m_gui.setName("GUI Parameters");
 
 	// Add content to GUI panel
+	m_gui.add(m_sScreenResolution.setup("Window res ", m_sScreenResolution));
+	m_gui.add(m_sSendFboResolution.setup("Fbo res ", m_sSendFboResolution));
 	m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
 	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
-	m_gui.add(m_sZoomFactor.setup("Zoom factor", m_sZoomFactor));	
+	m_gui.add((m_fZoomCoef.setup("Zoom", 1, 0.3, 2)));
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
 
 	// guiFirstGroup parameters ---------------------------
@@ -133,9 +145,22 @@ void ofApp::setupGUI(){
 	string sSecondGroupName = "OSC";
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
-	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce",100,1,400)->getParameter());
+	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce ms",100,1,400)->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
+	#ifdef WIN32
+	string sThridGroupName = "SPOUT";
+	#elif __APPLE__
+	string sThridGroupName = "SYPHON";
+	#else
+	string sThridGroupName = "FBO";
+	#endif
+	
+
+	m_guiThirdGroup.setName(sThridGroupName);
+	m_guiThirdGroup.add((m_bSendFbo.setup("on/off", m_bSendFbo))->getParameter());
+	
+	m_gui.add(m_guiThirdGroup);
 
 	// You can add colors to your GUI groups to identify them easily
 	// Example of beautiful colors you can use : salmon, orange, darkSeaGreen, teal, cornflowerBlue...
@@ -143,6 +168,8 @@ void ofApp::setupGUI(){
 	m_gui.getGroup(sFirstGroupName).setBorderColor(ofColor::salmon);
 	m_gui.getGroup(sSecondGroupName).setHeaderBackgroundColor(ofColor::orange);
 	m_gui.getGroup(sSecondGroupName).setBorderColor(ofColor::orange);
+	m_gui.getGroup(sThridGroupName).setHeaderBackgroundColor(ofColor::cornflowerBlue);
+	m_gui.getGroup(sThridGroupName).setBorderColor(ofColor::cornflowerBlue);
 
 	// Load autosave settings
 	if (ofFile::doesFileExist("autosave.xml")){
@@ -208,8 +235,10 @@ void ofApp::reset(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	//test
-	ofSetWindowShape(m_iFboWidth* m_fZoomCoef, m_iFboHeight* m_fZoomCoef);
+
+	m_sScreenResolution = ofToString(ofGetWindowWidth()) + " x " + ofToString(ofGetWindowHeight());
+	m_sSendFboResolution = ofToString(m_iFboWidth) + " x " + ofToString(m_iFboHeight);
+
 	if (m_oToggleDeleteLastPoly){
 		deleteLastPolygon();
 		m_oToggleDeleteLastPoly = false;
@@ -225,7 +254,7 @@ void ofApp::update(){
 
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
-	m_sZoomFactor = ofToString(m_fZoomCoef);
+
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
 		if (m_vAreaPolygonsVector[i].isCompleted()){
@@ -239,11 +268,13 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::fboSizeHaveChanged(int a_iNewWidth, int a_iNewHeight){
-	if (m_iFboWidth != a_iNewWidth || m_iFboHeight != a_iNewHeight){
-			m_iFboWidth = a_iNewWidth ;
+	if (a_iNewWidth != 0 && a_iNewHeight != 0){
+		if (m_iFboWidth != a_iNewWidth || m_iFboHeight != a_iNewHeight){
+			m_iFboWidth = a_iNewWidth;
 			m_iFboHeight = a_iNewHeight;
 			m_fbo.allocate(m_iFboWidth, m_iFboHeight, GL_RGBA);
 		}
+	}
 }
 
 //--------------------------------------------------------------
@@ -305,8 +336,10 @@ void ofApp::draw(){
 	ofDisableDepthTest();
 	m_fbo.end();
 
-	sendVisuals(); 
-    
+	if (m_bSendFbo){
+		sendVisuals();
+	}
+
     // Draw interface
     if(m_bHideInterface){
         drawHiddenInterface();
@@ -322,7 +355,7 @@ void ofApp::sendVisuals(){
     
     #ifdef WIN32
     // On Windows, use Spout
-	   m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
+	m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
     #elif MAC_OS_X_VERSION_10_6
     // On Mac OSX, use Syphon
     m_syphonServer.publishTexture(&m_fbo.getTextureReference());
@@ -333,21 +366,48 @@ void ofApp::sendVisuals(){
 // Draw the interface of your app : visuals, GUI, debug content...
 void ofApp::drawInterface(){
     
-    ofBackground(ofColor::darkGray); // Clear screen
-    
-    // Show the FBO in the app window with right ratio
-    float fFboRatio = (float) m_iFboWidth / (float) m_iFboHeight;
-    if(fFboRatio > 1){
-		m_fbo.draw(0,0,m_oActualScene->width * m_fZoomCoef, m_oActualScene->height * m_fZoomCoef);
-    } else {
-		m_fbo.draw(0,0,m_oActualScene->width * m_fZoomCoef, m_oActualScene->height * m_fZoomCoef);
-    }
+	int min = 700;
+	int max = 1000;
 
-    // Update the UI 
+    ofBackground(ofColor::darkGray); // Clear screen
+
+	m_iWidthRender = m_iFboWidth;
+	m_iHeightRender = m_iFboHeight;
+
+
+	float fFboRatio = (float)m_iFboWidth / (float)m_iFboHeight;
+
+	// Portrait or square mode Height >= Width
+	if (fFboRatio <= 1){
+		if (m_iHeightRender > max){
+			m_iHeightRender = max;
+			m_iWidthRender = m_iHeightRender * fFboRatio;
+		}
+		if (m_iWidthRender < min){
+			m_iWidthRender = min;
+			m_iHeightRender = m_iWidthRender / fFboRatio;
+		}
+	}
+	// Landscape mode Height < Width
+	if (fFboRatio > 1){
+		if (m_iWidthRender > max){
+			m_iWidthRender = max;
+			m_iHeightRender = m_iWidthRender / fFboRatio;
+		}
+		if (m_iHeightRender < min){
+			m_iHeightRender = min;
+			m_iWidthRender = m_iHeightRender * fFboRatio;
+		}
+	}
+	
+	m_fbo.draw(0, 0, m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
+	ofSetWindowShape(m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
+	
+	// Update the UI 
     m_sFramerate = ofToString(ofGetFrameRate());
 	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
-	
-		m_gui.draw();
+	m_gui.draw();
+
 }
 
 //--------------------------------------------------------------
@@ -362,10 +422,9 @@ void ofApp::drawHiddenInterface(){
 	ofDrawBitmapString("FPS: " +
 		ofToString(ofGetFrameRate()) + "\n" +
 		"Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n" + m_sAugmentaOscDiplay
-		+ "\n" + "Window width: " + ofToString(AugmentaReceiver.getScene()->width * m_fZoomCoef) + "\n" +
-		"Window height: " + ofToString(AugmentaReceiver.getScene()->height * m_fZoomCoef) + "\n" +
-		"Fbo width: " + ofToString(AugmentaReceiver.getScene()->width) + "\n" +
-		"Fbo height: " + ofToString(AugmentaReceiver.getScene()->height) + "\n" +
+		+ "\n" +
+		"Fbo width : " + ofToString(AugmentaReceiver.getScene()->width) + "\n" +
+		"Fbo height : " + ofToString(AugmentaReceiver.getScene()->height) + "\n\n-" +
 		"---------------------------------------\n"
 		"\n[h] to unhide interface\n" \
 		"[ctrl+s] / [cmd+s] to save settings and the currents polygons\n" \
@@ -373,8 +432,8 @@ void ofApp::drawHiddenInterface(){
 		"[ctrl+z] to delete the last polygon created or the current polygon\n" \
 		"[r] / [R] to delete all the polygons you have created\n" \
 		"[del] / [backSpace] to delete the selected polygon\n" \
-		"[-] to zoom in (only for a better appreciation on the screen)\n" \
-		"[+] to zoom out (only for a better appreciation on the screen)\n" \
+		"[-] To zoom in(only for a better appreciation on the screen).\n"\
+		"[+] To zoom out(only for a better appreciation on the screen).\n"\
 		"[left click] to create a new point or polygon\n" \
 		"[right click] to delete the last point created\n" \
 		"[left click] inside a polygon to select it /outside a polygon to deselect it\n\n"
@@ -386,7 +445,6 @@ void ofApp::drawHiddenInterface(){
 		"\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
 		"The dimensions will be the same as the ones sent by Augmenta.\n" \
 		"You can change the osc messages of a polygon in the preferences.xml file."\
-
 
 	
 
@@ -444,18 +502,25 @@ void ofApp::keyPressed(int key){
         case OF_KEY_COMMAND:
             m_iModifierKey = OF_KEY_COMMAND;
             break;
-            
+
 		case '+':
-			m_fZoomCoef = m_fZoomCoef * 2;
+			if (m_fZoomCoef + 0.2 < m_fZoomCoef.getMax()){
+				m_fZoomCoef = m_fZoomCoef + 0.2;
+			}
+			else{
+				m_fZoomCoef = m_fZoomCoef.getMax();
+			}
 			break;
 
 		case '-':
-			//if (!((m_fZoomCoef / 2) < 1)){
-				m_fZoomCoef = m_fZoomCoef / 2;
-			//}
-		break;
+			if (m_fZoomCoef - 0.2 > m_fZoomCoef.getMin()){
+				m_fZoomCoef = m_fZoomCoef-0.2;
+			}
+			else{
+				m_fZoomCoef = m_fZoomCoef.getMin();
+			}
+			break;
 
-        // Other keys
         case 'f':
         case 'F':
             ofToggleFullscreen();
@@ -591,8 +656,9 @@ void ofApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-	x = x / m_fZoomCoef;
-	y = y / m_fZoomCoef;
+	ofPoint temp = transformMouseCoord(x, y);
+	x = temp.x;
+	y = temp.y;
 
 	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
 
@@ -610,8 +676,9 @@ void ofApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
 
-	x = x / m_fZoomCoef;
-	y = y / m_fZoomCoef;
+	ofPoint temp = transformMouseCoord(x, y);
+	x = temp.x;
+	y = temp.y;
 	m_oOldMousePosition = ofVec2f(x, y);
 	bool isLastPoint = false;
 
@@ -697,10 +764,14 @@ void ofApp::mousePressed(int x, int y, int button){
 	}
 }
 
+
+
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-	x = x / m_fZoomCoef;
-	y = y / m_fZoomCoef;
+	
+	ofPoint temp = transformMouseCoord(x, y);
+	x = temp.x;
+	y = temp.y;
 
 	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
 
@@ -713,6 +784,13 @@ void ofApp::mouseReleased(int x, int y, int button){
 		}
 	}
 	m_oOldMousePosition = ofVec2f(x, y);
+}
+
+//--------------------------------------------------------------
+ofPoint ofApp::transformMouseCoord(int x, int y){
+	x = x * m_iFboWidth / (m_iWidthRender * m_fZoomCoef);
+	y = y * m_iFboHeight / (m_iHeightRender * m_fZoomCoef);
+	return ofPoint(x, y);
 }
 
 //_______________________________________________________________

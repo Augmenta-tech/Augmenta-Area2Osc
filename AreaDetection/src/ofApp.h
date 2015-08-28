@@ -68,13 +68,15 @@ private:
     bool m_bHideInterface;
     // Keyboard modifier key currently pressed
     int m_iModifierKey;
+	ofPoint transformMouseCoord(int x, int y);
+
     
     // Fbo used to render visuals
     ofFbo m_fbo;
 	ofFbo m_oFboSent;
     int m_iFboWidth;
     int m_iFboHeight;
-	float m_fZoomCoef;
+	
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
     void deleteLastPolygon();
@@ -106,28 +108,36 @@ private:
 	int m_iRadiusClosePolyZone;
 	float m_fPointRadius;
 	int m_iLinesWidthSlider;
-	
+	int m_iWidthRender;
+	int m_iHeightRender;
+
+
     // Gui panel
     ofxPanel m_gui;
 
     // Gui content ----------------
     ofxLabel m_sFramerate;
-	ofxLabel m_sZoomFactor;
 	ofxLabel m_sNumberOfAreaPolygons;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     
 	// Parameters group to organize your parameters
-	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup;
+	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;
 
-    // Gui parameters inside m_guiSecondGroup
+    // Gui parameters inside m_guiFirstGroup
     ofxToggle m_bRedondanteMode;
 	ofxIntSlider m_iAntiBounce;
+	ofxFloatSlider m_fZoomCoef;
 
-	// Gui parameters inside m_ThirdGroup
+	// Gui parameters inside m_SecondGroup
 	ofxToggle m_oToggleClearAll;
 	ofxToggle m_oToggleDeleteLastPoly;
+
+	// Gui parameters inside m_ThirdGroup
+	ofxToggle m_bSendFbo;
+	ofxLabel m_sSendFboResolution;
+	ofxLabel m_sScreenResolution;
     // --------- End of Gui content	
-    
+	
     #ifdef WIN32
     ofxSpout2 m_spoutSender;
     #elif MAC_OS_X_VERSION_10_6
