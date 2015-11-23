@@ -162,11 +162,11 @@ void AreaPolygon::draw(int width,int height){
 		ofSetColor(m_oLinesColor);
 		for (int i = 0; i < m_vVectorPoints.size() - 1; ++i){
 			for (int j = 1; j < m_vVectorPoints.size(); ++j){
-				ofLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
+				ofDrawLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
 				++i;
 			}
 		}
-		ofLine(m_vVectorPoints[0].x * width, m_vVectorPoints[0].y * height, m_vVectorPoints[m_vVectorPoints.size() - 1].x * width, m_vVectorPoints[m_vVectorPoints.size() - 1].y * height);
+		ofDrawLine(m_vVectorPoints[0].x * width, m_vVectorPoints[0].y * height, m_vVectorPoints[m_vVectorPoints.size() - 1].x * width, m_vVectorPoints[m_vVectorPoints.size() - 1].y * height);
 			
 		
 		 if (m_iPeopleInside > 0){
@@ -200,13 +200,13 @@ void AreaPolygon::draw(int width,int height){
 	else{
 		ofSetColor(m_oPointsColor);
 		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			ofCircle(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_fRadius);
+			ofDrawCircle(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_fRadius);
 		}
 		ofSetColor(m_oLinesColor);
 		ofSetLineWidth(m_iLinesWidth);
 		for (int i = 0; i < m_vVectorPoints.size() - 1; ++i){
 			for (int j = 1; j < m_vVectorPoints.size(); ++j){
-				ofLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
+				ofDrawLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
 				++i;
 			}
 		}
@@ -401,9 +401,9 @@ void AreaPolygon::move(float a_iX, float a_iY){
 //--------------------------------------------------------------
 void AreaPolygon::update(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime){
 
-setPeopleInside(a_vPeople, a_iBounceIntervalTime);
-m_iPeopleMovement= m_iPeopleInside - m_iOldPeopleInside;
-m_iOldPeopleInside = m_iPeopleInside;
+    setPeopleInside(a_vPeople, a_iBounceIntervalTime);
+    m_iPeopleMovement= m_iPeopleInside - m_iOldPeopleInside;
+    m_iOldPeopleInside = m_iPeopleInside;
 
 }
 

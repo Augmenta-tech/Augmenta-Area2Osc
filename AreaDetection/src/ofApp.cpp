@@ -86,8 +86,8 @@ void ofApp::init(){
     m_bLogToFile = false;
     m_iFboWidth = 1024;
     m_iFboHeight = 768;
-    m_iOscReceiverPort = 13000;
-    m_iOscSenderPort = 12000;
+    m_iOscReceiverPort = 12000;
+    m_iOscSenderPort = 7000;
     m_sOscSenderHost = "127.0.0.1";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
 
@@ -316,7 +316,7 @@ void ofApp::drawAugmentaPeople(){
 	ofSetColor(ofColor(93,224,133,200));
 	for (int i = 0; i<m_oPeople.size(); i++){
 		centroid = m_oPeople[i]->centroid;
-		ofCircle(centroid.x * m_iFboWidth , centroid.y * m_iFboHeight , 10);
+		ofDrawCircle(centroid.x * m_iFboWidth , centroid.y * m_iFboHeight , 10);
 	}
 	ofPopStyle();
 }
@@ -358,7 +358,7 @@ void ofApp::sendVisuals(){
 	m_spoutSender.sendTexture(m_fbo.getTextureReference(), APP_NAME);
     #elif MAC_OS_X_VERSION_10_6
     // On Mac OSX, use Syphon
-    m_syphonServer.publishTexture(&m_fbo.getTextureReference());
+    m_syphonServer.publishTexture(&m_fbo.getTexture());
     #endif
 }
 
