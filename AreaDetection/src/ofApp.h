@@ -76,7 +76,8 @@ private:
 	ofFbo m_oFboSent;
     int m_iFboWidth;
     int m_iFboHeight;
-	
+    string m_sSendFboResolution;
+    string m_sScreenResolution;
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
     void deleteLastPolygon();
@@ -116,7 +117,6 @@ private:
     ofxPanel m_gui;
 
     // Gui content ----------------
-    ofxLabel m_sFramerate;
 	ofxLabel m_sNumberOfAreaPolygons;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     
@@ -134,8 +134,9 @@ private:
 
 	// Gui parameters inside m_ThirdGroup
 	ofxToggle m_bSendFbo;
-	ofxLabel m_sSendFboResolution;
-	ofxLabel m_sScreenResolution;
+    ofxLabel m_sOscOutGUI;
+    ofxLabel m_sOscInGUI;
+
     // --------- End of Gui content	
 	
     #ifdef WIN32

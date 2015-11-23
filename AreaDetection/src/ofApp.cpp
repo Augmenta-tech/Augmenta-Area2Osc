@@ -109,8 +109,6 @@ void ofApp::init(){
 	m_bSendFbo = false;
 	m_sScreenResolution = ofToString(m_iWidthRender) +" x "+ ofToString(m_iHeightRender);
 	m_sSendFboResolution = ofToString(m_iFboWidth) + " x " + ofToString(m_iFboHeight);
-
-
 	
 }
 
@@ -124,18 +122,17 @@ void ofApp::setupGUI(){
 
 	// Setup GUI panel
 	m_gui.setup();
-	m_gui.setName("GUI Parameters");
+	m_gui.setName("GUI");
 
 	// Add content to GUI panel
-	m_gui.add(m_sScreenResolution.setup("Window res ", m_sScreenResolution));
-	m_gui.add(m_sSendFboResolution.setup("Fbo res ", m_sSendFboResolution));
-	m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
-	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
+	//m_gui.add(m_sScreenResolution.setup("Window res ", m_sScreenResolution));
+	//m_gui.add(m_sSendFboResolution.setup("Fbo res ", m_sSendFboResolution));
 	m_gui.add((m_fZoomCoef.setup("Zoom", 1, 0.3, 2)));
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
 
 	// guiFirstGroup parameters ---------------------------
 	string sFirstGroupName = "Polygons";
+    m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
 	m_guiFirstGroup.setName(sFirstGroupName);     // Name the group of parameters (important if you want to apply color to your GUI)
 	m_guiFirstGroup.add((m_oToggleClearAll.setup("Delete all polygons", m_oToggleClearAll))->getParameter());
 	m_guiFirstGroup.add((m_oToggleDeleteLastPoly.setup("Delete last polygon", m_oToggleDeleteLastPoly))->getParameter());
@@ -329,7 +326,7 @@ void ofApp::draw(){
 	m_fbo.begin();
 	ofClear(ofColor(52,53,46)); // Clear FBO content to black
 	ofEnableDepthTest();
-	
+    
 	drawAugmentaPeople();
 	drawAreaPolygons();
 	
@@ -403,8 +400,7 @@ void ofApp::drawInterface(){
 	m_fbo.draw(0, 0, m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
 	ofSetWindowShape(m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
 	
-	// Update the UI 
-    m_sFramerate = ofToString(ofGetFrameRate());
+	// Update the UI
 	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
 	m_gui.draw();
 
@@ -420,11 +416,12 @@ void ofApp::drawHiddenInterface(){
     ofSetColor(ofColor::white);
 
 	ofDrawBitmapString("FPS: " +
-		ofToString(ofGetFrameRate()) + "\n" +
-		"Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n" + m_sAugmentaOscDiplay
+		ofToString(ofGetFrameRate()) + "\n\n"
+        "Window res: " + m_sScreenResolution + "\n" +
+        "FBO res: " + m_sSendFboResolution + "\n\n" +
+        m_sAugmentaOscDiplay +
+		"Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n"
 		+ "\n" +
-		"Fbo width : " + ofToString(AugmentaReceiver.getScene()->width) + "\n" +
-		"Fbo height : " + ofToString(AugmentaReceiver.getScene()->height) + "\n\n-" +
 		"---------------------------------------\n"
 		"\n[h] to unhide interface\n" \
 		"[ctrl+s] / [cmd+s] to save settings and the currents polygons\n" \
@@ -445,10 +442,7 @@ void ofApp::drawHiddenInterface(){
 		"\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
 		"The dimensions will be the same as the ones sent by Augmenta.\n" \
 		"You can change the osc messages of a polygon in the preferences.xml file."\
-
-	
-
-                       ,20,20);
+        ,20,20);
     
     ofPopStyle();
 }

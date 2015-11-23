@@ -133,8 +133,20 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 //--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){
 	if (m_bIsFinished){
-		ofDrawBitmapString("[in] " + m_vInOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
-		ofDrawBitmapString("[out] " + m_vOutOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
+        
+        string m_vInOscReadable="";
+        string m_vOutOscReadable="";
+        for(int i=0; i<m_vInOsc.size() ; i++)
+        {
+            m_vInOscReadable+=m_vInOsc[i]+" ";
+        }
+        for(int i=0; i<m_vOutOsc.size() ; i++)
+        {
+            m_vOutOscReadable+=m_vOutOsc[i]+" ";
+        }
+
+		ofDrawBitmapString("[in] " + m_vInOscReadable, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
+		ofDrawBitmapString("[out] " + m_vOutOscReadable, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
 		ofDrawBitmapString("people : " + ofToString(m_iPeopleInside), ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
 	}
 }
