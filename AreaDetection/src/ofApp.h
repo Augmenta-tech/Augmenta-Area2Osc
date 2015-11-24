@@ -84,7 +84,6 @@ private:
 	void deleteAllPolygon();
 
     // OSC
-    ofxOscReceiver m_oscReceiver;
     ofxOscSender m_oscSender;
     string m_sOscPortDisplayMessage;   
     int m_iOscReceiverPort;

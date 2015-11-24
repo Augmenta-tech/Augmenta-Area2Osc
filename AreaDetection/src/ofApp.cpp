@@ -26,17 +26,17 @@ void ofApp::setup(){
 	// For example, GUI variables or preferences.xml variables.
 	init();
 
-	//Augmenta
-	AugmentaReceiver.connect(m_iOscReceiverPort);
-	m_oPeople = AugmentaReceiver.getPeople();
-	m_oActualScene = AugmentaReceiver.getScene();
-
 	// Important : call those function AFTER init,
 	// because init() will define all default values
 	m_iNextFreeId = 0;
-	setupGUI();
-	setupOSC();
-	loadPreferences();
+	loadSettings();
+    setupGUI();
+    setupOSC();
+    
+    //Augmenta
+    AugmentaReceiver.connect(m_iOscReceiverPort);
+    m_oPeople = AugmentaReceiver.getPeople();
+    m_oActualScene = AugmentaReceiver.getScene();
 
 	if (m_oActualScene->width == 0 || m_oActualScene->height == 0){
 		m_iFboWidth = 1024;
@@ -90,9 +90,6 @@ void ofApp::init(){
     m_iOscSenderPort = 7000;
     m_sOscSenderHost = "127.0.0.1";
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
-
-	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
-    
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
@@ -209,14 +206,6 @@ void ofApp::setupOSC(){
 	}
 
 	m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
-
-	try{
-		m_oscReceiver.setup(m_iOscReceiverPort);
-	}
-	catch (std::exception&e){
-		ofLogWarning("setupOSC") << "Error : " << ofToString(e.what());
-		m_sReceiverOscDisplay = "\n/!\\ ERROR : Could not bind to OSC port " + ofToString(m_iOscReceiverPort) + " !\n\n";
-	}
 
 	m_oscSender.setup(m_sOscSenderHost, m_iOscSenderPort);
 }
@@ -419,7 +408,7 @@ void ofApp::drawHiddenInterface(){
 		ofToString(ofGetFrameRate()) + "\n\n"
         "Window res: " + m_sScreenResolution + "\n" +
         "FBO res: " + m_sSendFboResolution + "\n\n" +
-        m_sAugmentaOscDiplay +
+        m_sReceiverOscDisplay +
 		"Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n"
 		+ "\n" +
 		"---------------------------------------\n"
@@ -795,7 +784,7 @@ ofPoint ofApp::transformMouseCoord(int x, int y){
 void ofApp::saveSettings(){    
     // Save GUI parameters
     m_gui.saveToFile("settings.xml");
-	savePreferences(); 
+	savePreferences();
 }
 
 //--------------------------------------------------------------
@@ -812,21 +801,28 @@ void ofApp::loadSettings(){
 		}
 		m_vAreaPolygonsVector.clear();
 		m_bEditMode = false;
-		loadPreferences();
+		//loadPreferences();
 	}
 }
 
 //--------------------------------------------------------------
 void ofApp::savePreferences(){
-
+    std::cout << "Save preferences" << std::endl;
 	ofxXmlSettings preferences;
-	preferences.addTag("Settings");
-	preferences.pushTag("Settings");
-	preferences.addValue("HideInterface", m_bHideInterface);
-	preferences.addValue("LogToFile", m_bLogToFile);
-	preferences.addValue("FboWidth", m_iFboWidth);
-	preferences.addValue("FboHeight", m_iFboHeight);
-	preferences.addValue("NextFreeId", m_iNextFreeId);
+    preferences.addTag("Settings");
+    preferences.pushTag("Settings");
+    preferences.addValue("HideInterface", m_bHideInterface);
+    preferences.addValue("LogToFile", m_bLogToFile);
+    preferences.addValue("FboWidth", m_iFboWidth);
+    preferences.addValue("FboHeight", m_iFboHeight);
+    preferences.popTag();
+    preferences.addTag("OSC");
+    preferences.pushTag("OSC");
+    preferences.addValue("ReceiverPort",m_iOscReceiverPort);
+    preferences.addValue("SenderPort",m_iOscSenderPort);
+    preferences.addValue("SenderHost",m_sOscSenderHost);
+    preferences.popTag();
+    preferences.saveFile("preferences.xml");
 
 
 	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
@@ -917,8 +913,8 @@ void ofApp::loadPreferences(){
 		}
 	}
 	else{
-		ofLogNotice("Preferences file did not load..");
-	}
+		ofLogNotice("Preferences file did not load...We'll create a new one when stopping");
+    }
 }
 
 //_______________________________________________________________
