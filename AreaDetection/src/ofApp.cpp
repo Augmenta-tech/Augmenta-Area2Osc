@@ -101,6 +101,7 @@ void ofApp::init(){
 	m_iAntiBounce = 100;
 	m_fZoomCoef = 1.0;
 	m_bSendFbo = false;
+    m_bAutoSize = false;
 	m_sScreenResolution = ofToString(m_iWidthRender) +" x "+ ofToString(m_iHeightRender);
 	m_sSendFboResolution = ofToString(m_iFboWidth) + " x " + ofToString(m_iFboHeight);
 	
@@ -313,7 +314,8 @@ void ofApp::drawAugmentaPeople(){
 }
 
 //--------------------------------------------------------------
-void ofApp::draw(){	
+void ofApp::draw(){
+    
     if(m_bAutoSize){
         fboSizeHaveChanged(m_oActualScene->width, m_oActualScene->height);
     } else {
