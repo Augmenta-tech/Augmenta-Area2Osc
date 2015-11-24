@@ -76,6 +76,8 @@ private:
 	ofFbo m_oFboSent;
     int m_iFboWidth;
     int m_iFboHeight;
+    int m_iXMLFboWidth;
+    int m_iXMLFboHeight;
     string m_sSendFboResolution;
     string m_sScreenResolution;
 
@@ -120,7 +122,7 @@ private:
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     
 	// Parameters group to organize your parameters
-	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;
+	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup, m_guiFourthGroup;
 
     // Gui parameters inside m_guiFirstGroup
     ofxToggle m_bRedondanteMode;
@@ -133,8 +135,11 @@ private:
 
 	// Gui parameters inside m_ThirdGroup
 	ofxToggle m_bSendFbo;
-    ofxLabel m_sOscOutGUI;
-    ofxLabel m_sOscInGUI;
+    //ofxLabel m_sOscOutGUI;
+    //ofxLabel m_sOscInGUI;
+    
+    // 4th group
+    ofxToggle m_bAutoSize;
 
     // --------- End of Gui content	
 	

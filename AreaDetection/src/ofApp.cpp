@@ -38,10 +38,7 @@ void ofApp::setup(){
     m_oPeople = AugmentaReceiver.getPeople();
     m_oActualScene = AugmentaReceiver.getScene();
 
-	if (m_oActualScene->width == 0 || m_oActualScene->height == 0){
-		m_iFboWidth = 1024;
-		m_iFboHeight = 768;
-	}else{
+	if ((m_oActualScene->width != 0 && m_oActualScene->height != 0) && m_bAutoSize){
 		m_iFboWidth = m_oActualScene->width;
 		m_iFboHeight = m_oActualScene->height;
 	}
@@ -156,6 +153,12 @@ void ofApp::setupGUI(){
 	
 	m_gui.add(m_guiThirdGroup);
 
+    // 4th group
+    string sFourthGroupName = "Augmenta";
+    m_guiFourthGroup.setName(sFourthGroupName);
+    m_guiFourthGroup.add((m_bAutoSize.setup("Auto resize", m_bAutoSize))->getParameter());
+    m_gui.add(m_guiFourthGroup);
+    
 	// You can add colors to your GUI groups to identify them easily
 	// Example of beautiful colors you can use : salmon, orange, darkSeaGreen, teal, cornflowerBlue...
 	m_gui.getGroup(sFirstGroupName).setHeaderBackgroundColor(ofColor::salmon);    // Parameter group must be get with its name defined in setupGUI()
@@ -164,6 +167,8 @@ void ofApp::setupGUI(){
 	m_gui.getGroup(sSecondGroupName).setBorderColor(ofColor::orange);
 	m_gui.getGroup(sThridGroupName).setHeaderBackgroundColor(ofColor::cornflowerBlue);
 	m_gui.getGroup(sThridGroupName).setBorderColor(ofColor::cornflowerBlue);
+    m_gui.getGroup(sFourthGroupName).setHeaderBackgroundColor(ofColor::darkOrchid);
+    m_gui.getGroup(sFourthGroupName).setBorderColor(ofColor::darkOrchid);
 
 	// Load autosave settings
 	if (ofFile::doesFileExist("autosave.xml")){
@@ -309,9 +314,11 @@ void ofApp::drawAugmentaPeople(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){	
-	
-	fboSizeHaveChanged(m_oActualScene->width, m_oActualScene->height);
-
+    if(m_bAutoSize){
+        fboSizeHaveChanged(m_oActualScene->width, m_oActualScene->height);
+    } else {
+        fboSizeHaveChanged(m_iXMLFboWidth, m_iXMLFboHeight);
+    }
 	m_fbo.begin();
 	ofClear(ofColor(52,53,46)); // Clear FBO content to black
 	ofEnableDepthTest();
@@ -801,7 +808,7 @@ void ofApp::loadSettings(){
 		}
 		m_vAreaPolygonsVector.clear();
 		m_bEditMode = false;
-		//loadPreferences();
+		loadPreferences();
 	}
 }
 
@@ -813,8 +820,8 @@ void ofApp::savePreferences(){
     preferences.pushTag("Settings");
     preferences.addValue("HideInterface", m_bHideInterface);
     preferences.addValue("LogToFile", m_bLogToFile);
-    preferences.addValue("FboWidth", m_iFboWidth);
-    preferences.addValue("FboHeight", m_iFboHeight);
+    preferences.addValue("FboWidth", m_iXMLFboWidth);
+    preferences.addValue("FboHeight", m_iXMLFboHeight);
     preferences.popTag();
     preferences.addTag("OSC");
     preferences.pushTag("OSC");
@@ -865,8 +872,10 @@ void ofApp::loadPreferences(){
 		preferences.pushTag("Settings");
 		m_bHideInterface = preferences.getValue("HideInterface", m_bHideInterface);
 		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
-		m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
-		m_iFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
+		m_iXMLFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
+		m_iXMLFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
+        m_iFboWidth = m_iXMLFboWidth;
+        m_iFboHeight = m_iXMLFboHeight;
 		m_iNextFreeId = preferences.getValue("NextFreeId", m_iNextFreeId);
 
 		nbrPolygons = preferences.getNumTags("AreaPolygon");
