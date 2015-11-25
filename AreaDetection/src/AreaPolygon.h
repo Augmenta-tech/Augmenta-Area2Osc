@@ -38,13 +38,12 @@ public:
 	inline int getPeopleInside(){ return m_iPeopleInside; };
 
 	//Osc
-	inline string getInOscAdress(){ return m_vInOsc[0]; };
-	inline string getOutOscAdress(){ return m_vOutOsc[0]; };
-	inline ofxOscMessage getInOscMessage(){ return m_oOscMessageIn; };
-	inline ofxOscMessage getOutOscMessage(){ return m_oOscMessageOut; };
-	string getInOscAll(); 
-	string getOutOscAll();
-	void loadOscMessage(string m_aInOsc, string m_aOutOsc);
+	inline vector<ofxOscMessage> getInOscMessages(){ return m_vOscMessagesIn; };
+	inline vector<ofxOscMessage> getOutOscMessages(){ return m_vOscMessagesOut; };
+    
+	string messageToString(ofxOscMessage m);
+	ofxOscMessage parseOscMessage(string _messageString);
+    void loadOscMessages(vector<string> ins, vector<string> outs);
 		
 	//Draw
 	void draw(int width, int height); 
@@ -78,10 +77,8 @@ private:
 	bool m_bSelected;
 	ofVec2f m_oCentroid;
 	int m_iPeopleMovement;
-	vector<string> m_vInOsc;
-	vector<string> m_vOutOsc;
-	ofxOscMessage m_oOscMessageIn;
-	ofxOscMessage m_oOscMessageOut;
+	vector<ofxOscMessage> m_vOscMessagesIn;
+	vector<ofxOscMessage> m_vOscMessagesOut;
 	float m_fMoveIncremente;
 	vector<LeavingPerson> m_vWaitingToLeave;
 	vector<int> m_vIdPeopleInside;

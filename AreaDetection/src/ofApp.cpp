@@ -83,6 +83,8 @@ void ofApp::init(){
     m_bLogToFile = false;
     m_iFboWidth = 1024;
     m_iFboHeight = 768;
+    m_iXMLFboWidth = m_iFboWidth;
+    m_iXMLFboHeight = m_iFboHeight;
     m_iOscReceiverPort = 12000;
     m_iOscSenderPort = 7000;
     m_sOscSenderHost = "127.0.0.1";
@@ -210,8 +212,6 @@ void ofApp::setupOSC(){
 		settings.popTag();
 		settings.saveFile("preferences.xml");
 	}
-
-	m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
 
 	m_oscSender.setup(m_sOscSenderHost, m_iOscSenderPort);
 }
@@ -822,8 +822,12 @@ void ofApp::savePreferences(){
     preferences.pushTag("Settings");
     preferences.addValue("HideInterface", m_bHideInterface);
     preferences.addValue("LogToFile", m_bLogToFile);
+    
+    if (m_iXMLFboWidth == 0) m_iXMLFboWidth = m_iFboWidth;
+    if (m_iXMLFboHeight == 0) m_iXMLFboHeight = m_iFboHeight;
     preferences.addValue("FboWidth", m_iXMLFboWidth);
     preferences.addValue("FboHeight", m_iXMLFboHeight);
+    preferences.addValue("NextFreeId", m_iNextFreeId);
     preferences.popTag();
     preferences.addTag("OSC");
     preferences.pushTag("OSC");
@@ -847,11 +851,16 @@ void ofApp::savePreferences(){
 				preferences.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
 				preferences.popTag();
 			}
-
+            vector<ofxOscMessage> ins = m_vAreaPolygonsVector[i].getInOscMessages();
+            vector<ofxOscMessage> outs = m_vAreaPolygonsVector[i].getOutOscMessages();
 			preferences.addTag("Osc");
 			preferences.pushTag("Osc");
-				preferences.addValue("In", m_vAreaPolygonsVector[i].getInOscAll());
-				preferences.addValue("Out", m_vAreaPolygonsVector[i].getOutOscAll());
+                for (int j=0; j < ins.size(); j++){
+                    preferences.addValue("In", m_vAreaPolygonsVector[i].messageToString(ins[j]));
+                }
+                for (int j=0; j < outs.size(); j++){
+                    preferences.addValue("Out", m_vAreaPolygonsVector[i].messageToString(outs[j]));
+                }
 			preferences.popTag();
 			preferences.popTag();
 		}
@@ -870,6 +879,8 @@ void ofApp::loadPreferences(){
 
 	// If a preferences.xml file exists, load it
 	if (ofFile::doesFileExist("preferences.xml")){
+        ofLogNotice("Loading XML file...");
+        
 		preferences.load("preferences.xml");
 		preferences.pushTag("Settings");
 		m_bHideInterface = preferences.getValue("HideInterface", m_bHideInterface);
@@ -879,15 +890,18 @@ void ofApp::loadPreferences(){
         m_iFboWidth = m_iXMLFboWidth;
         m_iFboHeight = m_iXMLFboHeight;
 		m_iNextFreeId = preferences.getValue("NextFreeId", m_iNextFreeId);
+        preferences.popTag();
+        
+        
+        std::cout << "Size fbo loaded : " << m_iFboWidth << "/" << m_iFboHeight << std::endl;
 
 		nbrPolygons = preferences.getNumTags("AreaPolygon");
-		ofLogVerbose("loadPreferences") << "load of " << nbrPolygons << " polygons";
+		ofLogNotice("loadPreferences") << "load of " << nbrPolygons << " polygons";
 
 		for (int i = 0; i < nbrPolygons; ++i){
 			preferences.pushTag("AreaPolygon", i);
 
 			nbrPoints = preferences.getNumTags("Point");
-			ofLogVerbose("loadPreferences") << "load of " << nbrPoints << " points";
 
 			for (int j = 0; j < nbrPoints; j++){
 				preferences.pushTag("Point", j);
@@ -910,9 +924,22 @@ void ofApp::loadPreferences(){
 			}
 			m_vAreaPolygonsVector[i].complete();
 
-				preferences.pushTag("Osc");
-				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(m_iNextFreeId) + "/personEntered"),
-														preferences.getValue("Out", "/area" + ofToString(m_iNextFreeId) + "/personWillLeave"));
+            preferences.pushTag("Osc");
+            
+                // Handle multiple IN/OUT messages
+                int nbrIn = preferences.getNumTags("In");
+                int nbrOut = preferences.getNumTags("Out");
+                vector<string> ins;
+                vector<string> outs;
+            
+                for (int i=0 ; i < nbrIn ; i++){
+                    ins.push_back(preferences.getValue("In",  "/area" + ofToString(m_iNextFreeId) + "/personEntered", i));
+                }
+                for (int i=0 ; i < nbrOut ; i++){
+                    outs.push_back(preferences.getValue("Out", "/area" + ofToString(m_iNextFreeId) + "/personWillLeave", i));
+                }
+                // Load the strings into objects
+				m_vAreaPolygonsVector[i].loadOscMessages(ins,outs);
 				preferences.popTag();
 
 			preferences.popTag();
@@ -934,59 +961,51 @@ void ofApp::loadPreferences(){
 
 //--------------------------------------------------------------
 void ofApp::sendOSC(){
-// Create a new message
+    
 ofxOscMessage m;
-	if (m_bRedondanteMode){	
-		for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
-			if (m_vAreaPolygonsVector[i].isCompleted()){
-				if (m_vAreaPolygonsVector[i].getPeopleMovement() > 0){		
-					// Create a first dataset
-					m = m_vAreaPolygonsVector[i].getInOscMessage();
-					m.setAddress(m_vAreaPolygonsVector[i].getInOscAdress());
-					for (int j = 0; j < m_vAreaPolygonsVector[i].getPeopleMovement(); j++){
-						m_oscSender.sendMessage(m); // Send it
-						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOscAdress();
-					}
-					m.clear(); // Clear message to be able to reuse it
-				}
-				if (m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
-					// Create a second dataset
-					m = m_vAreaPolygonsVector[i].getOutOscMessage();
-					m.setAddress(m_vAreaPolygonsVector[i].getOutOscAdress());
-					for (int j = 0; j < abs(m_vAreaPolygonsVector[i].getPeopleMovement()); j++){
-						m_oscSender.sendMessage(m); // Send it
-						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOscAdress();
-					}
-					m.clear(); // Clear message to be able to reuse it
-				}
-			}
-		}
-	}
-	else{//Non redondant mode 
-		for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
-			if (m_vAreaPolygonsVector[i].isCompleted()){
-				//We can work on this polygon
-				if (m_vAreaPolygonsVector[i].getPeopleInside() == 0 
-					&& m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
-					//X->0
-					m = m_vAreaPolygonsVector[i].getOutOscMessage();
-					m.setAddress(m_vAreaPolygonsVector[i].getOutOscAdress());
-					m_oscSender.sendMessage(m); // Send it
-					m.clear(); // Clear message to be able to reuse it
-					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOscAdress();
-				}
-				if (m_vAreaPolygonsVector[i].getPeopleInside() != 0 
-					&& m_vAreaPolygonsVector[i].getPeopleInside() == m_vAreaPolygonsVector[i].getPeopleMovement()){
-					//0->X
-					m = m_vAreaPolygonsVector[i].getInOscMessage();
-					m.setAddress(m_vAreaPolygonsVector[i].getInOscAdress());
-					m_oscSender.sendMessage(m); // Send it
-					m.clear(); // Clear message to be able to reuse it
-					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOscAdress();
-				}
-			}
-		}
-	}
+    for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
+        AreaPolygon ap = m_vAreaPolygonsVector[i];
+        if (ap.isCompleted()){
+            // IN
+            if (ap.getPeopleMovement() > 0){
+                // Get all in messages
+                vector<ofxOscMessage> ins = ap.getInOscMessages();
+                // Send each message
+                for (int i=0; i<ins.size(); i++){
+                    ofxOscMessage m = ins[i];
+                    if (m_bRedondanteMode){
+                        for (int j = 0; j < ap.getPeopleMovement(); j++){
+                            m_oscSender.sendMessage(m); // Send it
+                            ofLogVerbose("sendOSC") << m.getAddress();
+                        }
+                    } else {
+                        m_oscSender.sendMessage(m); // Send it
+                        ofLogVerbose("sendOSC") << m.getAddress();
+                    }
+                    m.clear(); // Clear message to be able to reuse it
+                }
+            // OUT
+            } else if (ap.getPeopleMovement() < 0){
+                // Get all in messages
+                vector<ofxOscMessage> outs = ap.getOutOscMessages();
+                // Send each message
+                for (int i=0; i<outs.size(); i++){
+                    ofxOscMessage m = outs[i];
+                    if (m_bRedondanteMode){
+                        for (int j = 0; j > ap.getPeopleMovement(); j--){
+                            std::cout << "Test : " << j << std::endl;
+                            m_oscSender.sendMessage(m); // Send it
+                            ofLogVerbose("sendOSC") << m.getAddress();
+                        }
+                    } else {
+                        m_oscSender.sendMessage(m); // Send it
+                        ofLogVerbose("sendOSC") << m.getAddress();
+                    }
+                    m.clear(); // Clear message to be able to reuse it
+                }
+            }
+        }
+    }
 }
 
 //_______________________________________________________________

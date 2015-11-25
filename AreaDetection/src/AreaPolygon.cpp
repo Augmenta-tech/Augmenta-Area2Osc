@@ -17,29 +17,34 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
 	m_fMoveIncremente = 0.001;
-	m_vInOsc.push_back("/area" + ofToString(a_iIndice) + "/personEntered");
-	m_vOutOsc.push_back("/area" + ofToString(a_iIndice) + "/personWillLeave");
+    
+    ofxOscMessage defaultIn;
+    defaultIn.setAddress("/area" + ofToString(a_iIndice) + "/personEntered");
+    m_vOscMessagesIn.push_back(defaultIn);
+    ofxOscMessage defaultOut;
+    defaultOut.setAddress("/area" + ofToString(a_iIndice) + "/personWillLeave");
+    m_vOscMessagesOut.push_back(defaultOut);
 
 	addPoint(a_oFirstPoint);
 }
 
 //--------------------------------------------------------------
-string AreaPolygon::getInOscAll(){
-	string tempString = m_vInOsc[0];
-	for (int i = 1; i < m_vInOsc.size(); ++i){
-		tempString = tempString + " " + m_vInOsc[i];
+string AreaPolygon::messageToString(ofxOscMessage m){
+	string tempString = m.getAddress();
+    
+	for (int i = 0; i < m.getNumArgs(); ++i){
+        string type = m.getArgTypeName(i);
+        if (type == "f"){
+            tempString = tempString + " " + std::to_string(m.getArgAsFloat(i));
+        } else if (type == "i"){
+            tempString = tempString + " " + std::to_string(m.getArgAsInt(i));
+        } else {
+            tempString = tempString + " " + m.getArgAsString(i);
+        }
 	}
 	return tempString;
 }
 
-//--------------------------------------------------------------
-string AreaPolygon::getOutOscAll(){
-	string tempString = m_vOutOsc[0];
-	for (int i = 1; i < m_vOutOsc.size(); ++i){
-		tempString = tempString + " " + m_vOutOsc[i];
-	}
-	return tempString;
-}
 
 //--------------------------------------------------------------
 bool AreaPolygon::doesStringContainOnlyNumber(string a_sString){
@@ -81,48 +86,54 @@ bool AreaPolygon::doesStringContainOnlyNumberAndOnePoint(string a_sString){
 }
 
 //--------------------------------------------------------------
-void AreaPolygon::loadOscMessage(string m_aInOsc, string m_aOutOsc){
-	m_vInOsc = ofSplitString(m_aInOsc, " ");
-	for (int i = 1; i < m_vInOsc.size(); i++){
-		if (containOnlyAlpha(m_vInOsc[i])){
+ofxOscMessage AreaPolygon::parseOscMessage(string _messageString){
+    
+    ofxOscMessage output = *new ofxOscMessage();
+	vector<string> strings = ofSplitString(_messageString, " ");
+    // Address
+    output.setAddress(strings[0]);
+    // Args
+	for (int i = 1; i < strings.size(); i++){
+		if (containOnlyAlpha(strings[i])){
 			// is a string 
-			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
+			output.addStringArg(strings[i]);
 		}
-		else if (doesStringContainOnlyNumber(m_vInOsc[i])){
+		else if (doesStringContainOnlyNumber(strings[i])){
 			//is a int 
-			m_oOscMessageIn.addIntArg(ofToInt(m_vInOsc[i]));
-			}
-		else if (doesStringContainOnlyNumberAndOnePoint(m_vInOsc[i])){
+			output.addIntArg(ofToInt(strings[i]));
+        }
+		else if (doesStringContainOnlyNumberAndOnePoint(strings[i])){
 			//is a float
-			m_oOscMessageIn.addFloatArg(ofToFloat(m_vInOsc[i]));
+			output.addFloatArg(ofToFloat(strings[i]));
 		}
 		else{
 			//Unknow type send as string
 			ofLogError("m_oOscMessageIn loaded an unknow variable as string");
-			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
+			output.addStringArg(strings[i]);
 		}
 	}
+    
+    return output;
+}
 
-	m_vOutOsc = ofSplitString(m_aOutOsc, " ");
-	for (int i = 1; i < m_vOutOsc.size(); i++){
-		if (containOnlyAlpha(m_vOutOsc[i])){
-			// is a string 
-			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
-		}
-		else if (doesStringContainOnlyNumber(m_vOutOsc[i])){
-			//is a int 
-			m_oOscMessageOut.addIntArg(ofToInt(m_vOutOsc[i]));
-		}
-		else if (doesStringContainOnlyNumberAndOnePoint(m_vOutOsc[i])){
-			//is a float
-			m_oOscMessageOut.addFloatArg(ofToFloat(m_vOutOsc[i]));
-		}
-		else{
-			//Unknow type send as string
-			ofLogError("m_oOscMessageOut loaded an unknow variable as string");
-			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
-		}
-	}
+//--------------------------------------------------------------
+void AreaPolygon::loadOscMessages(vector<string> ins, vector<string> outs){
+    // Clear ofxOscMessages vectors
+    std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
+    m_vOscMessagesIn.clear();
+    m_vOscMessagesOut.clear();
+    // Ins
+    for (int i=0; i<ins.size(); i++){
+        ofxOscMessage msg = parseOscMessage(ins[i]);
+        std::cout << "Address" << msg.getAddress() << std::endl;
+        m_vOscMessagesIn.push_back(msg);
+    }
+    // Outs
+    for (int i=0; i<outs.size(); i++){
+        m_vOscMessagesOut.push_back(parseOscMessage(outs[i]));
+    }
+    
+    std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
 }
 
 //--------------------------------------------------------------
@@ -133,7 +144,7 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 //--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){
 	if (m_bIsFinished){
-        
+        /*
         string m_vInOscReadable="";
         string m_vOutOscReadable="";
         for(int i=0; i<m_vInOsc.size() ; i++)
@@ -144,10 +155,22 @@ void AreaPolygon::drawPeopleInside(int width, int height){
         {
             m_vOutOscReadable+=m_vOutOsc[i]+" ";
         }
-
-		ofDrawBitmapString("[in] " + m_vInOscReadable, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
-		ofDrawBitmapString("[out] " + m_vOutOscReadable, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
-		ofDrawBitmapString("people : " + ofToString(m_iPeopleInside), ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
+        */
+        // PEOPLE
+        ofDrawBitmapString("people : " + ofToString(m_iPeopleInside), ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height -10));
+        // INS
+        int count = 0;
+        for (int i=0; i< m_vOscMessagesIn.size(); i++){
+            string s = "[in] "+ messageToString(m_vOscMessagesIn[i]);
+            ofDrawBitmapString(s, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height + 10*count));
+            count ++;
+        }
+        for (int i=0; i< m_vOscMessagesOut.size(); i++){
+            string s = "[out] "+ messageToString(m_vOscMessagesOut[i]);
+            ofDrawBitmapString(s, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height + 10*count));
+            count ++;
+        }
+		
 	}
 }
 
