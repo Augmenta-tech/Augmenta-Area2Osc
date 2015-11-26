@@ -882,7 +882,7 @@ void ofApp::savePreferences(){
         preferences.popTag();
     }
     preferences.popTag();
-    preferences.saveFile("preferences.xml");
+    //preferences.saveFile(m_sPreferencesPath);
 
 
 	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
