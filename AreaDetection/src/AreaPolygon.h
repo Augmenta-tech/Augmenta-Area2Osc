@@ -91,6 +91,7 @@ private:
 	ofColor m_oNotEmptyColor;
 	float m_fRadius;
 	int m_iLinesWidth;
+    int m_iLinesWidthCompleted;
 
 };
 #endif // AreaPolygon_H

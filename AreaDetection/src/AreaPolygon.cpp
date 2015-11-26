@@ -5,12 +5,17 @@
 
 
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce){
-	m_oPointsColor = ofColor(246,128,248,200);
-	m_oLinesColor = ofColor(237,232,229,200);
-	m_oCompletedColor = ofColor(255, 166, 70,200);
-	m_oLinesCompletedColor = ofColor(243,80,64,200);
-	m_oNotEmptyColor = ofColor(243,80,64,200);
-	m_iLinesWidth = 3;
+	
+    m_oPointsColor = ofColor(255,255,255,255);
+    
+	m_oLinesColor = ofColor(255,255,255,255);
+    m_oLinesCompletedColor = ofColor(243,80,64,255);
+    m_iLinesWidth = 4;
+    m_iLinesWidthCompleted = 2;
+    
+	m_oCompletedColor = ofColor(0, 255, 255,100);
+	m_oNotEmptyColor = ofColor(100,255,100,100);
+    
 	m_fRadius = 5;
 	m_bIsFinished = false;
 	setPeopleInside(a_vPeople, m_iAntiBounce);
@@ -191,9 +196,11 @@ void AreaPolygon::draw(int width,int height){
 	ofPushStyle();
 	int brightness = 150;
 
+
 	//The shape is finished
 	if (m_bIsFinished){
 		//draw completed poly
+        ofSetLineWidth(m_iLinesWidthCompleted);
 		ofSetColor(m_oLinesColor);
 		for (int i = 0; i < m_vVectorPoints.size() - 1; ++i){
 			for (int j = 1; j < m_vVectorPoints.size(); ++j){

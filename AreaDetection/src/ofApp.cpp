@@ -20,7 +20,7 @@ void ofApp::setup(){
 #endif
 
 	// Limit framerate to 60fps
-	ofSetFrameRate(60);
+	ofSetFrameRate(60);    
 
 	// Init function is used to set default variables that can be changed.
 	// For example, GUI variables or preferences.xml variables.
@@ -346,15 +346,16 @@ void ofApp::draw(){
     } else {
         fboSizeHaveChanged(m_iXMLFboWidth, m_iXMLFboHeight);
     }
-	m_fbo.begin();
-	ofClear(ofColor(52,53,46)); // Clear FBO content to black
-	ofEnableDepthTest();
     
-	drawAugmentaPeople();
-	drawAreaPolygons();
-	
+	m_fbo.begin();
+    
+	ofClear(ofColor(20,20,20)); // Clear FBO content to black
 	ofDisableDepthTest();
-	m_fbo.end();
+
+    drawAugmentaPeople();
+	drawAreaPolygons();
+
+    m_fbo.end();
 
 	if (m_bSendFbo){
 		sendVisuals();
@@ -365,8 +366,8 @@ void ofApp::draw(){
         drawHiddenInterface();
     } else{
         drawInterface();
-		
     }
+    
 }
 
 //--------------------------------------------------------------
