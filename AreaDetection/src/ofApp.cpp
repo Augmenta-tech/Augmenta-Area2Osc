@@ -86,8 +86,8 @@ void ofApp::init(){
     m_iXMLFboWidth = m_iFboWidth;
     m_iXMLFboHeight = m_iFboHeight;
     m_iOscReceiverPort = 12000;
-    m_iOscSenderPort = 7000;
-    m_sOscSenderHost = "127.0.0.1";
+    m_iOscSenderPorts.push_back(7000);
+    m_sOscSenderHosts.push_back("127.0.0.1");
     m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
@@ -183,37 +183,55 @@ void ofApp::setupGUI(){
 void ofApp::setupOSC(){
 
 	ofxXmlSettings settings;
-	bool bNeedToSaveSettings = false;
+    
+	bool bNeedDefault = false;
 
 	// If a file settings exists, load values saved ; else, take default values
 	if (ofFile::doesFileExist("preferences.xml")){
 		settings.load("preferences.xml");
 		if (settings.tagExists("OSC")){
 			settings.pushTag("OSC");
-			m_iOscReceiverPort = settings.getValue("ReceiverPort", m_iOscReceiverPort);
-			m_iOscSenderPort = settings.getValue("SenderPort", m_iOscSenderPort);
-			m_sOscSenderHost = settings.getValue("SenderHost", m_sOscSenderHost);
+            
+            // Receiver
+			m_iOscReceiverPort = settings.getValue("Receiver", m_iOscReceiverPort);
+            // Senders
+            int nbrSenders = settings.getNumTags("Sender");
+            if (nbrSenders == 0){
+                bNeedDefault = true;
+            } else {
+                m_iOscSenderPorts.clear();
+                m_sOscSenderHosts.clear();
+            }
+
+            for (int i=0; i < nbrSenders ; i++){
+                settings.pushTag("Sender", i);
+                m_iOscSenderPorts.push_back(settings.getValue("Port", 1234));
+                m_sOscSenderHosts.push_back(settings.getValue("Ip", "127.0.0.1"));
+                // Add actual sender
+                ofxOscSender sender;
+                sender.setup(m_sOscSenderHosts[i],  m_iOscSenderPorts[i]);
+                m_oscSenders.push_back(sender);
+                std::cout << "Sender added : " <<  m_sOscSenderHosts.back() << ":" << m_iOscSenderPorts.back() << std::endl;
+                settings.popTag();
+            }
+			
 			settings.popTag();
-		}
-		else{
-			bNeedToSaveSettings = true;
-		}
-	}
-	else{
-		bNeedToSaveSettings = true;
-	}
-
-	if (bNeedToSaveSettings){
-		settings.addTag("OSC");
-		settings.pushTag("OSC");
-		settings.setValue("ReceiverPort", m_iOscReceiverPort);
-		settings.setValue("SenderPort", m_iOscSenderPort);
-		settings.setValue("SenderHost", m_sOscSenderHost);
-		settings.popTag();
-		settings.saveFile("preferences.xml");
-	}
-
-	m_oscSender.setup(m_sOscSenderHost, m_iOscSenderPort);
+		} else {
+            bNeedDefault = true;
+        }
+    } else {
+        bNeedDefault = true;
+    }
+    
+    if (bNeedDefault){
+        std::cout << "Adding default sender" << std::endl;
+        // Add default sender
+        ofxOscSender sender;
+        sender.setup(m_sOscSenderHosts[0],  m_iOscSenderPorts[0]);
+        m_oscSenders.push_back(sender);
+    }
+    
+    std::cout << "Num of senders : " << m_oscSenders.size() << std::endl;
 }
 
 //--------------------------------------------------------------
@@ -418,7 +436,7 @@ void ofApp::drawHiddenInterface(){
         "Window res: " + m_sScreenResolution + "\n" +
         "FBO res: " + m_sSendFboResolution + "\n\n" +
         m_sReceiverOscDisplay +
-		"Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n"
+		"Sending OSC to " + m_sOscSenderHosts[0] + ":" + ofToString(m_iOscSenderPorts[0]) + "\n"
 		+ "\n" +
 		"---------------------------------------\n"
 		"\n[h] to unhide interface\n" \
@@ -831,9 +849,20 @@ void ofApp::savePreferences(){
     preferences.popTag();
     preferences.addTag("OSC");
     preferences.pushTag("OSC");
+    /*
     preferences.addValue("ReceiverPort",m_iOscReceiverPort);
     preferences.addValue("SenderPort",m_iOscSenderPort);
     preferences.addValue("SenderHost",m_sOscSenderHost);
+     */
+    preferences.addValue("Receiver",m_iOscReceiverPort);
+    for (int i = 0; i< m_oscSenders.size(); i++){
+        std::cout << "Save one sender" << std::endl;
+        preferences.addTag("Sender");
+        preferences.pushTag("Sender");
+            preferences.addValue("Ip", m_sOscSenderHosts[i]);
+            preferences.addValue("Port", m_iOscSenderPorts[i]);
+        preferences.popTag();
+    }
     preferences.popTag();
     preferences.saveFile("preferences.xml");
 
@@ -975,11 +1004,16 @@ ofxOscMessage m;
                     ofxOscMessage m = ins[i];
                     if (m_bRedondanteMode){
                         for (int j = 0; j < ap.getPeopleMovement(); j++){
-                            m_oscSender.sendMessage(m); // Send it
+                            for (int k=0; k<m_oscSenders.size(); k++){
+                                m_oscSenders[k].sendMessage(m); // Send it
+                                std::cout << "Sending on sender num : "<< k<<" with port : "<< m_iOscSenderPorts[k] << std::endl;
+                            }
                             ofLogVerbose("sendOSC") << m.getAddress();
                         }
                     } else {
-                        m_oscSender.sendMessage(m); // Send it
+                        for (int k=0; k<m_oscSenders.size(); k++){
+                            m_oscSenders[k].sendMessage(m); // Send it
+                        }
                         ofLogVerbose("sendOSC") << m.getAddress();
                     }
                     m.clear(); // Clear message to be able to reuse it
@@ -993,12 +1027,15 @@ ofxOscMessage m;
                     ofxOscMessage m = outs[i];
                     if (m_bRedondanteMode){
                         for (int j = 0; j > ap.getPeopleMovement(); j--){
-                            std::cout << "Test : " << j << std::endl;
-                            m_oscSender.sendMessage(m); // Send it
+                            for (int k=0; k<m_oscSenders.size(); k++){
+                                m_oscSenders[k].sendMessage(m); // Send it
+                            }
                             ofLogVerbose("sendOSC") << m.getAddress();
                         }
                     } else {
-                        m_oscSender.sendMessage(m); // Send it
+                        for (int k=0; k<m_oscSenders.size(); k++){
+                            m_oscSenders[k].sendMessage(m); // Send it
+                        }
                         ofLogVerbose("sendOSC") << m.getAddress();
                     }
                     m.clear(); // Clear message to be able to reuse it

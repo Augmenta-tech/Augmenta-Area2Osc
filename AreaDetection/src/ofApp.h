@@ -86,11 +86,12 @@ private:
 	void deleteAllPolygon();
 
     // OSC
-    ofxOscSender m_oscSender;
+    vector<ofxOscSender> m_oscSenders;
+    vector<int> m_iOscSenderPorts;
+    vector<string> m_sOscSenderHosts;
+    
     string m_sOscPortDisplayMessage;   
     int m_iOscReceiverPort;
-    int m_iOscSenderPort;
-    string m_sOscSenderHost;
     string m_sReceiverOscDisplay;
 
 	//Augmenta
