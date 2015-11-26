@@ -191,6 +191,12 @@ void ofApp::setupOSC(){
 	if (ofFile::doesFileExist(m_sPreferencesPath)){
 		settings.load(m_sPreferencesPath);
 		if (settings.tagExists("OSC")){
+            
+            // Clear everything before putting it in
+            m_sOscSenderHosts.clear();
+            m_iOscSenderPorts.clear();
+            m_oscSenders.clear();
+            
 			settings.pushTag("OSC");
             
             // Receiver
@@ -804,15 +810,20 @@ ofPoint ofApp::transformMouseCoord(int x, int y){
 	return ofPoint(x, y);
 }
 
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo drag){
-    m_sPreferencesPath = drag.files[0];
-    loadSettings();
-    setupOSC();
-}
 //_______________________________________________________________
 //_____________________________SAVE & LOAD_______________________
 //_______________________________________________________________
+
+//--------------------------------------------------------------
+void ofApp::dragEvent(ofDragInfo drag){
+    // Save first
+    saveSettings();
+    // Get path
+    m_sPreferencesPath = drag.files[0];
+    // Then load new pref file
+    loadSettings();
+    setupOSC();
+}
 
 //--------------------------------------------------------------
 void ofApp::saveSettings(){    
@@ -841,7 +852,7 @@ void ofApp::loadSettings(){
 
 //--------------------------------------------------------------
 void ofApp::savePreferences(){
-    std::cout << "Save preferences" << std::endl;
+    ofLogNotice() << "Save preferences";
 	ofxXmlSettings preferences;
     preferences.addTag("Settings");
     preferences.pushTag("Settings");
@@ -903,7 +914,7 @@ void ofApp::savePreferences(){
 	}
 	preferences.popTag();
 
-	preferences.saveFile("preferences.xml");
+	preferences.saveFile(m_sPreferencesPath);
 }
 //--------------------------------------------------------------
 void ofApp::loadPreferences(){
@@ -912,11 +923,9 @@ void ofApp::loadPreferences(){
 	int nbrPoints;
 	int nbrPolygons;
     
-    ofLogNotice("Loading XML file : ") << m_sPreferencesPath;
-    
 	// If a preferences.xml file exists, load it
 	if (ofFile::doesFileExist(m_sPreferencesPath)){
-        ofLogNotice("Loading XML file...");
+        ofLogNotice("Loading XML file") << m_sPreferencesPath;
         
 		preferences.load(m_sPreferencesPath);
 		preferences.pushTag("Settings");
@@ -1070,7 +1079,7 @@ void ofApp::exit(){
 	to prevent saving wrong parameters if application quit unexpectedly.
 	*/
 	m_gui.saveToFile("autosave.xml");
-	savePreferences();
+    savePreferences();
 	// Remove listener because instance of our gui button will be deleted
 	m_bResetSettings.removeListener(this, &ofApp::reset);
 }
