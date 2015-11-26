@@ -32,6 +32,7 @@ public:
 	void mouseDragged(int x, int y, int button);
 	void mousePressed(int x, int y, int button);
 	void mouseReleased(int x, int y, int button);
+    void dragEvent(ofDragInfo drag);
 	    
     void saveSettings();
     void loadSettings();
@@ -48,6 +49,8 @@ private:
     void setupGUI();
     
     void sendOSC();
+    
+    string m_sPreferencesPath;
     
     // Only draw final output visuals - no GUI, no debug visuals, only content that can be seen by spectator
     void drawVisuals();

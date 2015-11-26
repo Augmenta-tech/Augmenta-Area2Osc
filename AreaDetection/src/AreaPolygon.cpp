@@ -119,13 +119,13 @@ ofxOscMessage AreaPolygon::parseOscMessage(string _messageString){
 //--------------------------------------------------------------
 void AreaPolygon::loadOscMessages(vector<string> ins, vector<string> outs){
     // Clear ofxOscMessages vectors
-    std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
+    //std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
     m_vOscMessagesIn.clear();
     m_vOscMessagesOut.clear();
     // Ins
     for (int i=0; i<ins.size(); i++){
         ofxOscMessage msg = parseOscMessage(ins[i]);
-        std::cout << "Address" << msg.getAddress() << std::endl;
+        //std::cout << "Address" << msg.getAddress() << std::endl;
         m_vOscMessagesIn.push_back(msg);
     }
     // Outs
@@ -133,7 +133,7 @@ void AreaPolygon::loadOscMessages(vector<string> ins, vector<string> outs){
         m_vOscMessagesOut.push_back(parseOscMessage(outs[i]));
     }
     
-    std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
+    //std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
 }
 
 //--------------------------------------------------------------

@@ -79,6 +79,7 @@ void ofApp::init(){
     //--------------------------------------------
 
     // App default values (preferences.xml)
+    m_sPreferencesPath = "preferences.xml";
     m_bHideInterface = false;
     m_bLogToFile = false;
     m_iFboWidth = 1024;
@@ -187,8 +188,8 @@ void ofApp::setupOSC(){
 	bool bNeedDefault = false;
 
 	// If a file settings exists, load values saved ; else, take default values
-	if (ofFile::doesFileExist("preferences.xml")){
-		settings.load("preferences.xml");
+	if (ofFile::doesFileExist(m_sPreferencesPath)){
+		settings.load(m_sPreferencesPath);
 		if (settings.tagExists("OSC")){
 			settings.pushTag("OSC");
             
@@ -211,7 +212,7 @@ void ofApp::setupOSC(){
                 ofxOscSender sender;
                 sender.setup(m_sOscSenderHosts[i],  m_iOscSenderPorts[i]);
                 m_oscSenders.push_back(sender);
-                std::cout << "Sender added : " <<  m_sOscSenderHosts.back() << ":" << m_iOscSenderPorts.back() << std::endl;
+                ofLogNotice() << "Sender added : " <<  m_sOscSenderHosts.back() << ":" << m_iOscSenderPorts.back();
                 settings.popTag();
             }
 			
@@ -224,14 +225,14 @@ void ofApp::setupOSC(){
     }
     
     if (bNeedDefault){
-        std::cout << "Adding default sender" << std::endl;
+        ofLogNotice() << "Default sender added : " <<  m_sOscSenderHosts.back() << ":" << m_iOscSenderPorts.back();
         // Add default sender
         ofxOscSender sender;
         sender.setup(m_sOscSenderHosts[0],  m_iOscSenderPorts[0]);
         m_oscSenders.push_back(sender);
     }
     
-    std::cout << "Num of senders : " << m_oscSenders.size() << std::endl;
+    //std::cout << "Num of senders : " << m_oscSenders.size() << std::endl;
 }
 
 //--------------------------------------------------------------
@@ -803,6 +804,12 @@ ofPoint ofApp::transformMouseCoord(int x, int y){
 	return ofPoint(x, y);
 }
 
+//--------------------------------------------------------------
+void ofApp::dragEvent(ofDragInfo drag){
+    m_sPreferencesPath = drag.files[0];
+    loadSettings();
+    setupOSC();
+}
 //_______________________________________________________________
 //_____________________________SAVE & LOAD_______________________
 //_______________________________________________________________
@@ -820,7 +827,7 @@ void ofApp::loadSettings(){
     if(ofFile::doesFileExist("settings.xml")){
         m_gui.loadFromFile("settings.xml");
     }
-	if (ofFile::doesFileExist("preferences.xml")){
+	if (ofFile::doesFileExist(m_sPreferencesPath)){
 		if (m_bSelectMode){
 			m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
 			m_iIndicePolygonSelected = -1;
@@ -856,9 +863,9 @@ void ofApp::savePreferences(){
      */
     preferences.addValue("Receiver",m_iOscReceiverPort);
     for (int i = 0; i< m_oscSenders.size(); i++){
-        std::cout << "Save one sender" << std::endl;
+        //std::cout << "Save one sender" << std::endl;
         preferences.addTag("Sender");
-        preferences.pushTag("Sender");
+        preferences.pushTag("Sender",i);
             preferences.addValue("Ip", m_sOscSenderHosts[i]);
             preferences.addValue("Port", m_iOscSenderPorts[i]);
         preferences.popTag();
@@ -898,19 +905,20 @@ void ofApp::savePreferences(){
 
 	preferences.saveFile("preferences.xml");
 }
-
 //--------------------------------------------------------------
 void ofApp::loadPreferences(){
 	ofxXmlSettings preferences;
 	ofVec2f p;
 	int nbrPoints;
 	int nbrPolygons;
-
+    
+    ofLogNotice("Loading XML file : ") << m_sPreferencesPath;
+    
 	// If a preferences.xml file exists, load it
-	if (ofFile::doesFileExist("preferences.xml")){
+	if (ofFile::doesFileExist(m_sPreferencesPath)){
         ofLogNotice("Loading XML file...");
         
-		preferences.load("preferences.xml");
+		preferences.load(m_sPreferencesPath);
 		preferences.pushTag("Settings");
 		m_bHideInterface = preferences.getValue("HideInterface", m_bHideInterface);
 		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
@@ -980,7 +988,7 @@ void ofApp::loadPreferences(){
 		}
 	}
 	else{
-		ofLogNotice("Preferences file did not load...We'll create a new one when stopping");
+		ofLogNotice("Preferences file did not load...");
     }
 }
 
