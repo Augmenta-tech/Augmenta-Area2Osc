@@ -147,11 +147,11 @@ void ofApp::setupGUI(){
 	m_gui.add(m_guiSecondGroup);
 
 	#ifdef WIN32
-	string sThridGroupName = "SPOUT";
+	string sThirdGroupName = "SPOUT";
 	#elif __APPLE__
-	string sThridGroupName = "SYPHON";
+	string sThirdGroupName = "SYPHON";
 	#else
-	string sThridGroupName = "FBO";
+	string sThirdGroupName = "FBO";
 	#endif
 	
 
