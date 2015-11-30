@@ -20,7 +20,7 @@ void ofApp::setup(){
 #endif
 
 	// Limit framerate to 60fps
-	ofSetFrameRate(60);    
+	ofSetFrameRate(60);
 
 	// Init function is used to set default variables that can be changed.
 	// For example, GUI variables or preferences.xml variables.
@@ -29,12 +29,12 @@ void ofApp::setup(){
 	// Important : call those function AFTER init,
 	// because init() will define all default values
 	m_iNextFreeId = 0;
-	loadSettings();
+    load("autosave.xml");
     setupGUI();
     setupOSC();
     
     //Augmenta
-    AugmentaReceiver.connect(m_iOscReceiverPort);
+    AugmentaReceiver.connect(m_iOscReceiverPorts[0]);
     m_oPeople = AugmentaReceiver.getPeople();
     m_oActualScene = AugmentaReceiver.getScene();
 
@@ -79,17 +79,16 @@ void ofApp::init(){
     //--------------------------------------------
 
     // App default values (preferences.xml)
-    m_sPreferencesPath = "preferences.xml";
+    m_sSettingsPath = "settings.xml";
     m_bHideInterface = false;
     m_bLogToFile = false;
     m_iFboWidth = 1024;
     m_iFboHeight = 768;
     m_iXMLFboWidth = m_iFboWidth;
     m_iXMLFboHeight = m_iFboHeight;
-    m_iOscReceiverPort = 12000;
+    m_iOscReceiverPorts.push_back(12000);
     m_iOscSenderPorts.push_back(7000);
     m_sOscSenderHosts.push_back("127.0.0.1");
-    m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
@@ -127,6 +126,10 @@ void ofApp::setupGUI(){
 	//m_gui.add(m_sSendFboResolution.setup("Fbo res ", m_sSendFboResolution));
 	m_gui.add((m_fZoomCoef.setup("Zoom", 1, 0.3, 2)));
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
+    
+    // Add save/load listener
+    ofAddListener(m_gui.savePressedE,this, &ofApp::onSavePressed);
+    ofAddListener(m_gui.loadPressedE,this, &ofApp::onLoadPressed);
 
 	// guiFirstGroup parameters ---------------------------
 	string sFirstGroupName = "Polygons";
@@ -152,7 +155,7 @@ void ofApp::setupGUI(){
 	#endif
 	
 
-	m_guiThirdGroup.setName(sThridGroupName);
+	m_guiThirdGroup.setName(sThirdGroupName);
 	m_guiThirdGroup.add((m_bSendFbo.setup("on/off", m_bSendFbo))->getParameter());
 	
 	m_gui.add(m_guiThirdGroup);
@@ -169,76 +172,40 @@ void ofApp::setupGUI(){
 	m_gui.getGroup(sFirstGroupName).setBorderColor(ofColor::salmon);
 	m_gui.getGroup(sSecondGroupName).setHeaderBackgroundColor(ofColor::orange);
 	m_gui.getGroup(sSecondGroupName).setBorderColor(ofColor::orange);
-	m_gui.getGroup(sThridGroupName).setHeaderBackgroundColor(ofColor::cornflowerBlue);
-	m_gui.getGroup(sThridGroupName).setBorderColor(ofColor::cornflowerBlue);
+	m_gui.getGroup(sThirdGroupName).setHeaderBackgroundColor(ofColor::cornflowerBlue);
+	m_gui.getGroup(sThirdGroupName).setBorderColor(ofColor::cornflowerBlue);
     m_gui.getGroup(sFourthGroupName).setHeaderBackgroundColor(ofColor::darkOrchid);
     m_gui.getGroup(sFourthGroupName).setBorderColor(ofColor::darkOrchid);
 
 	// Load autosave settings
 	if (ofFile::doesFileExist("autosave.xml")){
-		m_gui.loadFromFile("autosave.xml");
+        load("autosave.xml");
 	}
 }
 
 //--------------------------------------------------------------
 void ofApp::setupOSC(){
-
-	ofxXmlSettings settings;
     
-	bool bNeedDefault = false;
-
-	// If a file settings exists, load values saved ; else, take default values
-	if (ofFile::doesFileExist(m_sPreferencesPath)){
-		settings.load(m_sPreferencesPath);
-		if (settings.tagExists("OSC")){
-            
-            // Clear everything before putting it in
-            m_sOscSenderHosts.clear();
-            m_iOscSenderPorts.clear();
-            m_oscSenders.clear();
-            
-			settings.pushTag("OSC");
-            
-            // Receiver
-			m_iOscReceiverPort = settings.getValue("Receiver", m_iOscReceiverPort);
-            // Senders
-            int nbrSenders = settings.getNumTags("Sender");
-            if (nbrSenders == 0){
-                bNeedDefault = true;
-            } else {
-                m_iOscSenderPorts.clear();
-                m_sOscSenderHosts.clear();
-            }
-
-            for (int i=0; i < nbrSenders ; i++){
-                settings.pushTag("Sender", i);
-                m_iOscSenderPorts.push_back(settings.getValue("Port", 1234));
-                m_sOscSenderHosts.push_back(settings.getValue("Ip", "127.0.0.1"));
-                // Add actual sender
-                ofxOscSender sender;
-                sender.setup(m_sOscSenderHosts[i],  m_iOscSenderPorts[i]);
-                m_oscSenders.push_back(sender);
-                ofLogNotice() << "Sender added : " <<  m_sOscSenderHosts.back() << ":" << m_iOscSenderPorts.back();
-                settings.popTag();
-            }
-			
-			settings.popTag();
-		} else {
-            bNeedDefault = true;
-        }
-    } else {
-        bNeedDefault = true;
-    }
+    m_oscReceivers.clear();
+    m_oscSenders.clear();
     
-    if (bNeedDefault){
-        ofLogNotice() << "Default sender added : " <<  m_sOscSenderHosts.back() << ":" << m_iOscSenderPorts.back();
-        // Add default sender
+    // Senders
+    for (int i=0 ; i < m_iOscSenderPorts.size() ; i++){
         ofxOscSender sender;
-        sender.setup(m_sOscSenderHosts[0],  m_iOscSenderPorts[0]);
+        sender.setup(m_sOscSenderHosts[i],  m_iOscSenderPorts[i]);
         m_oscSenders.push_back(sender);
+        ofLogNotice() << "Sender added : " <<  m_sOscSenderHosts.back() << ":" << m_iOscSenderPorts.back();
     }
     
-    //std::cout << "Num of senders : " << m_oscSenders.size() << std::endl;
+    // Receivers
+    /* Don't add receivers for this app : augmenta is handling the port
+    for (int i=0 ; i < m_iOscReceiverPorts.size() ; i++){
+        ofxOscReceiver receiver;
+        receiver.setup(m_iOscReceiverPorts[i]);
+        m_oscReceivers.push_back(receiver);
+        ofLogNotice() << "Receiver added : " << m_iOscReceiverPorts.back();
+    }
+     */
 }
 
 //--------------------------------------------------------------
@@ -438,13 +405,25 @@ void ofApp::drawHiddenInterface(){
     
     ofPushStyle();
     ofSetColor(ofColor::white);
+    
+    // Create string with senders
+    string sendersString = "";
+    for (int i = 0 ; i < m_sOscSenderHosts.size() ; i++){
+        sendersString += m_sOscSenderHosts[i];
+        sendersString += ":";
+        sendersString += ofToString(m_iOscSenderPorts[i]);
+        if (i < m_sOscSenderHosts.size()-1){
+            sendersString += " / ";
+        }
+    }
+    
 
 	ofDrawBitmapString("FPS: " +
 		ofToString(ofGetFrameRate()) + "\n\n"
         "Window res: " + m_sScreenResolution + "\n" +
         "FBO res: " + m_sSendFboResolution + "\n\n" +
-        m_sReceiverOscDisplay +
-		"Sending OSC to " + m_sOscSenderHosts[0] + ":" + ofToString(m_iOscSenderPorts[0]) + "\n"
+        "Receiving OSC on port : " + ofToString(m_iOscReceiverPorts[0]) + "\n" +
+		"Sending OSC to " + sendersString + "\n"
 		+ "\n" +
 		"---------------------------------------\n"
 		"\n[h] to unhide interface\n" \
@@ -555,7 +534,7 @@ void ofApp::keyPressed(int key){
             // CTRL+S or CMD+S
             if(m_iModifierKey == OF_KEY_CONTROL || m_iModifierKey == OF_KEY_COMMAND){
                 // Save settings
-                saveSettings();
+                save(m_sSettingsPath);
 				ofLogVerbose("keyPressed", "Settings have been successfully saved ");
             }
             break;
@@ -573,20 +552,20 @@ void ofApp::keyPressed(int key){
             // CTRL+L or CMD+L
             if(m_iModifierKey == OF_KEY_CONTROL || m_iModifierKey == OF_KEY_COMMAND){
                 // Load settings
-                loadSettings();
+                load(m_sSettingsPath);
 				ofLogVerbose("keyPressed", "Settings have been successfully loaded ");
             }
             break;
             
         case 19:
             // CTRL+S or CMD+S
-            saveSettings();
+            save(m_sSettingsPath);
 			ofLogVerbose("keyPressed", "Settings have been successfully saved ");
             break;
             
         case 12:
             // CTRL+L or CMD+L
-            loadSettings();
+            load(m_sSettingsPath);
 			ofLogVerbose("keyPressed", "Settings have been successfully loaded ");
             break;
 
@@ -818,28 +797,167 @@ ofPoint ofApp::transformMouseCoord(int x, int y){
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo drag){
     // Save first
-    saveSettings();
-    // Get path
-    m_sPreferencesPath = drag.files[0];
+    save("autosave.xml");
     // Then load new pref file
-    loadSettings();
+    load(drag.files[0]);
     setupOSC();
 }
-
 //--------------------------------------------------------------
-void ofApp::saveSettings(){    
-    // Save GUI parameters
-    m_gui.saveToFile("settings.xml");
-	savePreferences();
+void ofApp::onLoadPressed(){
+    ofLogNotice("Load button pressed");
+    load(m_sSettingsPath);
+    setupOSC();
+}
+//--------------------------------------------------------------
+void ofApp::onSavePressed(){
+    ofLogNotice("Save button pressed");
+    save(m_sSettingsPath);
 }
 
 //--------------------------------------------------------------
-void ofApp::loadSettings(){
-    // Load saved settings
-    if(ofFile::doesFileExist("settings.xml")){
-        m_gui.loadFromFile("settings.xml");
+void ofApp::save(string _sPath){
+    ofLogNotice() << "Saving settings to "<< _sPath;
+    
+    // Clean existing file if needed
+    if(ofFile::doesFileExist(_sPath)){
+        ofFile::removeFile(_sPath);
+        ofLogNotice("File correctly cleaned");
     }
-	if (ofFile::doesFileExist(m_sPreferencesPath)){
+    
+    // ----------------------------------------------
+    // First save GUI parameters
+    // ----------------------------------------------
+    m_gui.saveToFile(_sPath);
+    ofLogNotice("GUI saved...");
+	
+    // ----------------------------------------------
+    // Then save other settings
+    // ----------------------------------------------
+
+    // First reopen the file
+    ofxXmlSettings settings;
+    settings.load(_sPath);
+    
+    settings.addTag("Settings");
+    settings.pushTag("Settings");
+    settings.addValue("HideInterface", m_bHideInterface);
+    settings.addValue("LogToFile", m_bLogToFile);
+    
+    if (m_iXMLFboWidth == 0) m_iXMLFboWidth = m_iFboWidth;
+    if (m_iXMLFboHeight == 0) m_iXMLFboHeight = m_iFboHeight;
+    settings.addValue("FboWidth", m_iXMLFboWidth);
+    settings.addValue("FboHeight", m_iXMLFboHeight);
+    settings.addValue("NextFreeId", m_iNextFreeId);
+    settings.popTag();
+    ofLogNotice() << "Other settings saved...";
+    
+    // ----------------------------------------------
+    // Then save OSC settings
+    // ----------------------------------------------
+    settings.addTag("OSC");
+    settings.pushTag("OSC");
+    // Receivers
+    for (int i = 0; i< m_oscReceivers.size(); i++){
+        settings.addValue("Receiver", m_iOscReceiverPorts[i]);
+    }
+    // Senders
+    for (int i = 0; i< m_oscSenders.size(); i++){
+        //std::cout << "Save one sender" << std::endl;
+        settings.addTag("Sender");
+        settings.pushTag("Sender",i);
+        settings.addValue("Ip", m_sOscSenderHosts[i]);
+        settings.addValue("Port", m_iOscSenderPorts[i]);
+        settings.popTag();
+    }
+    settings.popTag();
+    ofLogNotice() << "OSC saved...";
+    
+    // ----------------------------------------------
+    // Then save Polygons
+    // ----------------------------------------------
+    for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
+        if (m_vAreaPolygonsVector[i].isCompleted()){
+            
+            settings.addTag("AreaPolygon");
+            settings.pushTag("AreaPolygon", i);
+            
+            for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){
+                settings.addTag("Point");
+                settings.pushTag("Point", j);
+                settings.addValue("x", m_vAreaPolygonsVector[i].getPoint(j).x);
+                settings.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
+                settings.popTag();
+            }
+            vector<ofxOscMessage> ins = m_vAreaPolygonsVector[i].getInOscMessages();
+            vector<ofxOscMessage> outs = m_vAreaPolygonsVector[i].getOutOscMessages();
+            settings.addTag("Osc");
+            settings.pushTag("Osc");
+            for (int j=0; j < ins.size(); j++){
+                settings.addValue("In", m_vAreaPolygonsVector[i].messageToString(ins[j]));
+            }
+            for (int j=0; j < outs.size(); j++){
+                settings.addValue("Out", m_vAreaPolygonsVector[i].messageToString(outs[j]));
+            }
+            settings.popTag();
+            settings.popTag();
+        }
+    }
+    settings.popTag();
+    
+    // ----------------------------------------------
+    // Write File !
+    // ----------------------------------------------
+    
+    // We have to do a little trick to combine the GUI XML with this one...
+    // First copy the XML to text
+    string more;
+    settings.copyXmlToString(more);
+    ofBuffer xml;
+    xml.append("<root>\n");
+    xml.append(more);
+    xml.append("</root>");
+    //Write
+    ofBufferToFile(_sPath, xml);
+
+    ofLogNotice("Saving finished");
+    
+}
+
+//--------------------------------------------------------------
+void ofApp::load(string _sPath){
+    ofLogNotice() << "Trying to load "<< _sPath;
+    
+    // Check if file exists before opening it
+    if(ofFile::doesFileExist(_sPath)){
+        ofLogNotice() << "Loading settings";
+        
+        
+        
+        // ----------------------------------------------
+        // First load GUI parameters
+        // ----------------------------------------------
+        
+        // We must make a temp file with only the GUI parameters
+        ofFile temp;
+        temp.open(_sPath);
+        ofBuffer fullBuff = temp.readToBuffer();
+        stringstream ss;
+        ss << fullBuff;
+        string guiText = ofSplitString(ss.str(), "<GUI>")[1];
+        guiText = ofSplitString(guiText,"</GUI>")[0];
+        guiText = "<GUI>"+guiText+"</GUI>";
+        ofBuffer tempBuff;
+        tempBuff.append(guiText);
+        ofBufferToFile("temp.xml", tempBuff);
+        // Now we load it
+        m_gui.loadFromFile("temp.xml");
+        // And we delete the temp
+        if(ofFile::doesFileExist("temp.xml")){
+            ofFile::removeFile("temp.xml");
+            ofLogNotice("Temp file correctly cleaned");
+        }
+        
+        // Set a few things now it's loaded...
 		if (m_bSelectMode){
 			m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
 			m_iIndicePolygonSelected = -1;
@@ -847,160 +965,126 @@ void ofApp::loadSettings(){
 		}
 		m_vAreaPolygonsVector.clear();
 		m_bEditMode = false;
-		loadPreferences();
-	}
-}
-
-//--------------------------------------------------------------
-void ofApp::savePreferences(){
-    ofLogNotice() << "Save preferences";
-	ofxXmlSettings preferences;
-    preferences.addTag("Settings");
-    preferences.pushTag("Settings");
-    preferences.addValue("HideInterface", m_bHideInterface);
-    preferences.addValue("LogToFile", m_bLogToFile);
-    
-    if (m_iXMLFboWidth == 0) m_iXMLFboWidth = m_iFboWidth;
-    if (m_iXMLFboHeight == 0) m_iXMLFboHeight = m_iFboHeight;
-    preferences.addValue("FboWidth", m_iXMLFboWidth);
-    preferences.addValue("FboHeight", m_iXMLFboHeight);
-    preferences.addValue("NextFreeId", m_iNextFreeId);
-    preferences.popTag();
-    preferences.addTag("OSC");
-    preferences.pushTag("OSC");
-    /*
-    preferences.addValue("ReceiverPort",m_iOscReceiverPort);
-    preferences.addValue("SenderPort",m_iOscSenderPort);
-    preferences.addValue("SenderHost",m_sOscSenderHost);
-     */
-    preferences.addValue("Receiver",m_iOscReceiverPort);
-    for (int i = 0; i< m_oscSenders.size(); i++){
-        //std::cout << "Save one sender" << std::endl;
-        preferences.addTag("Sender");
-        preferences.pushTag("Sender",i);
-            preferences.addValue("Ip", m_sOscSenderHosts[i]);
-            preferences.addValue("Port", m_iOscSenderPorts[i]);
-        preferences.popTag();
-    }
-    preferences.popTag();
-    //preferences.saveFile(m_sPreferencesPath);
-
-
-	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
-		if (m_vAreaPolygonsVector[i].isCompleted()){
-
-			preferences.addTag("AreaPolygon");
-			preferences.pushTag("AreaPolygon", i);
-
-			for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){
-				preferences.addTag("Point");
-				preferences.pushTag("Point", j);
-				preferences.addValue("x", m_vAreaPolygonsVector[i].getPoint(j).x);
-				preferences.addValue("y", m_vAreaPolygonsVector[i].getPoint(j).y);
-				preferences.popTag();
-			}
-            vector<ofxOscMessage> ins = m_vAreaPolygonsVector[i].getInOscMessages();
-            vector<ofxOscMessage> outs = m_vAreaPolygonsVector[i].getOutOscMessages();
-			preferences.addTag("Osc");
-			preferences.pushTag("Osc");
-                for (int j=0; j < ins.size(); j++){
-                    preferences.addValue("In", m_vAreaPolygonsVector[i].messageToString(ins[j]));
-                }
-                for (int j=0; j < outs.size(); j++){
-                    preferences.addValue("Out", m_vAreaPolygonsVector[i].messageToString(outs[j]));
-                }
-			preferences.popTag();
-			preferences.popTag();
-		}
-	}
-	preferences.popTag();
-
-	preferences.saveFile(m_sPreferencesPath);
-}
-//--------------------------------------------------------------
-void ofApp::loadPreferences(){
-	ofxXmlSettings preferences;
-	ofVec2f p;
-	int nbrPoints;
-	int nbrPolygons;
-    
-	// If a preferences.xml file exists, load it
-	if (ofFile::doesFileExist(m_sPreferencesPath)){
-        ofLogNotice("Loading XML file") << m_sPreferencesPath;
         
-		preferences.load(m_sPreferencesPath);
-		preferences.pushTag("Settings");
-		m_bHideInterface = preferences.getValue("HideInterface", m_bHideInterface);
-		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
-		m_iXMLFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
-		m_iXMLFboHeight = preferences.getValue("FboHeight", m_iFboHeight);
+        // ----------------------------------------------
+        // Then load other settings
+        // ----------------------------------------------
+        ofxXmlSettings settings;
+        settings.load(_sPath);
+        
+        settings.pushTag("root");
+        settings.pushTag("Settings");
+        m_bHideInterface = settings.getValue("HideInterface", m_bHideInterface);
+        m_bLogToFile = settings.getValue("LogToFile", m_bLogToFile);
+        m_iXMLFboWidth = settings.getValue("FboWidth", m_iFboWidth);
+        m_iXMLFboHeight = settings.getValue("FboHeight", m_iFboHeight);
         m_iFboWidth = m_iXMLFboWidth;
         m_iFboHeight = m_iXMLFboHeight;
-		m_iNextFreeId = preferences.getValue("NextFreeId", m_iNextFreeId);
-        preferences.popTag();
+        m_iNextFreeId = settings.getValue("NextFreeId", m_iNextFreeId);
+        settings.popTag();
+        ofLogNotice() << "Size fbo loaded : " << m_iFboWidth << "/" << m_iFboHeight;
         
+        // ----------------------------------------------
+        // Then load OSC settings
+        // ----------------------------------------------
         
-        std::cout << "Size fbo loaded : " << m_iFboWidth << "/" << m_iFboHeight << std::endl;
-
-		nbrPolygons = preferences.getNumTags("AreaPolygon");
-		ofLogNotice("loadPreferences") << "load of " << nbrPolygons << " polygons";
-
-		for (int i = 0; i < nbrPolygons; ++i){
-			preferences.pushTag("AreaPolygon", i);
-
-			nbrPoints = preferences.getNumTags("Point");
-
-			for (int j = 0; j < nbrPoints; j++){
-				preferences.pushTag("Point", j);
-
-				p.x = preferences.getValue("x", 0.0f);
-				p.y = preferences.getValue("y", 0.0f);
-
-				if (j == 0){
-					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y), m_oPeople, 0, m_iAntiBounce));
-
-				}
-				else{
-					m_vAreaPolygonsVector[i].addPoint(ofVec2f(p.x, p.y));
-				}
-
-				ofLogVerbose("loadPreferences") << "x = " << p.x;
-				ofLogVerbose("loadPreferences") << "y = " << p.y;
-
-				preferences.popTag();
-			}
-			m_vAreaPolygonsVector[i].complete();
-
-            preferences.pushTag("Osc");
+        if (settings.tagExists("OSC")){
             
-                // Handle multiple IN/OUT messages
-                int nbrIn = preferences.getNumTags("In");
-                int nbrOut = preferences.getNumTags("Out");
-                vector<string> ins;
-                vector<string> outs;
+            settings.pushTag("OSC");
             
-                for (int i=0 ; i < nbrIn ; i++){
-                    ins.push_back(preferences.getValue("In",  "/area" + ofToString(m_iNextFreeId) + "/personEntered", i));
+            // Receivers
+            int nbrReceivers = settings.getNumTags("Receiver");
+            if (nbrReceivers != 0){
+                m_iOscReceiverPorts.clear();
+                for (int i=0; i < nbrReceivers ; i++){
+                    m_iOscReceiverPorts.push_back(settings.getValue("Receiver", 12000));
                 }
-                for (int i=0 ; i < nbrOut ; i++){
-                    outs.push_back(preferences.getValue("Out", "/area" + ofToString(m_iNextFreeId) + "/personWillLeave", i));
+            }
+            
+            // Senders
+            int nbrSenders = settings.getNumTags("Sender");
+            if (nbrSenders != 0){
+                m_sOscSenderHosts.clear();
+                m_iOscSenderPorts.clear();
+                for (int i=0; i < nbrSenders ; i++){
+                    settings.pushTag("Sender", i);
+                    m_iOscSenderPorts.push_back(settings.getValue("Port", 7000));
+                    m_sOscSenderHosts.push_back(settings.getValue("Ip", "127.0.0.1"));
+                    settings.popTag();
                 }
-                // Load the strings into objects
-				m_vAreaPolygonsVector[i].loadOscMessages(ins,outs);
-				preferences.popTag();
-
-			preferences.popTag();
-		}
-		preferences.popTag();
-
-		if (m_iNextFreeId < m_vAreaPolygonsVector.size()){
-			ofLogError("Problem detected in the naming of the polygons..");
-		}
-	}
-	else{
-		ofLogNotice("Preferences file did not load...");
+            }
+            
+            settings.popTag();
+        }
+        
+        // ----------------------------------------------
+        // Then load Polygons
+        // ----------------------------------------------
+        ofVec2f p;
+        int nbrPoints;
+        int nbrPolygons;
+        nbrPolygons = settings.getNumTags("AreaPolygon");
+        ofLogNotice("loadPreferences") << "load of " << nbrPolygons << " polygons";
+        
+        for (int i = 0; i < nbrPolygons; ++i){
+            settings.pushTag("AreaPolygon", i);
+            
+            nbrPoints = settings.getNumTags("Point");
+            
+            for (int j = 0; j < nbrPoints; j++){
+                settings.pushTag("Point", j);
+                
+                p.x = settings.getValue("x", 0.0f);
+                p.y = settings.getValue("y", 0.0f);
+                
+                if (j == 0){
+                    m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y), m_oPeople, 0, m_iAntiBounce));
+                    
+                }
+                else{
+                    m_vAreaPolygonsVector[i].addPoint(ofVec2f(p.x, p.y));
+                }
+                
+                ofLogVerbose("loadPreferences") << "x = " << p.x;
+                ofLogVerbose("loadPreferences") << "y = " << p.y;
+                
+                settings.popTag();
+            }
+            m_vAreaPolygonsVector[i].complete();
+            
+            settings.pushTag("Osc");
+            
+            // Handle multiple IN/OUT messages
+            int nbrIn = settings.getNumTags("In");
+            int nbrOut = settings.getNumTags("Out");
+            vector<string> ins;
+            vector<string> outs;
+            
+            for (int i=0 ; i < nbrIn ; i++){
+                ins.push_back(settings.getValue("In",  "/area" + ofToString(m_iNextFreeId) + "/personEntered", i));
+            }
+            for (int i=0 ; i < nbrOut ; i++){
+                outs.push_back(settings.getValue("Out", "/area" + ofToString(m_iNextFreeId) + "/personWillLeave", i));
+            }
+            // Load the strings into objects
+            m_vAreaPolygonsVector[i].loadOscMessages(ins,outs);
+            settings.popTag();
+            
+            settings.popTag();
+        }
+        settings.popTag();
+        settings.popTag();
+        
+        // Perform a sanity check
+        if (m_iNextFreeId < m_vAreaPolygonsVector.size()){
+            ofLogWarning("Problem detected in the naming of the polygons.,.");
+        }
+        
+    } else {
+        ofLogNotice() << "Could not load settings : file '"<<_sPath<<"' doesn't exist";
     }
 }
+
 
 //_______________________________________________________________
 //_____________________________OSC_______________________________
@@ -1024,7 +1108,7 @@ ofxOscMessage m;
                         for (int j = 0; j < ap.getPeopleMovement(); j++){
                             for (int k=0; k<m_oscSenders.size(); k++){
                                 m_oscSenders[k].sendMessage(m); // Send it
-                                std::cout << "Sending on sender num : "<< k<<" with port : "<< m_iOscSenderPorts[k] << std::endl;
+                                //std::cout << "Sending on sender num : "<< k<<" with port : "<< m_iOscSenderPorts[k] << std::endl;
                             }
                             ofLogVerbose("sendOSC") << m.getAddress();
                         }
@@ -1079,8 +1163,7 @@ void ofApp::exit(){
 	Parameters are saved in another file that the one used in saveSettings() function
 	to prevent saving wrong parameters if application quit unexpectedly.
 	*/
-	m_gui.saveToFile("autosave.xml");
-    savePreferences();
+    save("autosave.xml");
 	// Remove listener because instance of our gui button will be deleted
 	m_bResetSettings.removeListener(this, &ofApp::reset);
 }

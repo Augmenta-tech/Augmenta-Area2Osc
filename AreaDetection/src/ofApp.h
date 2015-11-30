@@ -33,11 +33,11 @@ public:
 	void mousePressed(int x, int y, int button);
 	void mouseReleased(int x, int y, int button);
     void dragEvent(ofDragInfo drag);
+    void onLoadPressed();
+    void onSavePressed();
 	    
-    void saveSettings();
-    void loadSettings();
-	void savePreferences();
-	void loadPreferences();
+    void save(string _sPath);
+    void load(string _sPath);
 
     
 private:
@@ -50,7 +50,7 @@ private:
     
     void sendOSC();
     
-    string m_sPreferencesPath;
+    string m_sSettingsPath;
     
     // Only draw final output visuals - no GUI, no debug visuals, only content that can be seen by spectator
     void drawVisuals();
@@ -92,10 +92,8 @@ private:
     vector<ofxOscSender> m_oscSenders;
     vector<int> m_iOscSenderPorts;
     vector<string> m_sOscSenderHosts;
-    
-    string m_sOscPortDisplayMessage;   
-    int m_iOscReceiverPort;
-    string m_sReceiverOscDisplay;
+    vector<ofxOscReceiver> m_oscReceivers;
+    vector<int> m_iOscReceiverPorts;
 
 	//Augmenta
 	Augmenta::Receiver AugmentaReceiver;
