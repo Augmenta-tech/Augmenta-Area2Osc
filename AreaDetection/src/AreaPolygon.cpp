@@ -21,6 +21,8 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	setPeopleInside(a_vPeople, m_iAntiBounce);
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
+    m_fPointRadius = 0.01f;
+    m_iSelectedPoint = -1; // No point selected
 	m_fMoveIncremente = 0.001;
     
     ofxOscMessage defaultIn;
@@ -147,6 +149,27 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 }
 
 //--------------------------------------------------------------
+void AreaPolygon::movePoint(int i, ofVec2f _target){
+    m_vVectorPoints[i] = _target;
+}
+
+//--------------------------------------------------------------
+int AreaPolygon::pointClicked(ofVec2f _mouse){
+    m_iSelectedPoint = -1; // Default is -1
+    
+    for (int i=0 ; i < m_vVectorPoints.size() ; i++){
+        // Compute distance between mouse and point
+        ofVec2f delta = _mouse - m_vVectorPoints[i];
+        float dist = sqrt(delta.x * delta.x + delta.y * delta.y);
+        if (dist < m_fPointRadius){
+            m_iSelectedPoint = i;
+            break; // We don't need to search more
+        }
+    }
+    return m_iSelectedPoint;
+}
+
+//--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){
 	if (m_bIsFinished){
         /*
@@ -210,33 +233,39 @@ void AreaPolygon::draw(int width,int height){
 		}
 		ofDrawLine(m_vVectorPoints[0].x * width, m_vVectorPoints[0].y * height, m_vVectorPoints[m_vVectorPoints.size() - 1].x * width, m_vVectorPoints[m_vVectorPoints.size() - 1].y * height);
 			
-		
-		 if (m_iPeopleInside > 0){
-			 if (m_bSelected){
-				 ofColor tempColor = m_oNotEmptyColor;
-				 tempColor.setBrightness(brightness);
-				 ofSetColor(tempColor);
-			 }
-			 else{
-				 ofSetColor(m_oNotEmptyColor);
-			 }
+        // Set color
+        ofColor tempColor;
+        if (m_iPeopleInside < 1){
+			 tempColor = m_oCompletedColor;
 		}
 		else{
-			if (m_bSelected){
-				ofColor tempColor = m_oCompletedColor;
-				tempColor.setBrightness(brightness);
-				ofSetColor(tempColor);
-			}
-			else{
-				ofSetColor(m_oCompletedColor);
-			}
+			tempColor = m_oNotEmptyColor;
 		}
+        
+        if (m_bSelected){
+            tempColor.setBrightness(brightness);
+            ofSetColor(tempColor);
+        }
+        else{
+            ofSetColor(tempColor);
+        }
+        
+        
 		ofSetPolyMode(OF_POLY_WINDING_NONZERO);
 		ofBeginShape();
 		for (size_t i = 0; i < m_vVectorPoints.size(); i++){
 			ofVertex(m_vVectorPoints[i].x*width, m_vVectorPoints[i].y*height);
 		}
-		ofEndShape();	
+		ofEndShape();
+        
+        if (m_bSelected){
+            // Draw points
+            for (int i=0 ; i < m_vVectorPoints.size() ; i++){
+                ofSetColor(255, 255, 255);
+                ofDrawCircle(m_vVectorPoints[i].x*width, m_vVectorPoints[i].y*height, m_fPointRadius*width, m_fPointRadius*width);
+            }
+        }
+        
 	}
 	//The shape is not finished
 	else{
@@ -316,12 +345,13 @@ void AreaPolygon::complete(){
 
 //--------------------------------------------------------------
 void AreaPolygon::setPolygonCentroid(){
-	ofVec2f centroid(0, 0);
+    ofVec2f centroid(0, 0);
 	for (int i = 0; i < m_vVectorPoints.size(); i++){
 		centroid += m_vVectorPoints[i];
 	}
 	centroid /= m_vVectorPoints.size();
 	m_oCentroid = centroid;
+
 }
 
 //--------------------------------------------------------------

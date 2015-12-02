@@ -58,6 +58,8 @@ void ofApp::setup(){
     // Setup Syphon output
     m_syphonServer.setName(APP_NAME);
     #endif
+    
+    m_iCurrentPointMoved = -1; // No point moving
 }
 
 //--------------------------------------------------------------
@@ -653,6 +655,7 @@ void ofApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
+    
 	ofPoint temp = transformMouseCoord(x, y);
 	x = temp.x;
 	y = temp.y;
@@ -662,12 +665,21 @@ void ofApp::mouseDragged(int x, int y, int button){
 	if (button == 0){
 		if (!m_bEditMode){
 			if (m_bSelectMode){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
+                AreaPolygon* poly = &m_vAreaPolygonsVector[m_iIndicePolygonSelected];
+                // First test if we have clicked a point
+                ofVec2f dividedTemp = *new ofVec2f((float)x/(float)m_iFboWidth, (float)y/(float)m_iFboHeight);
+                if (m_iCurrentPointMoved != -1){
+                    poly->movePoint(m_iCurrentPointMoved, dividedTemp);
+                } else {
+                    // Else it's the full polygon
+                    poly->move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
+                    poly->setPolygonCentroid();
+                }
 			}
 		}
 	}
 	m_oOldMousePosition = ofVec2f(x, y);
+ 
 }
 
 //--------------------------------------------------------------
@@ -698,7 +710,6 @@ void ofApp::mousePressed(int x, int y, int button){
 			//One AreaPolygon is not finish
 			if (m_bEditMode){
 				//Is closing the poly
-
 				ofVec2f temp = m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getPoint(0);
 				temp.x = temp.x * m_iFboWidth;
 				temp.y = temp.y * m_iFboHeight;
@@ -727,6 +738,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 		//Selection
 		if (!m_bEditMode && !isLastPoint){
+            // Test polygon selection mode
 			if(!m_bSelectMode){
 				for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
 					if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
@@ -737,9 +749,18 @@ void ofApp::mousePressed(int x, int y, int button){
 						break;//because we only want one selectd poly
 					}
 				}
+                m_iCurrentPointMoved = -1;
 			}
 			else{
-				if (!m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
+                bool isMouseInsideSelected = m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
+                int selectedPoint = m_vAreaPolygonsVector[m_iIndicePolygonSelected].pointClicked(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
+                if (selectedPoint != -1){
+                    m_iCurrentPointMoved = selectedPoint;
+                } else {
+                    m_iCurrentPointMoved = -1;
+                }
+                
+                if(!isMouseInsideSelected && selectedPoint == -1 ){
 					//We leave the selection mode
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
 					m_iIndicePolygonSelected = -1;
@@ -781,6 +802,8 @@ void ofApp::mouseReleased(int x, int y, int button){
 		}
 	}
 	m_oOldMousePosition = ofVec2f(x, y);
+    
+    m_iCurrentPointMoved = -1;
 }
 
 //--------------------------------------------------------------

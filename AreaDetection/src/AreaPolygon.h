@@ -62,7 +62,9 @@ public:
 	void setPolygonCentroid();
 	void complete();
 	void addPoint(ofVec2f a_oPoint);
+    void movePoint(int i, ofVec2f _target);
 	bool removeLastPoint();
+    int pointClicked(ofVec2f _mouse);
 	bool isPointInPolygon(ofVec2f a_oPersonPosition);
 	bool doesStringContainOnlyNumber(string a_sString);
 	bool containOnlyAlpha(string s);
@@ -75,6 +77,8 @@ private:
 	int m_iPeopleInside;
 	int m_iOldPeopleInside;
 	bool m_bSelected;
+    int m_iSelectedPoint;
+    float m_fPointRadius;
 	ofVec2f m_oCentroid;
 	int m_iPeopleMovement;
 	vector<ofxOscMessage> m_vOscMessagesIn;

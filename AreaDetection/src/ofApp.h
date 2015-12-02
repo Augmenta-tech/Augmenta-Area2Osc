@@ -105,6 +105,7 @@ private:
 	int m_iNextFreeId;
 	bool m_bEditMode;
 	bool m_bSelectMode;
+    int m_iCurrentPointMoved;
 	int m_iNumberOfAreaPolygons;
 	int m_iIndicePolygonSelected;
 	vector<AreaPolygon> m_vAreaPolygonsVector;
