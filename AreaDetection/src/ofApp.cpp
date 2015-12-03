@@ -60,6 +60,9 @@ void ofApp::setup(){
     #endif
     
     m_iCurrentPointMoved = -1; // No point moving
+    
+    // Hardcode window size
+    ofSetWindowShape(800,600);
 }
 
 //--------------------------------------------------------------
@@ -108,6 +111,7 @@ void ofApp::init(){
     m_bAutoSize = false;
 	m_sScreenResolution = ofToString(m_iWidthRender) +" x "+ ofToString(m_iHeightRender);
 	m_sSendFboResolution = ofToString(m_iFboWidth) + " x " + ofToString(m_iFboHeight);
+    m_pFboOffset = *new ofPoint(0,0);
 	
 }
 
@@ -390,8 +394,8 @@ void ofApp::drawInterface(){
 		}
 	}
 	
-	m_fbo.draw(0, 0, m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
-	ofSetWindowShape(m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
+	m_fbo.draw(m_pFboOffset.x, m_pFboOffset.y, m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
+	//ofSetWindowShape(m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
 	
 	// Update the UI
 	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
@@ -656,39 +660,61 @@ void ofApp::keyReleased(int key){
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
     
+    // Get transformed coords for mouse
 	ofPoint temp = transformMouseCoord(x, y);
-	x = temp.x;
-	y = temp.y;
+	int tx = temp.x;
+	int ty = temp.y;
+    // Get transformed coords for old pos
+    temp = transformMouseCoord(m_oOldMousePosition.x, m_oOldMousePosition.y);
+    int tox = temp.x;
+    int toy = temp.y;
     
-	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
+    // Screen space movement
+    ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
+    // Transformed movement
+	ofVec2f tmovement = ofVec2f(tox - tx, toy - ty);
 
 	if (button == 0){
 		if (!m_bEditMode){
 			if (m_bSelectMode){
                 AreaPolygon* poly = &m_vAreaPolygonsVector[m_iIndicePolygonSelected];
                 // First test if we have clicked a point
-                ofVec2f dividedTemp = *new ofVec2f((float)x/(float)m_iFboWidth, (float)y/(float)m_iFboHeight);
+                ofVec2f dividedTemp = *new ofVec2f((float)tx/(float)m_iFboWidth, (float)ty/(float)m_iFboHeight);
                 if (m_iCurrentPointMoved != -1){
                     poly->movePoint(m_iCurrentPointMoved, dividedTemp);
                 } else {
                     // Else it's the full polygon
-                    poly->move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
+                    poly->move(static_cast<float>(tmovement.x) / m_iFboWidth, static_cast<float>(tmovement.y) / m_iFboHeight);
                     poly->setPolygonCentroid();
                 }
 			}
 		}
-	}
-	m_oOldMousePosition = ofVec2f(x, y);
+    } else if (button == 1){
+        m_pFboOffset -= movement;
+    }
+	
+    m_oOldMousePosition = ofVec2f(x,y);
  
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
+    m_fZoomCoef = m_fZoomCoef + scrollY*0.05f;
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
 
-	ofPoint temp = transformMouseCoord(x, y);
-	x = temp.x;
-	y = temp.y;
-	m_oOldMousePosition = ofVec2f(x, y);
+    // Get transformed coords for mouse
+    ofPoint temp = transformMouseCoord(x, y);
+    int tx = temp.x;
+    int ty = temp.y;
+    // Get transformed coords for old pos
+    temp = transformMouseCoord(m_oOldMousePosition.x, m_oOldMousePosition.y);
+    int tox = temp.x;
+    int toy = temp.y;
+    m_oOldMousePosition = ofVec2f(x,y);
+    
 	bool isLastPoint = false;
 
 	if (button == 2 && !m_bSelectMode){
@@ -706,7 +732,7 @@ void ofApp::mousePressed(int x, int y, int button){
 	
 	if (button == 0){
 		//Creation of poly
-		if (!m_bSelectMode && !isInsideAPolygon(ofVec2f(x, y))){
+		if (!m_bSelectMode && !isInsideAPolygon(ofVec2f(tx, ty))){
 			//One AreaPolygon is not finish
 			if (m_bEditMode){
 				//Is closing the poly
@@ -714,7 +740,7 @@ void ofApp::mousePressed(int x, int y, int button){
 				temp.x = temp.x * m_iFboWidth;
 				temp.y = temp.y * m_iFboHeight;
 
-				if (temp.distance(ofVec2f(x, y)) < m_iRadiusClosePolyZone){
+				if (temp.distance(ofVec2f(tx, ty)) < m_iRadiusClosePolyZone){
 					m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].complete();
 					m_bEditMode = false;
 					if (m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].getSize() <= 2){
@@ -724,13 +750,13 @@ void ofApp::mousePressed(int x, int y, int button){
 				}
 				//Create another point
 				else{
-					m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].addPoint(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
+					m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].addPoint(ofVec2f(static_cast<float>(tx) / m_iFboWidth, static_cast<float>(ty) / m_iFboHeight));
 				}
 			}
 
 			//Every AreaPolygons are completed
 			else{
-				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), m_oPeople, m_iNextFreeId,m_iAntiBounce));
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(tx) / m_iFboWidth, static_cast<float>(ty) / m_iFboHeight), m_oPeople, m_iNextFreeId,m_iAntiBounce));
 				m_iNextFreeId++;
 				m_bEditMode = true;
 			}
@@ -741,7 +767,7 @@ void ofApp::mousePressed(int x, int y, int button){
             // Test polygon selection mode
 			if(!m_bSelectMode){
 				for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
-					if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
+					if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(tx) / m_iFboWidth, static_cast<float>(ty) / m_iFboHeight))){
 						//We enter in selection mode
 						m_iIndicePolygonSelected = i;
 						m_vAreaPolygonsVector[i].hasBeenSelected(true);
@@ -752,8 +778,8 @@ void ofApp::mousePressed(int x, int y, int button){
                 m_iCurrentPointMoved = -1;
 			}
 			else{
-                bool isMouseInsideSelected = m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
-                int selectedPoint = m_vAreaPolygonsVector[m_iIndicePolygonSelected].pointClicked(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight));
+                bool isMouseInsideSelected = m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(tx) / m_iFboWidth, static_cast<float>(ty) / m_iFboHeight));
+                int selectedPoint = m_vAreaPolygonsVector[m_iIndicePolygonSelected].pointClicked(ofVec2f(static_cast<float>(tx) / m_iFboWidth, static_cast<float>(ty) / m_iFboHeight));
                 if (selectedPoint != -1){
                     m_iCurrentPointMoved = selectedPoint;
                 } else {
@@ -768,7 +794,7 @@ void ofApp::mousePressed(int x, int y, int button){
 
 					//We change the selected poly
 					for (int i = 0; i < m_vAreaPolygonsVector.size(); i++){
-						if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){						
+						if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(tx) / m_iFboWidth, static_cast<float>(ty) / m_iFboHeight))){
 							m_iIndicePolygonSelected = i;
 							m_vAreaPolygonsVector[i].hasBeenSelected(true);
 							m_bSelectMode = true;
@@ -787,27 +813,35 @@ void ofApp::mousePressed(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
 	
-	ofPoint temp = transformMouseCoord(x, y);
-	x = temp.x;
-	y = temp.y;
+    // Get transformed coords for mouse
+    ofPoint temp = transformMouseCoord(x, y);
+    int tx = temp.x;
+    int ty = temp.y;
+    // Get transformed coords for old pos
+    temp = transformMouseCoord(m_oOldMousePosition.x, m_oOldMousePosition.y);
+    int tox = temp.x;
+    int toy = temp.y;
+    m_oOldMousePosition = ofVec2f(x,y);
 
-	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
+    // Transformed movement
+    ofVec2f tmovement = ofVec2f(tox - tx, toy - ty);
 
 	if (button == 0){
 		if (!m_bEditMode){
 			if (m_bSelectMode){
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(movement.x) / m_iFboWidth, static_cast<float>(movement.y) / m_iFboHeight);
+				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(tmovement.x) / m_iFboWidth, static_cast<float>(tmovement.y) / m_iFboHeight);
 				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
 			}
 		}
 	}
-	m_oOldMousePosition = ofVec2f(x, y);
     
     m_iCurrentPointMoved = -1;
 }
 
 //--------------------------------------------------------------
 ofPoint ofApp::transformMouseCoord(int x, int y){
+    x -= m_pFboOffset.x;
+    y -= m_pFboOffset.y;
 	x = x * m_iFboWidth / (m_iWidthRender * m_fZoomCoef);
 	y = y * m_iFboHeight / (m_iHeightRender * m_fZoomCoef);
 	return ofPoint(x, y);

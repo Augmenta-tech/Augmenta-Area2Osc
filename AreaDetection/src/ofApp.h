@@ -32,6 +32,7 @@ public:
 	void mouseDragged(int x, int y, int button);
 	void mousePressed(int x, int y, int button);
 	void mouseReleased(int x, int y, int button);
+    void mouseScrolled(int x, int y, float scrollX, float scrollY);
     void dragEvent(ofDragInfo drag);
     void onLoadPressed();
     void onSavePressed();
@@ -115,6 +116,7 @@ private:
 	int m_iLinesWidthSlider;
 	int m_iWidthRender;
 	int m_iHeightRender;
+    ofPoint m_pFboOffset;
 
 
     // Gui panel
