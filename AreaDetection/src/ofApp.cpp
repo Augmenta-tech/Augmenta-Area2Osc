@@ -659,7 +659,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 	ofPoint temp = transformMouseCoord(x, y);
 	x = temp.x;
 	y = temp.y;
-
+    
 	ofVec2f movement = ofVec2f(m_oOldMousePosition.x - x, m_oOldMousePosition.y - y);
 
 	if (button == 0){
