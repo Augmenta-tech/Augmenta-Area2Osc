@@ -365,7 +365,7 @@ void ofApp::drawInterface(){
 	int min = 700;
 	int max = 1000;
 
-    ofBackground(ofColor::darkGray); // Clear screen
+    ofBackground(50); // Clear screen
 
 	m_iWidthRender = m_iFboWidth;
 	m_iHeightRender = m_iFboHeight;
@@ -914,6 +914,8 @@ void ofApp::save(string _sPath){
     if (m_iXMLFboHeight == 0) m_iXMLFboHeight = m_iFboHeight;
     settings.addValue("FboWidth", m_iXMLFboWidth);
     settings.addValue("FboHeight", m_iXMLFboHeight);
+    settings.addValue("FboOffsetX", m_pFboOffset.x);
+    settings.addValue("FboOffsetY", m_pFboOffset.y);
     settings.addValue("NextFreeId", m_iNextFreeId);
     settings.popTag();
     ofLogNotice() << "Other settings saved...";
@@ -1047,6 +1049,7 @@ void ofApp::load(string _sPath){
         m_iXMLFboHeight = settings.getValue("FboHeight", m_iFboHeight);
         m_iFboWidth = m_iXMLFboWidth;
         m_iFboHeight = m_iXMLFboHeight;
+        m_pFboOffset = *new ofPoint(settings.getValue("FboOffsetX", m_pFboOffset.x),settings.getValue("FboOffsetY", m_pFboOffset.y));
         m_iNextFreeId = settings.getValue("NextFreeId", m_iNextFreeId);
         settings.popTag();
         ofLogNotice() << "Size fbo loaded : " << m_iFboWidth << "/" << m_iFboHeight;
