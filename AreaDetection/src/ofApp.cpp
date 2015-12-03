@@ -122,6 +122,7 @@ void ofApp::setupGUI(){
 	// Listeners can be used to call a function when a UI element has changed.
 	// Don't forget to call ofRemoveListener before deleting any instance that is listening to an event, to prevent crashes. Here, we will call it in exit() method.
 	m_bResetSettings.addListener(this, &ofApp::reset);
+    m_bResetFboView.addListener(this, &ofApp::resetFboView);
 
 	// Setup GUI panel
 	m_gui.setup();
@@ -131,6 +132,7 @@ void ofApp::setupGUI(){
 	//m_gui.add(m_sScreenResolution.setup("Window res ", m_sScreenResolution));
 	//m_gui.add(m_sSendFboResolution.setup("Fbo res ", m_sSendFboResolution));
 	m_gui.add((m_fZoomCoef.setup("Zoom", 1, 0.3, 2)));
+    m_gui.add(m_bResetFboView.setup("Reset View",false));
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
     
     // Add save/load listener
@@ -484,6 +486,12 @@ void ofApp::deleteAllPolygon(){
 	ofLogVerbose("deleteAllPolygon", "All AreaPolygons are now deleted ");
 }
 
+//--------------------------------------------------------------
+void ofApp::resetFboView(){
+    m_pFboOffset = ofPoint(0,0);
+    m_fZoomCoef = 1.f;
+}
+
 //_______________________________________________________________
 //_____________________________INPUT_____________________________
 //_______________________________________________________________
@@ -700,6 +708,8 @@ void ofApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
     m_fZoomCoef = m_fZoomCoef + scrollY*0.05f;
+    //Revert if we went too far
+    if (m_fZoomCoef < 0.1f) m_fZoomCoef = m_fZoomCoef - scrollY*0.05f;
 }
 
 //--------------------------------------------------------------
@@ -1223,4 +1233,5 @@ void ofApp::exit(){
     save("autosave.xml");
 	// Remove listener because instance of our gui button will be deleted
 	m_bResetSettings.removeListener(this, &ofApp::reset);
+    m_bResetFboView.removeListener(this, &ofApp::resetFboView);
 }

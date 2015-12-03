@@ -84,6 +84,8 @@ private:
     int m_iXMLFboHeight;
     string m_sSendFboResolution;
     string m_sScreenResolution;
+    ofPoint m_pFboOffset;
+    void resetFboView();
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
     void deleteLastPolygon();
@@ -116,7 +118,6 @@ private:
 	int m_iLinesWidthSlider;
 	int m_iWidthRender;
 	int m_iHeightRender;
-    ofPoint m_pFboOffset;
 
 
     // Gui panel
@@ -133,6 +134,7 @@ private:
     ofxToggle m_bRedondanteMode;
 	ofxIntSlider m_iAntiBounce;
 	ofxFloatSlider m_fZoomCoef;
+    ofxButton m_bResetFboView;
 
 	// Gui parameters inside m_SecondGroup
 	ofxToggle m_oToggleClearAll;
