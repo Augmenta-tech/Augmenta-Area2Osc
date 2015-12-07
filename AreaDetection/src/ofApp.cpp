@@ -710,6 +710,13 @@ void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
     m_fZoomCoef = m_fZoomCoef + scrollY*0.05f;
     //Revert if we went too far
     if (m_fZoomCoef < 0.1f) m_fZoomCoef = m_fZoomCoef - scrollY*0.05f;
+    
+    // Compute offset to zoom around pointer
+    
+    // Mouse offset
+    //1ofPoint mouseOffset = x
+    
+    //m_pFboOffset.x =
 }
 
 //--------------------------------------------------------------

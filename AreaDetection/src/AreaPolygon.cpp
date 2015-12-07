@@ -150,7 +150,12 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 
 //--------------------------------------------------------------
 void AreaPolygon::movePoint(int i, ofVec2f _target){
-    m_vVectorPoints[i] = _target;
+    if (_target.x > 0 && _target.x < 1){
+        m_vVectorPoints[i].x = _target.x;
+    }
+    if (_target.y > 0 && _target.y < 1){
+        m_vVectorPoints[i].y = _target.y;
+    }
 }
 
 //--------------------------------------------------------------
