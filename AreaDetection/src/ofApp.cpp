@@ -615,7 +615,9 @@ void ofApp::keyPressed(int key){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveLeft();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
 					ofLogVerbose("keyPressed", "go left !");
-				}
+                } else {
+                    m_pFboOffset.x = m_pFboOffset.x - 10;
+                }
 				break;
 
 			case OF_KEY_RIGHT:
@@ -623,7 +625,9 @@ void ofApp::keyPressed(int key){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveRight();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
 					ofLogVerbose("keyPressed", "go right !");
-				}
+                } else {
+                    m_pFboOffset.x = m_pFboOffset.x + 10;
+                }
 				break;
 
 			case OF_KEY_UP:
@@ -631,7 +635,9 @@ void ofApp::keyPressed(int key){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveUp();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
 					ofLogVerbose("keyPressed", "go up !");
-				}
+				} else {
+                    m_pFboOffset.y = m_pFboOffset.y - 10;
+                }
 				break;
 
 			case OF_KEY_DOWN:			
@@ -639,7 +645,9 @@ void ofApp::keyPressed(int key){
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveDown();
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
 					ofLogVerbose("keyPressed", "go down !");
-				}
+				} else {
+                    m_pFboOffset.y = m_pFboOffset.y + 10;
+                }
 				break;
 		}
         default:
