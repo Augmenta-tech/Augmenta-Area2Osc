@@ -724,8 +724,9 @@ void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
     
     // Check if not too small first
     if (m_fZoomCoef*localZoom > 0.1f){
+        // Apply zoom
         m_fZoomCoef = m_fZoomCoef * localZoom;
-        // Compute offset to zoom around pointer
+        // Compute offset to zoom around mouse pointer
         m_pFboOffset = ofPoint( (float)x-(float)(x-m_pFboOffset.x)*localZoom, (float)y-(float)(y-m_pFboOffset.y)*localZoom );
     }
     

@@ -266,6 +266,11 @@ void AreaPolygon::draw(int width,int height){
         if (m_bSelected){
             // Draw points
             for (int i=0 ; i < m_vVectorPoints.size() ; i++){
+                if (m_iSelectedPoint == i){
+                    ofFill();
+                } else {
+                    ofNoFill();
+                }
                 ofSetColor(255, 255, 255);
                 ofDrawCircle(m_vVectorPoints[i].x*width, m_vVectorPoints[i].y*height, m_fPointRadius*width);
             }
