@@ -74,6 +74,9 @@ private:
     int m_iModifierKey;
 	ofPoint transformMouseCoord(int x, int y);
 
+    // Window
+    int m_iWindowWidth;
+    int m_iWindowHeight;
     
     // Fbo used to render visuals
     ofFbo m_fbo;
@@ -85,6 +88,7 @@ private:
     string m_sSendFboResolution;
     string m_sScreenResolution;
     ofPoint m_pFboOffset;
+    ofPoint m_pDefaultFboOffset;
     void resetFboView();
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
@@ -116,8 +120,6 @@ private:
 	int m_iRadiusClosePolyZone;
 	float m_fPointRadius;
 	int m_iLinesWidthSlider;
-	int m_iWidthRender;
-	int m_iHeightRender;
 
 
     // Gui panel

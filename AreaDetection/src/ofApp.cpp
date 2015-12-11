@@ -60,9 +60,7 @@ void ofApp::setup(){
     #endif
     
     m_iCurrentPointMoved = -1; // No point moving
-    
-    // Hardcode window size
-    ofSetWindowShape(800,600);
+
 }
 
 //--------------------------------------------------------------
@@ -87,6 +85,8 @@ void ofApp::init(){
     m_sSettingsPath = "settings.xml";
     m_bHideInterface = false;
     m_bLogToFile = false;
+    m_iWindowWidth = 1024;
+    m_iWindowHeight = 768;
     m_iFboWidth = 1024;
     m_iFboHeight = 768;
     m_iXMLFboWidth = m_iFboWidth;
@@ -109,9 +109,10 @@ void ofApp::init(){
 	m_fZoomCoef = 1.0;
 	m_bSendFbo = false;
     m_bAutoSize = false;
-	m_sScreenResolution = ofToString(m_iWidthRender) +" x "+ ofToString(m_iHeightRender);
+	m_sScreenResolution = ofToString(ofGetWidth()) +" x "+ ofToString(ofGetHeight());
 	m_sSendFboResolution = ofToString(m_iFboWidth) + " x " + ofToString(m_iFboHeight);
-    m_pFboOffset = *new ofPoint(0,0);
+    m_pDefaultFboOffset = *new ofPoint(220,8);
+    m_pFboOffset = m_pDefaultFboOffset;
 	
 }
 
@@ -366,38 +367,8 @@ void ofApp::drawInterface(){
 	int max = 1000;
 
     ofBackground(50); // Clear screen
-
-	m_iWidthRender = m_iFboWidth;
-	m_iHeightRender = m_iFboHeight;
-
-
-	float fFboRatio = (float)m_iFboWidth / (float)m_iFboHeight;
-
-	// Portrait or square mode Height >= Width
-	if (fFboRatio <= 1){
-		if (m_iHeightRender > max){
-			m_iHeightRender = max;
-			m_iWidthRender = m_iHeightRender * fFboRatio;
-		}
-		if (m_iWidthRender < min){
-			m_iWidthRender = min;
-			m_iHeightRender = m_iWidthRender / fFboRatio;
-		}
-	}
-	// Landscape mode Height < Width
-	if (fFboRatio > 1){
-		if (m_iWidthRender > max){
-			m_iWidthRender = max;
-			m_iHeightRender = m_iWidthRender / fFboRatio;
-		}
-		if (m_iHeightRender < min){
-			m_iHeightRender = min;
-			m_iWidthRender = m_iHeightRender * fFboRatio;
-		}
-	}
 	
-	m_fbo.draw(m_pFboOffset.x, m_pFboOffset.y, m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
-	//ofSetWindowShape(m_iWidthRender * m_fZoomCoef, m_iHeightRender * m_fZoomCoef);
+	m_fbo.draw(m_pFboOffset.x, m_pFboOffset.y, m_iFboWidth * m_fZoomCoef, m_iFboHeight * m_fZoomCoef);
 	
 	// Update the UI
 	m_sNumberOfAreaPolygons = ofToString(m_iNumberOfAreaPolygons);
@@ -488,8 +459,9 @@ void ofApp::deleteAllPolygon(){
 
 //--------------------------------------------------------------
 void ofApp::resetFboView(){
-    m_pFboOffset = ofPoint(0,0);
-    m_fZoomCoef = 1.f;
+    m_pFboOffset = m_pDefaultFboOffset;
+    int availableWidth = ofGetWidth() - m_pDefaultFboOffset.x - m_pDefaultFboOffset.y; // y is the margin
+    m_fZoomCoef = (float)availableWidth/(float)m_iFboWidth;
 }
 
 //_______________________________________________________________
@@ -765,10 +737,11 @@ void ofApp::mousePressed(int x, int y, int button){
         bool isInsideArea =true;
         if (tx < 0 || tx > m_iFboWidth || ty < 0 || ty > m_iFboHeight){
             isInsideArea = false;
+            ofLogNotice("Click outside area");
         }
         
 		//Creation of poly
-		if (!m_bSelectMode && !isInsideAPolygon(ofVec2f(tx, ty)) && isInsideArea){
+		if ( !m_bSelectMode && !isInsideAPolygon(ofVec2f(tx, ty)) && isInsideArea ){
 			//One AreaPolygon is not finish
 			if (m_bEditMode){
 				//Is closing the poly
@@ -878,8 +851,8 @@ void ofApp::mouseReleased(int x, int y, int button){
 ofPoint ofApp::transformMouseCoord(int x, int y){
     x -= m_pFboOffset.x;
     y -= m_pFboOffset.y;
-	x = x * m_iFboWidth / (m_iWidthRender * m_fZoomCoef);
-	y = y * m_iFboHeight / (m_iHeightRender * m_fZoomCoef);
+    x /= m_fZoomCoef;
+    y /= m_fZoomCoef;
 	return ofPoint(x, y);
 }
 
@@ -935,7 +908,8 @@ void ofApp::save(string _sPath){
     settings.pushTag("Settings");
     settings.addValue("HideInterface", m_bHideInterface);
     settings.addValue("LogToFile", m_bLogToFile);
-    
+    settings.addValue("WindowWidth", ofGetWidth());
+    settings.addValue("WindowHeight", ofGetHeight());
     if (m_iXMLFboWidth == 0) m_iXMLFboWidth = m_iFboWidth;
     if (m_iXMLFboHeight == 0) m_iXMLFboHeight = m_iFboHeight;
     settings.addValue("FboWidth", m_iXMLFboWidth);
@@ -1071,6 +1045,9 @@ void ofApp::load(string _sPath){
         settings.pushTag("Settings");
         m_bHideInterface = settings.getValue("HideInterface", m_bHideInterface);
         m_bLogToFile = settings.getValue("LogToFile", m_bLogToFile);
+        m_iWindowWidth = settings.getValue("WindowWidth", m_iWindowWidth);
+        m_iWindowHeight = settings.getValue("WindowHeight", m_iWindowHeight);
+        ofSetWindowShape(m_iWindowWidth,m_iWindowHeight);
         m_iXMLFboWidth = settings.getValue("FboWidth", m_iFboWidth);
         m_iXMLFboHeight = settings.getValue("FboHeight", m_iFboHeight);
         m_iFboWidth = m_iXMLFboWidth;
