@@ -22,7 +22,13 @@ Left click : to create a new point or polygon.
 
 Left click : inside a polygon to select it /outside a polygon to deselect it.
 
+Left click : on a selected polygon point to move it.
+
 Right click : to delete the last point created.
+
+Mousewheel click + drag : to move the view.
+
+Mousewheel up/down : to zoom in/out of the view. 
 
 #### Keyboard
 
@@ -36,9 +42,11 @@ R / r : To delete all the polygons you have created.
 
 Del / BackSpace : To delete the selected polygon.
 
-- : To zoom in (only for a better appreciation on the screen).
+(-) : To zoom in (only for a better appreciation on the screen).
 
-+ : To zoom out (only for a better appreciation on the screen).
+(+) : To zoom out (only for a better appreciation on the screen).
+
+Arrows : move a polygon when selected / move the view when not.
 
 #### Note 
 
