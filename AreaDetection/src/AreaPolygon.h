@@ -69,6 +69,7 @@ public:
 	bool doesStringContainOnlyNumber(string a_sString);
 	bool containOnlyAlpha(string s);
 	bool doesStringContainOnlyNumberAndOnePoint(string s);
+    ofVec2f m_vPotentialPoint;
 
 private:
 

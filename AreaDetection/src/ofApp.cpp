@@ -247,6 +247,25 @@ void ofApp::update(){
 
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
+    
+    // Update the potential point
+    // Get transformed coords for mouse
+    ofPoint temp = transformMouseCoord(mouseX, mouseY);
+    int tx = temp.x;
+    int ty = temp.y;
+        // Test if point is inside area
+        bool isInsideArea =true;
+        if (tx < 0 || tx > m_iFboWidth || ty < 0 || ty > m_iFboHeight){
+            isInsideArea = false;
+        }
+        
+        //Creation of poly
+        if ( !m_bSelectMode && !isInsideAPolygon(ofVec2f(tx, ty)) && isInsideArea ){
+            //One AreaPolygon is not finish
+            if (m_bEditMode){                
+                m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].m_vPotentialPoint = ofVec2f(tx,ty);
+            }
+        }
 
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){

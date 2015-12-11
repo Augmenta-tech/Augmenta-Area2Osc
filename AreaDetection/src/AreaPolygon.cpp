@@ -291,6 +291,16 @@ void AreaPolygon::draw(int width,int height){
 				++i;
 			}
 		}
+        
+        // Draw the potential point
+        if (m_vPotentialPoint.x > 0 && m_vPotentialPoint.y > 0 && m_vPotentialPoint.x < width && m_vPotentialPoint.y < height){ // Check if we should actually draw it
+            if (m_vVectorPoints.size() > 0){
+                ofPushStyle();
+                ofSetColor(255,255,255,100);
+                ofDrawLine(m_vVectorPoints.back().x * width, m_vVectorPoints.back().y * height, m_vPotentialPoint.x, m_vPotentialPoint.y);
+                ofPopStyle();
+            }
+        }
 	}
 	ofPopStyle();
 	drawPeopleInside(width,height);
