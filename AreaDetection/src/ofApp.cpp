@@ -761,8 +761,14 @@ void ofApp::mousePressed(int x, int y, int button){
 	}
 	
 	if (button == 0){
+        // Test if point is inside area
+        bool isInsideArea =true;
+        if (tx < 0 || tx > m_iFboWidth || ty < 0 || ty > m_iFboHeight){
+            isInsideArea = false;
+        }
+        
 		//Creation of poly
-		if (!m_bSelectMode && !isInsideAPolygon(ofVec2f(tx, ty))){
+		if (!m_bSelectMode && !isInsideAPolygon(ofVec2f(tx, ty)) && isInsideArea){
 			//One AreaPolygon is not finish
 			if (m_bEditMode){
 				//Is closing the poly
