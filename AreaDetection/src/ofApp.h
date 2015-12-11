@@ -36,6 +36,7 @@ public:
     void dragEvent(ofDragInfo drag);
     void onLoadPressed();
     void onSavePressed();
+    void onChangeDisplayInfo(bool &inval);
 	    
     void save(string _sPath);
     void load(string _sPath);
@@ -141,6 +142,7 @@ private:
 	// Gui parameters inside m_SecondGroup
 	ofxToggle m_oToggleClearAll;
 	ofxToggle m_oToggleDeleteLastPoly;
+    ofxToggle m_oToggleDisplayInfo;
 
 	// Gui parameters inside m_ThirdGroup
 	ofxToggle m_bSendFbo;

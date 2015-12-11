@@ -70,6 +70,7 @@ public:
 	bool containOnlyAlpha(string s);
 	bool doesStringContainOnlyNumberAndOnePoint(string s);
     ofVec2f m_vPotentialPoint;
+    bool m_bDisplayInfo;
 
 private:
 

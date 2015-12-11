@@ -22,8 +22,10 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
     m_fPointRadius = 0.01f;
-    m_iSelectedPoint = -1; // No point selected
+    m_iSelectedPoint = -1; //No point selected
 	m_fMoveIncremente = 0.001;
+    
+    m_bDisplayInfo = true;
     
     ofxOscMessage defaultIn;
     defaultIn.setAddress("/area" + ofToString(a_iIndice) + "/personEntered");
@@ -176,7 +178,7 @@ int AreaPolygon::pointClicked(ofVec2f _mouse){
 
 //--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){
-	if (m_bIsFinished){
+	if (m_bIsFinished && m_bDisplayInfo){
         /*
         string m_vInOscReadable="";
         string m_vOutOscReadable="";
@@ -198,6 +200,7 @@ void AreaPolygon::drawPeopleInside(int width, int height){
             ofDrawBitmapString(s, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height + 10*count));
             count ++;
         }
+        // OUTS
         for (int i=0; i< m_vOscMessagesOut.size(); i++){
             string s = "[out] "+ messageToString(m_vOscMessagesOut[i]);
             ofDrawBitmapString(s, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height + 10*count));

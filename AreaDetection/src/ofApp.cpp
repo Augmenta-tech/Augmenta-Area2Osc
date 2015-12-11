@@ -30,8 +30,13 @@ void ofApp::setup(){
 	// because init() will define all default values
 	m_iNextFreeId = 0;
     load("autosave.xml");
+    
     setupGUI();
     setupOSC();
+    
+    // Update display info on polygons
+    bool tmp = m_oToggleDisplayInfo;
+    onChangeDisplayInfo(tmp);
     
     //Augmenta
     AugmentaReceiver.connect(m_iOscReceiverPorts[0]);
@@ -100,6 +105,7 @@ void ofApp::init(){
 	m_bRedondanteMode = true;
 	m_oToggleClearAll = false;
 	m_oToggleDeleteLastPoly = false;
+    m_oToggleDisplayInfo = true;
 	m_bEditMode = false;
 	m_bSelectMode = false;
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
@@ -139,6 +145,8 @@ void ofApp::setupGUI(){
     // Add save/load listener
     ofAddListener(m_gui.savePressedE,this, &ofApp::onSavePressed);
     ofAddListener(m_gui.loadPressedE,this, &ofApp::onLoadPressed);
+    
+    m_oToggleDisplayInfo.addListener(this, &ofApp::onChangeDisplayInfo);
 
 	// guiFirstGroup parameters ---------------------------
 	string sFirstGroupName = "Polygons";
@@ -146,6 +154,7 @@ void ofApp::setupGUI(){
 	m_guiFirstGroup.setName(sFirstGroupName);     // Name the group of parameters (important if you want to apply color to your GUI)
 	m_guiFirstGroup.add((m_oToggleClearAll.setup("Delete all polygons", m_oToggleClearAll))->getParameter());
 	m_guiFirstGroup.add((m_oToggleDeleteLastPoly.setup("Delete last polygon", m_oToggleDeleteLastPoly))->getParameter());
+    m_guiFirstGroup.add((m_oToggleDisplayInfo.setup("Display polygon info", m_oToggleDisplayInfo))->getParameter());
 	m_gui.add(m_guiFirstGroup);     // When all parameters of the group are set up, add the group to the gui panel.
 
 	// guiSecondGroup parameters ---------------------------
@@ -898,6 +907,13 @@ void ofApp::onSavePressed(){
     ofLogNotice("Save button pressed");
     save(m_sSettingsPath);
 }
+//--------------------------------------------------------------
+void ofApp::onChangeDisplayInfo(bool &inval){
+    for (int i = 0 ; i<m_vAreaPolygonsVector.size() ; i++){
+        m_vAreaPolygonsVector[i].m_bDisplayInfo = inval;
+    }
+}
+
 
 //--------------------------------------------------------------
 void ofApp::save(string _sPath){
