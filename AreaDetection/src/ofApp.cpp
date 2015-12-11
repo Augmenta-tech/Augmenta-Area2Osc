@@ -441,8 +441,12 @@ void ofApp::drawHiddenInterface(){
 		"[del] / [backSpace] to delete the selected polygon\n" \
 		"[-] To zoom in(only for a better appreciation on the screen).\n"\
 		"[+] To zoom out(only for a better appreciation on the screen).\n"\
+        "[arrows] move a polygon when selected / move the view when not\n" \
+        "[mousewheel click + drag] to move the view\n" \
+        "[mousewheel up/down] to zoom in/out of the view\n" \
 		"[left click] to create a new point or polygon\n" \
 		"[right click] to delete the last point created\n" \
+        "[left click] on a selected polygon point to move it\n" \
 		"[left click] inside a polygon to select it /outside a polygon to deselect it\n\n"
 
 		"---------------------------------------\n" \
