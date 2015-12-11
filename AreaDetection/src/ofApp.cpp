@@ -151,7 +151,7 @@ void ofApp::setupGUI(){
 	string sSecondGroupName = "OSC";
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
-	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce ms",100,1,400)->getParameter());
+	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce ms",100,0,400)->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
 	#ifdef WIN32
