@@ -1,6 +1,6 @@
 #include "ofApp.h"
 
-#define APP_NAME "Augmenta area2OSC"
+#define APP_NAME "Augmenta Zone editor"
 
 
 //_______________________________________________________________
@@ -23,15 +23,18 @@ void ofApp::setup(){
 	ofSetFrameRate(60);
 
 	// Init function is used to set default variables that can be changed.
-	// For example, GUI variables or preferences.xml variables.
+	// For example, GUI variables or settings.xml variables.
 	init();
 
 	// Important : call those function AFTER init,
 	// because init() will define all default values
 	m_iNextFreeId = 0;
-    load("autosave.xml");
     
+    // First we setup the GUI (without loaded values)
     setupGUI();
+    // Then we load the full settings (GUI, OSC, other...)
+    load("autosave.xml");
+    // Then setup OSC with the loaded values
     setupOSC();
     
     // Update display info on polygons
@@ -86,7 +89,7 @@ void ofApp::init(){
     // Change default values here.
     //--------------------------------------------
 
-    // App default values (preferences.xml)
+    // App default values
     m_sSettingsPath = "settings.xml";
     m_bHideInterface = false;
     m_bLogToFile = false;
