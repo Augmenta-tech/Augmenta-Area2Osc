@@ -538,7 +538,14 @@ void ofApp::keyPressed(int key){
 
         case 'f':
         case 'F':
+            // Update res if needed first
+            if(ofGetWindowMode() != OF_FULLSCREEN){
+                m_iWindowWidth = ofGetWidth();
+                m_iWindowHeight = ofGetHeight();
+            }
+            // Toggle fullscreen
             ofToggleFullscreen();
+            // Put back the  window size
             if(ofGetWindowMode() != OF_FULLSCREEN){
                 ofSetWindowShape(m_iWindowWidth,m_iWindowHeight);
             }
