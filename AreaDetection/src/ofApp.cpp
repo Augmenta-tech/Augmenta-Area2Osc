@@ -723,20 +723,22 @@ void ofApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
     
-    // Compute the zoom difference we want for this frame
-    float localZoom = 1 + (scrollY*0.05f)/m_fZoomCoef;
-    
-    // Zoom for this frame shouldn't go below 0 of course
-    if (localZoom < 0.05f) localZoom = 0.05f;
-    
-    // Check if not too small first
-    if (m_fZoomCoef*localZoom > 0.1f){
-        // Apply zoom
-        m_fZoomCoef = m_fZoomCoef * localZoom;
-        // Compute offset to zoom around mouse pointer
-        m_pFboOffset = ofPoint( (float)x-(float)(x-m_pFboOffset.x)*localZoom, (float)y-(float)(y-m_pFboOffset.y)*localZoom );
+    // Check if the mouse is within the window (for cases where the app is out of focus)
+    if (x > 0 && x < ofGetWidth() && y > 0 && y < ofGetHeight()){
+        // Compute the zoom difference we want for this frame
+        float localZoom = 1 + (scrollY*0.05f)/m_fZoomCoef;
+        
+        // Zoom for this frame shouldn't go below 0 of course
+        if (localZoom < 0.05f) localZoom = 0.05f;
+        
+        // Check if not too small first
+        if (m_fZoomCoef*localZoom > 0.1f){
+            // Apply zoom
+            m_fZoomCoef = m_fZoomCoef * localZoom;
+            // Compute offset to zoom around mouse pointer
+            m_pFboOffset = ofPoint( (float)x-(float)(x-m_pFboOffset.x)*localZoom, (float)y-(float)(y-m_pFboOffset.y)*localZoom );
+        }
     }
-    
 }
 
 //--------------------------------------------------------------
