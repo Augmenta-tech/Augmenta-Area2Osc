@@ -97,8 +97,6 @@ void ofApp::init(){
     m_iWindowHeight = 768;
     m_iFboWidth = 1024;
     m_iFboHeight = 768;
-    m_iXMLFboWidth = m_iFboWidth;
-    m_iXMLFboHeight = m_iFboHeight;
     m_iOscReceiverPorts.push_back(12000);
     m_iOscSenderPorts.push_back(7000);
     m_sOscSenderHosts.push_back("127.0.0.1");
@@ -133,7 +131,12 @@ void ofApp::setupGUI(){
 	// Don't forget to call ofRemoveListener before deleting any instance that is listening to an event, to prevent crashes. Here, we will call it in exit() method.
 	m_bResetSettings.addListener(this, &ofApp::reset);
     m_bResetFboView.addListener(this, &ofApp::resetFboView);
-
+    m_oToggleDisplayInfo.addListener(this, &ofApp::onChangeDisplayInfo);
+    m_bAutoSize.addListener(this, &ofApp::onChangeAutoSize);
+    // Add save/load listener
+    ofAddListener(m_gui.savePressedE,this, &ofApp::onSavePressed);
+    ofAddListener(m_gui.loadPressedE,this, &ofApp::onLoadPressed);
+    
 	// Setup GUI panel
 	m_gui.setup();
 	m_gui.setName("GUI");
@@ -144,12 +147,6 @@ void ofApp::setupGUI(){
 	m_gui.add((m_fZoomCoef.setup("Zoom", 1, 0.3, 2)));
     m_gui.add(m_bResetFboView.setup("Reset View",false));
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
-    
-    // Add save/load listener
-    ofAddListener(m_gui.savePressedE,this, &ofApp::onSavePressed);
-    ofAddListener(m_gui.loadPressedE,this, &ofApp::onLoadPressed);
-    
-    m_oToggleDisplayInfo.addListener(this, &ofApp::onChangeDisplayInfo);
 
 	// guiFirstGroup parameters ---------------------------
 	string sFirstGroupName = "Polygons";
@@ -351,7 +348,7 @@ void ofApp::draw(){
     if(m_bAutoSize){
         fboSizeHaveChanged(m_oActualScene->width, m_oActualScene->height);
     } else {
-        fboSizeHaveChanged(m_iXMLFboWidth, m_iXMLFboHeight);
+        fboSizeHaveChanged(m_iFboWidth, m_iFboHeight);
     }
     
 	m_fbo.begin();
@@ -922,6 +919,14 @@ void ofApp::onChangeDisplayInfo(bool &inval){
         m_vAreaPolygonsVector[i].m_bDisplayInfo = inval;
     }
 }
+//--------------------------------------------------------------
+void ofApp::onChangeAutoSize(bool &inval){
+    if (!inval && m_oActualScene!=NULL){
+        // Trick to avoid considering old data for the auto size
+        m_oActualScene->width=0;
+        m_oActualScene->height=0;
+    }
+}
 
 
 //--------------------------------------------------------------
@@ -931,7 +936,9 @@ void ofApp::save(string _sPath){
     // Clean existing file if needed
     if(ofFile::doesFileExist(_sPath)){
         ofFile::removeFile(_sPath);
-        ofLogNotice("File correctly cleaned");
+        ofFile newFile(ofToDataPath(_sPath), ofFile::WriteOnly); //file doesn't exist yet
+        newFile.create();
+        ofLogNotice("File correctly cleaned ")<<_sPath;
     }
     
     // ----------------------------------------------
@@ -954,10 +961,8 @@ void ofApp::save(string _sPath){
     settings.addValue("LogToFile", m_bLogToFile);
     settings.addValue("WindowWidth", ofGetWidth());
     settings.addValue("WindowHeight", ofGetHeight());
-    if (m_iXMLFboWidth == 0) m_iXMLFboWidth = m_iFboWidth;
-    if (m_iXMLFboHeight == 0) m_iXMLFboHeight = m_iFboHeight;
-    settings.addValue("FboWidth", m_iXMLFboWidth);
-    settings.addValue("FboHeight", m_iXMLFboHeight);
+    settings.addValue("FboWidth", m_iFboWidth);
+    settings.addValue("FboHeight", m_iFboHeight);
     settings.addValue("FboOffsetX", m_pFboOffset.x);
     settings.addValue("FboOffsetY", m_pFboOffset.y);
     settings.addValue("NextFreeId", m_iNextFreeId);
@@ -1092,10 +1097,9 @@ void ofApp::load(string _sPath){
         m_iWindowWidth = settings.getValue("WindowWidth", m_iWindowWidth);
         m_iWindowHeight = settings.getValue("WindowHeight", m_iWindowHeight);
         ofSetWindowShape(m_iWindowWidth,m_iWindowHeight);
-        m_iXMLFboWidth = settings.getValue("FboWidth", m_iFboWidth);
-        m_iXMLFboHeight = settings.getValue("FboHeight", m_iFboHeight);
-        m_iFboWidth = m_iXMLFboWidth;
-        m_iFboHeight = m_iXMLFboHeight;
+        m_iFboWidth = settings.getValue("FboWidth", m_iFboWidth);
+        m_iFboHeight = settings.getValue("FboHeight", m_iFboHeight);
+        m_fbo.allocate(m_iFboWidth, m_iFboHeight, GL_RGBA);
         m_pFboOffset = *new ofPoint(settings.getValue("FboOffsetX", m_pFboOffset.x),settings.getValue("FboOffsetY", m_pFboOffset.y));
         m_iNextFreeId = settings.getValue("NextFreeId", m_iNextFreeId);
         settings.popTag();

@@ -37,6 +37,7 @@ public:
     void onLoadPressed();
     void onSavePressed();
     void onChangeDisplayInfo(bool &inval);
+    void onChangeAutoSize(bool &inval);
 	    
     void save(string _sPath);
     void load(string _sPath);
@@ -84,8 +85,6 @@ private:
 	ofFbo m_oFboSent;
     int m_iFboWidth;
     int m_iFboHeight;
-    int m_iXMLFboWidth;
-    int m_iXMLFboHeight;
     string m_sSendFboResolution;
     string m_sScreenResolution;
     ofPoint m_pFboOffset;
