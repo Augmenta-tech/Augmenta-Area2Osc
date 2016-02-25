@@ -16,7 +16,7 @@ public:
 
 	inline unsigned long long getLeavingTime(){ return m_ulLeavingTime; };
 	inline int getId(){ return m_iId; };
-
+    
 private:
 	unsigned long long m_ulLeavingTime;
 	int m_iId;
@@ -25,6 +25,9 @@ private:
 
 class AreaPolygon {
 public:
+    
+    // Enum used for easier movement direction
+    enum dir { LEFT, RIGHT, UP, DOWN };
 
 	//Construction
 	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce);
@@ -36,6 +39,9 @@ public:
 	inline void hasBeenSelected(bool a_bSelected){ m_bSelected = a_bSelected; };
 	inline int getPeopleMovement(){ return m_iPeopleMovement; };
 	inline int getPeopleInside(){ return m_iPeopleInside; };
+    inline int getSelectedPoint(){return m_iSelectedPoint;}
+    
+
 
 	//Osc
 	inline vector<ofxOscMessage> getInOscMessages(){ return m_vOscMessagesIn; };
@@ -51,11 +57,8 @@ public:
 	void drawPeopleMovement(int width, int height);
 
 	//Move Poly
-	void moveLeft();
-	void moveRight();
-	void moveUp();
-	void moveDown();
 	void move(float a_iX, float a_iY);
+    void move(dir d);
 
 	void update(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime);
 	void setPeopleInside(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime);
@@ -63,6 +66,7 @@ public:
 	void complete();
 	void addPoint(ofVec2f a_oPoint);
     void movePoint(int i, ofVec2f _target);
+    void movePoint(int i, dir d);
 	bool removeLastPoint();
     int pointClicked(ofVec2f _mouse);
 	bool isPointInPolygon(ofVec2f a_oPersonPosition);

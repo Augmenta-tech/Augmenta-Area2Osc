@@ -158,6 +158,45 @@ void AreaPolygon::movePoint(int i, ofVec2f _target){
     if (_target.y > 0 && _target.y < 1){
         m_vVectorPoints[i].y = _target.y;
     }
+    // Update polygon center
+    setPolygonCentroid();
+}
+void AreaPolygon::movePoint(int i, dir d){
+    if(d == dir::LEFT){
+        bool isMovePossible = true;
+        if (m_vVectorPoints[i].x - m_fMoveIncremente < 0.0){
+            isMovePossible = false;
+        }
+        if (isMovePossible){
+            m_vVectorPoints[i].x -= m_fMoveIncremente;
+        }
+    } else if(d == dir::RIGHT){
+        bool isMovePossible = true;
+        if (m_vVectorPoints[i].x + m_fMoveIncremente > 1.0){
+            isMovePossible = false;
+        }
+        if (isMovePossible){
+            m_vVectorPoints[i].x += m_fMoveIncremente;
+        }
+    } else if(d == dir::UP){
+        bool isMovePossible = true;
+        if (m_vVectorPoints[i].y - m_fMoveIncremente < 0.0){
+            isMovePossible = false;
+        }
+        if (isMovePossible){
+            m_vVectorPoints[i].y -= m_fMoveIncremente;
+        }
+    } else if(d == dir::DOWN){
+        bool isMovePossible = true;
+        if (m_vVectorPoints[i].y + m_fMoveIncremente > 1.0){
+            isMovePossible = false;
+        }
+        if (isMovePossible){
+            m_vVectorPoints[i].y += m_fMoveIncremente;
+        }
+    }
+    // Update polygon center
+    setPolygonCentroid();
 }
 
 //--------------------------------------------------------------
@@ -409,66 +448,6 @@ bool AreaPolygon::removeLastPoint(){
 }
 
 //--------------------------------------------------------------
-void AreaPolygon::moveDown(){
-	bool isMovePossible = true;
-	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].y + m_fMoveIncremente > 1.0){
-			isMovePossible = false;
-		}
-	}
-	if (isMovePossible){
-		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].y = m_vVectorPoints[i].y + m_fMoveIncremente;
-		}
-	}
-}
-
-//--------------------------------------------------------------
-void AreaPolygon::moveLeft(){
-	bool isMovePossible= true;
-	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].x - m_fMoveIncremente < 0){
-			isMovePossible = false;
-		}
-	}
-	if (isMovePossible){
-		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].x = m_vVectorPoints[i].x - m_fMoveIncremente;
-		}
-	}
-}
-
-//--------------------------------------------------------------
-void AreaPolygon::moveRight(){
-	bool isMovePossible = true;
-	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].x + m_fMoveIncremente > 1.0){
-			isMovePossible = false;
-		}
-	}
-	if (isMovePossible){
-		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].x = m_vVectorPoints[i].x + m_fMoveIncremente;
-		}
-	}
-}
-
-//--------------------------------------------------------------
-void AreaPolygon::moveUp(){
-	bool isMovePossible = true;
-	for (int i = 0; i < m_vVectorPoints.size(); ++i){
-		if (m_vVectorPoints[i].y - m_fMoveIncremente < 0){
-			isMovePossible = false;
-		}
-	}
-	if (isMovePossible){
-		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			m_vVectorPoints[i].y = m_vVectorPoints[i].y - m_fMoveIncremente;
-		}
-	}
-}
-
-//--------------------------------------------------------------
 void AreaPolygon::move(float a_iX, float a_iY){
 	bool isXMovePossible = true;
 	bool isYMovePossible = true;
@@ -491,7 +470,67 @@ void AreaPolygon::move(float a_iX, float a_iY){
 			m_vVectorPoints[i].y = m_vVectorPoints[i].y - a_iY;
 		}
 	}
+    // Update polygon center
+    setPolygonCentroid();
 }
+void AreaPolygon::move(dir d){
+    if(d == dir::LEFT){
+        bool isMovePossible = true;
+        for (int i = 0; i < m_vVectorPoints.size(); ++i){
+            if ((m_vVectorPoints[i].x - m_fMoveIncremente) < 0 || (m_vVectorPoints[i].x - m_fMoveIncremente) > 1){
+                isMovePossible = false;
+                break; // exit the loop
+            }
+        }
+        if (isMovePossible){
+            for (int i = 0; i < m_vVectorPoints.size(); ++i){
+                m_vVectorPoints[i].x -= m_fMoveIncremente;
+            }
+        }
+    } else if(d == dir::RIGHT){
+        bool isMovePossible = true;
+        for (int i = 0; i < m_vVectorPoints.size(); ++i){
+            if ((m_vVectorPoints[i].x + m_fMoveIncremente) < 0 || (m_vVectorPoints[i].x + m_fMoveIncremente) > 1){
+                isMovePossible = false;
+                break; // exit the loop
+            }
+        }
+        if (isMovePossible){
+            for (int i = 0; i < m_vVectorPoints.size(); ++i){
+                m_vVectorPoints[i].x += m_fMoveIncremente;
+            }
+        }
+    } else if(d == dir::UP){
+        bool isMovePossible = true;
+        for (int i = 0; i < m_vVectorPoints.size(); ++i){
+            if ((m_vVectorPoints[i].y - m_fMoveIncremente) < 0 || (m_vVectorPoints[i].y - m_fMoveIncremente) > 1){
+                isMovePossible = false;
+                break; // exit the loop
+            }
+        }
+        if (isMovePossible){
+            for (int i = 0; i < m_vVectorPoints.size(); ++i){
+                m_vVectorPoints[i].y -= m_fMoveIncremente;
+            }
+        }
+    } else if(d == dir::DOWN){
+        bool isMovePossible = true;
+        for (int i = 0; i < m_vVectorPoints.size(); ++i){
+            if ((m_vVectorPoints[i].y + m_fMoveIncremente) < 0 || (m_vVectorPoints[i].y + m_fMoveIncremente) > 1){
+                isMovePossible = false;
+                break; // exit the loop
+            }
+        }
+        if (isMovePossible){
+            for (int i = 0; i < m_vVectorPoints.size(); ++i){
+                m_vVectorPoints[i].y += m_fMoveIncremente;
+            }
+        }
+    }
+    // Update polygon center
+    setPolygonCentroid();
+}
+
 
 //--------------------------------------------------------------
 void AreaPolygon::update(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime){

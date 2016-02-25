@@ -626,43 +626,55 @@ void ofApp::keyPressed(int key){
 		if (m_bSelectMode){
 			case OF_KEY_LEFT:
 				if (m_iIndicePolygonSelected != -1){
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveLeft();
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-					ofLogVerbose("keyPressed", "go left !");
+                    AreaPolygon* p = &m_vAreaPolygonsVector[m_iIndicePolygonSelected];
+                    if(p->getSelectedPoint() == -1){
+                        p->move(AreaPolygon::dir::LEFT);
+                    } else {
+                        p->movePoint(p->getSelectedPoint(), AreaPolygon::dir::LEFT);
+                    }
                 } else {
-                    m_pFboOffset.x = m_pFboOffset.x - 10;
+                    m_pFboOffset.x -= 10;
                 }
 				break;
 
 			case OF_KEY_RIGHT:
-				if (m_iIndicePolygonSelected != -1){
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveRight();
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-					ofLogVerbose("keyPressed", "go right !");
+                if (m_iIndicePolygonSelected != -1){
+                    AreaPolygon* p = &m_vAreaPolygonsVector[m_iIndicePolygonSelected];
+                    if(p->getSelectedPoint() == -1){
+                        p->move(AreaPolygon::dir::RIGHT);
+                    } else {
+                        p->movePoint(p->getSelectedPoint(), AreaPolygon::dir::RIGHT);
+                    }
                 } else {
-                    m_pFboOffset.x = m_pFboOffset.x + 10;
+                    m_pFboOffset.x += 10;
                 }
-				break;
+                break;
 
 			case OF_KEY_UP:
-				if (m_iIndicePolygonSelected != -1){
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveUp();
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-					ofLogVerbose("keyPressed", "go up !");
-				} else {
-                    m_pFboOffset.y = m_pFboOffset.y - 10;
+                if (m_iIndicePolygonSelected != -1){
+                    AreaPolygon* p = &m_vAreaPolygonsVector[m_iIndicePolygonSelected];
+                    if(p->getSelectedPoint() == -1){
+                        p->move(AreaPolygon::dir::UP);
+                    } else {
+                        p->movePoint(p->getSelectedPoint(), AreaPolygon::dir::UP);
+                    }
+                } else {
+                    m_pFboOffset.y -= 10;
                 }
-				break;
+                break;
 
-			case OF_KEY_DOWN:			
-				if (m_iIndicePolygonSelected != -1){
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].moveDown();
-					m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
-					ofLogVerbose("keyPressed", "go down !");
-				} else {
-                    m_pFboOffset.y = m_pFboOffset.y + 10;
+			case OF_KEY_DOWN:
+                if (m_iIndicePolygonSelected != -1){
+                    AreaPolygon* p = &m_vAreaPolygonsVector[m_iIndicePolygonSelected];
+                    if(p->getSelectedPoint() == -1){
+                        p->move(AreaPolygon::dir::DOWN);
+                    } else {
+                        p->movePoint(p->getSelectedPoint(), AreaPolygon::dir::DOWN);
+                    }
+                } else {
+                    m_pFboOffset.y += 10;
                 }
-				break;
+                break;
 		}
         default:
             break;
@@ -714,8 +726,7 @@ void ofApp::mouseDragged(int x, int y, int button){
                     poly->movePoint(m_iCurrentPointMoved, dividedTemp);
                 } else {
                     // Else it's the full polygon
-                    poly->move(static_cast<float>(tmovement.x) / m_iFboWidth, static_cast<float>(tmovement.y) / m_iFboHeight);
-                    poly->setPolygonCentroid();
+                    poly->move(static_cast<float>(tmovement.x) / m_iFboWidth, static_cast<float>(tmovement.y) / m_iFboHeight);	
                 }
 			}
 		}
@@ -883,7 +894,6 @@ void ofApp::mouseReleased(int x, int y, int button){
 		if (!m_bEditMode){
 			if (m_bSelectMode){
 				m_vAreaPolygonsVector[m_iIndicePolygonSelected].move(static_cast<float>(tmovement.x) / m_iFboWidth, static_cast<float>(tmovement.y) / m_iFboHeight);
-				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
 			}
 		}
 	}
