@@ -1254,10 +1254,14 @@ ofxOscMessage m;
                             ofLogVerbose("sendOSC") << m.getAddress();
                         }
                     } else {
-                        for (int k=0; k<m_oscSenders.size(); k++){
-                            m_oscSenders[k].sendMessage(m); // Send it
+                        // If number of people inside area correspond to the number of people that just entered,
+                        // it means that there was nobody inside area before
+                        if (ap.getPeopleInside() == ap.getPeopleMovement()){
+                            for (int k=0; k<m_oscSenders.size(); k++){
+                                m_oscSenders[k].sendMessage(m); // Send it
+                            }
+                            ofLogVerbose("sendOSC") << m.getAddress();
                         }
-                        ofLogVerbose("sendOSC") << m.getAddress();
                     }
                     m.clear(); // Clear message to be able to reuse it
                 }
@@ -1276,10 +1280,13 @@ ofxOscMessage m;
                             ofLogVerbose("sendOSC") << m.getAddress();
                         }
                     } else {
-                        for (int k=0; k<m_oscSenders.size(); k++){
-                            m_oscSenders[k].sendMessage(m); // Send it
+                        // If person leaving was the last one
+                        if(ap.getPeopleInside() == 0){
+                            for (int k=0; k<m_oscSenders.size(); k++){
+                                m_oscSenders[k].sendMessage(m); // Send it
+                            }
+                            ofLogVerbose("sendOSC") << m.getAddress();
                         }
-                        ofLogVerbose("sendOSC") << m.getAddress();
                     }
                     m.clear(); // Clear message to be able to reuse it
                 }
