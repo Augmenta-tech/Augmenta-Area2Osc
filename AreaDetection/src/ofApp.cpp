@@ -158,7 +158,7 @@ void ofApp::setupGUI(){
 	m_gui.add(m_guiFirstGroup);     // When all parameters of the group are set up, add the group to the gui panel.
 
 	// guiSecondGroup parameters ---------------------------
-	string sSecondGroupName = "OSC";
+	string sSecondGroupName = "OSC settings";
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
 	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce ms",100,0,400)->getParameter());
@@ -995,7 +995,7 @@ void ofApp::save(string _sPath){
     settings.addTag("OSC");
     settings.pushTag("OSC");
     // Receivers
-    for (int i = 0; i< m_oscReceivers.size(); i++){
+    for (int i = 0; i< m_iOscReceiverPorts.size(); i++){
         settings.addValue("Receiver", m_iOscReceiverPorts[i]);
     }
     // Senders
