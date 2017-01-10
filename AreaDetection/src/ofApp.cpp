@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include <algorithm>  
 
 #define APP_NAME "Augmenta Zone editor"
 
@@ -113,6 +114,7 @@ void ofApp::init(){
 	m_iRadiusClosePolyZone = 15;
 	m_oOldMousePosition = ofVec2f(0,0);
 	m_iAntiBounce = 100;
+	m_bDollarPlusOne = false;
 	m_fZoomCoef = 1.0;
 	m_bSendFbo = false;
     m_bAutoSize = false;
@@ -162,6 +164,7 @@ void ofApp::setupGUI(){
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
 	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce ms",100,0,400)->getParameter());
+	m_guiSecondGroup.add((m_bDollarPlusOne.setup("+1 to $ in osc msgs", m_bDollarPlusOne))->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
 	#ifdef WIN32
@@ -1284,6 +1287,13 @@ ofxOscMessage m;
                 // Send each message
                 for (int i=0; i<ins.size(); i++){
                     ofxOscMessage m = ins[i];
+
+					// Replace the $ sign
+					string rs = m.getAddress();
+					char rc = ofToChar(ofToString((ap.getPeopleInside() + (int)m_bDollarPlusOne )));
+					replace(rs.begin(), rs.end(), '$', rc);
+					m.setAddress(rs);
+
                     if (m_bRedondanteMode){
                         for (int j = 0; j < ap.getPeopleMovement(); j++){
                             for (int k=0; k<m_oscSenders.size(); k++){
@@ -1311,6 +1321,13 @@ ofxOscMessage m;
                 // Send each message
                 for (int i=0; i<outs.size(); i++){
                     ofxOscMessage m = outs[i];
+
+					// Replace the $ sign
+					string rs = m.getAddress();
+					char rc = ofToChar(ofToString((ap.getPeopleInside() + (int)m_bDollarPlusOne)));
+					replace(rs.begin(), rs.end(), '$', rc);
+					m.setAddress(rs);
+
                     if (m_bRedondanteMode){
                         for (int j = 0; j > ap.getPeopleMovement(); j--){
                             for (int k=0; k<m_oscSenders.size(); k++){

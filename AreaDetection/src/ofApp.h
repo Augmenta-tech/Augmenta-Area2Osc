@@ -135,6 +135,7 @@ private:
     // Gui parameters inside m_guiFirstGroup
     ofxToggle m_bRedondanteMode;
 	ofxIntSlider m_iAntiBounce;
+	ofxToggle m_bDollarPlusOne;
 	ofxFloatSlider m_fZoomCoef;
     ofxButton m_bResetFboView;
 
