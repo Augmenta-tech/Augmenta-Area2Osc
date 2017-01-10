@@ -459,6 +459,7 @@ void ofApp::drawHiddenInterface(){
 		"\nNote : Your settings are saved when the app quits and are loaded at startup. (autosave feature)\n" \
 		"The dimensions will be the same as the ones sent by Augmenta.\n" \
 		"You can change the osc messages of a polygon in the preferences.xml file."\
+		"Any $ symbol in an osc message will be replaced by the number of people in the corresponding polygon."\
         ,20,20);
     
     ofPopStyle();

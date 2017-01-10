@@ -16,6 +16,8 @@ Send all event : If the button is ticked all person coming in and person coming 
 
 Anti bounce : Slider which represent the time in milliseconds, that will be waited once a person leaved a polygon to remove it definetly, (In the goal to avoid flickering when the person is on the edge of a polygon).
 
++ to $ in osc msgs : If a $ symbol in an osc message string, it will automatically be replaced by the number of people in the corresponding polygon. If this box is checked, it will add "1" to the number of people so that 0 becomes 1, 1 becomes 2, etc. Useful for Resolume for example.
+
 #### Mouse clics
 
 Left click : to create a new point or polygon.
@@ -55,6 +57,8 @@ Your settings are saved when the app quits and are loaded at startup. (autosave 
 The dimensions of the application window will be the same as the ones sent by Augmenta.
 
 You can change the osc messages of a polygon in the preferences.xml file.
+
+Any $ symbol in an osc message will be replaced by the number of people in the corresponding polygon.
 
 ### System
 
