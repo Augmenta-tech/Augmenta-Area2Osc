@@ -164,7 +164,7 @@ void ofApp::setupGUI(){
 	m_guiSecondGroup.setName(sSecondGroupName);
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
 	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce ms",100,0,400)->getParameter());
-	m_guiSecondGroup.add((m_bDollarPlusOne.setup("+1 to $ in osc msgs", m_bDollarPlusOne))->getParameter());
+	m_guiSecondGroup.add((m_bDollarPlusOne.setup("Plus one to dollar", m_bDollarPlusOne))->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
 	#ifdef WIN32
