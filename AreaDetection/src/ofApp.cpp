@@ -115,6 +115,7 @@ void ofApp::init(){
 	m_oOldMousePosition = ofVec2f(0,0);
 	m_iAntiBounce = 100;
 	m_bDollarPlusOne = false;
+	m_bMuteOsc = false;
 	m_fZoomCoef = 1.0;
 	m_bSendFbo = false;
     m_bAutoSize = false;
@@ -165,6 +166,7 @@ void ofApp::setupGUI(){
 	m_guiSecondGroup.add((m_bRedondanteMode.setup("Send all event", m_bRedondanteMode))->getParameter());
 	m_guiSecondGroup.add(m_iAntiBounce.setup("Anti bounce ms",100,0,400)->getParameter());
 	m_guiSecondGroup.add((m_bDollarPlusOne.setup("Plus one to dollar", m_bDollarPlusOne))->getParameter());
+	m_guiSecondGroup.add((m_bMuteOsc.setup("Mute Osc", m_bMuteOsc))->getParameter());
 	m_gui.add(m_guiSecondGroup);
 
 	#ifdef WIN32
@@ -1277,79 +1279,86 @@ void ofApp::load(string _sPath){
 //--------------------------------------------------------------
 void ofApp::sendOSC(){
     
-ofxOscMessage m;
-    for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
-        AreaPolygon ap = m_vAreaPolygonsVector[i];
-        if (ap.isCompleted()){
-            // IN
-            if (ap.getPeopleMovement() > 0){
-                // Get all in messages
-                vector<ofxOscMessage> ins = ap.getInOscMessages();
-                // Send each message
-                for (int i=0; i<ins.size(); i++){
-                    ofxOscMessage m = ins[i];
+	// Test if not muted
+	if (!m_bMuteOsc) {
 
-					// Replace the $ sign
-					string rs = m.getAddress();
-					char rc = ofToChar(ofToString((ap.getPeopleInside() + (int)m_bDollarPlusOne )));
-					replace(rs.begin(), rs.end(), '$', rc);
-					m.setAddress(rs);
+		ofxOscMessage m;
+		for (int i = 0; i < m_iNumberOfAreaPolygons; ++i) {
+			AreaPolygon ap = m_vAreaPolygonsVector[i];
+			if (ap.isCompleted()) {
+				// IN
+				if (ap.getPeopleMovement() > 0) {
+					// Get all in messages
+					vector<ofxOscMessage> ins = ap.getInOscMessages();
+					// Send each message
+					for (int i = 0; i < ins.size(); i++) {
+						ofxOscMessage m = ins[i];
 
-                    if (m_bRedondanteMode){
-                        for (int j = 0; j < ap.getPeopleMovement(); j++){
-                            for (int k=0; k<m_oscSenders.size(); k++){
-                                m_oscSenders[k].sendMessage(m); // Send it
-                                //std::cout << "Sending on sender num : "<< k<<" with port : "<< m_iOscSenderPorts[k] << std::endl;
-                            }
-                            ofLogVerbose("sendOSC") << m.getAddress();
-                        }
-                    } else {
-                        // If number of people inside area correspond to the number of people that just entered,
-                        // it means that there was nobody inside area before
-                        if (ap.getPeopleInside() == ap.getPeopleMovement()){
-                            for (int k=0; k<m_oscSenders.size(); k++){
-                                m_oscSenders[k].sendMessage(m); // Send it
-                            }
-                            ofLogVerbose("sendOSC") << m.getAddress();
-                        }
-                    }
-                    m.clear(); // Clear message to be able to reuse it
-                }
-            // OUT
-            } else if (ap.getPeopleMovement() < 0){
-                // Get all in messages
-                vector<ofxOscMessage> outs = ap.getOutOscMessages();
-                // Send each message
-                for (int i=0; i<outs.size(); i++){
-                    ofxOscMessage m = outs[i];
+						// Replace the $ sign
+						string rs = m.getAddress();
+						char rc = ofToChar(ofToString((ap.getPeopleInside() + (int)m_bDollarPlusOne)));
+						replace(rs.begin(), rs.end(), '$', rc);
+						m.setAddress(rs);
 
-					// Replace the $ sign
-					string rs = m.getAddress();
-					char rc = ofToChar(ofToString((ap.getPeopleInside() + (int)m_bDollarPlusOne)));
-					replace(rs.begin(), rs.end(), '$', rc);
-					m.setAddress(rs);
+						if (m_bRedondanteMode) {
+							for (int j = 0; j < ap.getPeopleMovement(); j++) {
+								for (int k = 0; k < m_oscSenders.size(); k++) {
+									m_oscSenders[k].sendMessage(m); // Send it
+									//std::cout << "Sending on sender num : "<< k<<" with port : "<< m_iOscSenderPorts[k] << std::endl;
+								}
+								ofLogVerbose("sendOSC") << m.getAddress();
+							}
+						}
+						else {
+							// If number of people inside area correspond to the number of people that just entered,
+							// it means that there was nobody inside area before
+							if (ap.getPeopleInside() == ap.getPeopleMovement()) {
+								for (int k = 0; k < m_oscSenders.size(); k++) {
+									m_oscSenders[k].sendMessage(m); // Send it
+								}
+								ofLogVerbose("sendOSC") << m.getAddress();
+							}
+						}
+						m.clear(); // Clear message to be able to reuse it
+					}
+					// OUT
+				}
+				else if (ap.getPeopleMovement() < 0) {
+					// Get all in messages
+					vector<ofxOscMessage> outs = ap.getOutOscMessages();
+					// Send each message
+					for (int i = 0; i < outs.size(); i++) {
+						ofxOscMessage m = outs[i];
 
-                    if (m_bRedondanteMode){
-                        for (int j = 0; j > ap.getPeopleMovement(); j--){
-                            for (int k=0; k<m_oscSenders.size(); k++){
-                                m_oscSenders[k].sendMessage(m); // Send it
-                            }
-                            ofLogVerbose("sendOSC") << m.getAddress();
-                        }
-                    } else {
-                        // If person leaving was the last one
-                        if(ap.getPeopleInside() == 0){
-                            for (int k=0; k<m_oscSenders.size(); k++){
-                                m_oscSenders[k].sendMessage(m); // Send it
-                            }
-                            ofLogVerbose("sendOSC") << m.getAddress();
-                        }
-                    }
-                    m.clear(); // Clear message to be able to reuse it
-                }
-            }
-        }
-    }
+						// Replace the $ sign
+						string rs = m.getAddress();
+						char rc = ofToChar(ofToString((ap.getPeopleInside() + (int)m_bDollarPlusOne)));
+						replace(rs.begin(), rs.end(), '$', rc);
+						m.setAddress(rs);
+
+						if (m_bRedondanteMode) {
+							for (int j = 0; j > ap.getPeopleMovement(); j--) {
+								for (int k = 0; k < m_oscSenders.size(); k++) {
+									m_oscSenders[k].sendMessage(m); // Send it
+								}
+								ofLogVerbose("sendOSC") << m.getAddress();
+							}
+						}
+						else {
+							// If person leaving was the last one
+							if (ap.getPeopleInside() == 0) {
+								for (int k = 0; k < m_oscSenders.size(); k++) {
+									m_oscSenders[k].sendMessage(m); // Send it
+								}
+								ofLogVerbose("sendOSC") << m.getAddress();
+							}
+						}
+						m.clear(); // Clear message to be able to reuse it
+					}
+				}
+			}
+		}
+	}
 }
 
 //_______________________________________________________________

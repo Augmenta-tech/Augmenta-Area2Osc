@@ -136,6 +136,7 @@ private:
     ofxToggle m_bRedondanteMode;
 	ofxIntSlider m_iAntiBounce;
 	ofxToggle m_bDollarPlusOne;
+	ofxToggle m_bMuteOsc;
 	ofxFloatSlider m_fZoomCoef;
     ofxButton m_bResetFboView;
 
