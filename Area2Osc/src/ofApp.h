@@ -13,7 +13,7 @@
 
 
 #ifdef WIN32
-#include "ofxSpout2.h"
+#include "ofxSpout2Sender.h"
 #elif MAC_OS_X_VERSION_10_6
 #include "ofxSyphon.h"
 #endif
@@ -139,7 +139,7 @@ private:
     // --------- End of Gui content	
 	
     #ifdef WIN32
-    ofxSpout2 m_spoutSender;
+    ofxSpout2::Sender m_spoutSender;
     #elif MAC_OS_X_VERSION_10_6
     ofxSyphonServer m_syphonServer;
     #endif

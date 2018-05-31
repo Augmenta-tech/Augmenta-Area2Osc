@@ -1,7 +1,7 @@
 #include "ofApp.h"
-
 #define APP_NAME "Augmenta area2OSC"
 
+using namespace ofxSpout2;
 
 //_______________________________________________________________
 //_____________________________SETUP_____________________________
