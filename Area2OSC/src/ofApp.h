@@ -32,15 +32,11 @@ public:
 	void mouseDragged(int x, int y, int button);
 	void mousePressed(int x, int y, int button);
 	void mouseReleased(int x, int y, int button);
-    void mouseScrolled(int x, int y, float scrollX, float scrollY);
-    void dragEvent(ofDragInfo drag);
-    void onLoadPressed();
-    void onSavePressed();
-    void onChangeDisplayInfo(bool &inval);
-    void onChangeAutoSize(bool &inval);
 	    
-    void save(string _sPath);
-    void load(string _sPath);
+    void saveSettings();
+    void loadSettings();
+	void savePreferences();
+	void loadPreferences();
 
     
 private:
@@ -52,8 +48,6 @@ private:
     void setupGUI();
     
     void sendOSC();
-    
-    string m_sSettingsPath;
     
     // Only draw final output visuals - no GUI, no debug visuals, only content that can be seen by spectator
     void drawVisuals();
@@ -76,31 +70,26 @@ private:
     int m_iModifierKey;
 	ofPoint transformMouseCoord(int x, int y);
 
-    // Window
-    int m_iWindowWidth;
-    int m_iWindowHeight;
     
     // Fbo used to render visuals
     ofFbo m_fbo;
 	ofFbo m_oFboSent;
     int m_iFboWidth;
     int m_iFboHeight;
-    string m_sSendFboResolution;
-    string m_sScreenResolution;
-    ofPoint m_pFboOffset;
-    ofPoint m_pDefaultFboOffset;
-    void resetFboView();
+	
 
 	bool isInsideAPolygon(ofVec2f a_oPoint);
     void deleteLastPolygon();
 	void deleteAllPolygon();
 
     // OSC
-    vector<ofxOscSender> m_oscSenders;
-    vector<int> m_iOscSenderPorts;
-    vector<string> m_sOscSenderHosts;
-    vector<ofxOscReceiver> m_oscReceivers;
-    vector<int> m_iOscReceiverPorts;
+    ofxOscReceiver m_oscReceiver;
+    ofxOscSender m_oscSender;
+    string m_sOscPortDisplayMessage;   
+    int m_iOscReceiverPort;
+    int m_iOscSenderPort;
+    string m_sOscSenderHost;
+    string m_sReceiverOscDisplay;
 
 	//Augmenta
 	Augmenta::Receiver AugmentaReceiver;
@@ -112,7 +101,6 @@ private:
 	int m_iNextFreeId;
 	bool m_bEditMode;
 	bool m_bSelectMode;
-    int m_iCurrentPointMoved;
 	int m_iNumberOfAreaPolygons;
 	int m_iIndicePolygonSelected;
 	vector<AreaPolygon> m_vAreaPolygonsVector;
@@ -120,39 +108,34 @@ private:
 	int m_iRadiusClosePolyZone;
 	float m_fPointRadius;
 	int m_iLinesWidthSlider;
+	int m_iWidthRender;
+	int m_iHeightRender;
 
 
     // Gui panel
     ofxPanel m_gui;
 
     // Gui content ----------------
+    ofxLabel m_sFramerate;
 	ofxLabel m_sNumberOfAreaPolygons;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     
 	// Parameters group to organize your parameters
-	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup, m_guiFourthGroup;
+	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;
 
     // Gui parameters inside m_guiFirstGroup
     ofxToggle m_bRedondanteMode;
 	ofxIntSlider m_iAntiBounce;
-	ofxToggle m_bDollarPlusOne;
-	ofxToggle m_bMuteOsc;
 	ofxFloatSlider m_fZoomCoef;
-    ofxButton m_bResetFboView;
 
 	// Gui parameters inside m_SecondGroup
 	ofxToggle m_oToggleClearAll;
 	ofxToggle m_oToggleDeleteLastPoly;
-    ofxToggle m_oToggleDisplayInfo;
 
 	// Gui parameters inside m_ThirdGroup
 	ofxToggle m_bSendFbo;
-    //ofxLabel m_sOscOutGUI;
-    //ofxLabel m_sOscInGUI;
-    
-    // 4th group
-    ofxToggle m_bAutoSize;
-
+	ofxLabel m_sSendFboResolution;
+	ofxLabel m_sScreenResolution;
     // --------- End of Gui content	
 	
     #ifdef WIN32

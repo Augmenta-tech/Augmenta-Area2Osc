@@ -16,7 +16,7 @@ public:
 
 	inline unsigned long long getLeavingTime(){ return m_ulLeavingTime; };
 	inline int getId(){ return m_iId; };
-    
+
 private:
 	unsigned long long m_ulLeavingTime;
 	int m_iId;
@@ -25,9 +25,6 @@ private:
 
 class AreaPolygon {
 public:
-    
-    // Enum used for easier movement direction
-    enum dir { LEFT, RIGHT, UP, DOWN };
 
 	//Construction
 	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce);
@@ -39,17 +36,15 @@ public:
 	inline void hasBeenSelected(bool a_bSelected){ m_bSelected = a_bSelected; };
 	inline int getPeopleMovement(){ return m_iPeopleMovement; };
 	inline int getPeopleInside(){ return m_iPeopleInside; };
-    inline int getSelectedPoint(){return m_iSelectedPoint;}
-    
-
 
 	//Osc
-	inline vector<ofxOscMessage> getInOscMessages(){ return m_vOscMessagesIn; };
-	inline vector<ofxOscMessage> getOutOscMessages(){ return m_vOscMessagesOut; };
-    
-	string messageToString(ofxOscMessage m);
-	ofxOscMessage parseOscMessage(string _messageString);
-    void loadOscMessages(vector<string> ins, vector<string> outs);
+	inline string getInOscAdress(){ return m_vInOsc[0]; };
+	inline string getOutOscAdress(){ return m_vOutOsc[0]; };
+	inline ofxOscMessage getInOscMessage(){ return m_oOscMessageIn; };
+	inline ofxOscMessage getOutOscMessage(){ return m_oOscMessageOut; };
+	string getInOscAll(); 
+	string getOutOscAll();
+	void loadOscMessage(string m_aInOsc, string m_aOutOsc);
 		
 	//Draw
 	void draw(int width, int height); 
@@ -57,24 +52,22 @@ public:
 	void drawPeopleMovement(int width, int height);
 
 	//Move Poly
+	void moveLeft();
+	void moveRight();
+	void moveUp();
+	void moveDown();
 	void move(float a_iX, float a_iY);
-    void move(dir d);
 
 	void update(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime);
 	void setPeopleInside(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime);
 	void setPolygonCentroid();
 	void complete();
 	void addPoint(ofVec2f a_oPoint);
-    void movePoint(int i, ofVec2f _target);
-    void movePoint(int i, dir d);
 	bool removeLastPoint();
-    int pointClicked(ofVec2f _mouse);
 	bool isPointInPolygon(ofVec2f a_oPersonPosition);
 	bool doesStringContainOnlyNumber(string a_sString);
 	bool containOnlyAlpha(string s);
 	bool doesStringContainOnlyNumberAndOnePoint(string s);
-    ofVec2f m_vPotentialPoint;
-    bool m_bDisplayInfo;
 
 private:
 
@@ -83,12 +76,12 @@ private:
 	int m_iPeopleInside;
 	int m_iOldPeopleInside;
 	bool m_bSelected;
-    int m_iSelectedPoint;
-    float m_fPointRadius;
 	ofVec2f m_oCentroid;
 	int m_iPeopleMovement;
-	vector<ofxOscMessage> m_vOscMessagesIn;
-	vector<ofxOscMessage> m_vOscMessagesOut;
+	vector<string> m_vInOsc;
+	vector<string> m_vOutOsc;
+	ofxOscMessage m_oOscMessageIn;
+	ofxOscMessage m_oOscMessageOut;
 	float m_fMoveIncremente;
 	vector<LeavingPerson> m_vWaitingToLeave;
 	vector<int> m_vIdPeopleInside;
@@ -101,7 +94,6 @@ private:
 	ofColor m_oNotEmptyColor;
 	float m_fRadius;
 	int m_iLinesWidth;
-    int m_iLinesWidthCompleted;
 
 };
 #endif // AreaPolygon_H
