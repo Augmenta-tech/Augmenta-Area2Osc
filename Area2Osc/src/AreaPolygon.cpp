@@ -5,55 +5,41 @@
 
 
 AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce){
-	
-    m_oPointsColor = ofColor(255,255,255,255);
-    
-	m_oLinesColor = ofColor(255,255,255,255);
-    m_oLinesCompletedColor = ofColor(243,80,64,255);
-    m_iLinesWidth = 4;
-    m_iLinesWidthCompleted = 2;
-    
-	m_oCompletedColor = ofColor(0, 255, 255,100);
-	m_oNotEmptyColor = ofColor(100,255,100,100);
-    
+	m_oPointsColor = ofColor(246,128,248,200);
+	m_oLinesColor = ofColor(237,232,229,200);
+	m_oCompletedColor = ofColor(255, 166, 70,200);
+	m_oLinesCompletedColor = ofColor(243,80,64,200);
+	m_oNotEmptyColor = ofColor(243,80,64,200);
+	m_iLinesWidth = 3;
 	m_fRadius = 5;
 	m_bIsFinished = false;
 	setPeopleInside(a_vPeople, m_iAntiBounce);
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
-    m_fPointRadius = 0.01f;
-    m_iSelectedPoint = -1; //No point selected
 	m_fMoveIncremente = 0.001;
-    
-    m_bDisplayInfo = true;
-    
-    ofxOscMessage defaultIn;
-    defaultIn.setAddress("/area" + ofToString(a_iIndice) + "/personEntered");
-    m_vOscMessagesIn.push_back(defaultIn);
-    ofxOscMessage defaultOut;
-    defaultOut.setAddress("/area" + ofToString(a_iIndice) + "/personWillLeave");
-    m_vOscMessagesOut.push_back(defaultOut);
+	m_vInOsc.push_back("/area/" + ofToString(a_iIndice) + "/personEntered");
+	m_vOutOsc.push_back("/area/" + ofToString(a_iIndice) + "/personWillLeave");
 
 	addPoint(a_oFirstPoint);
 }
 
 //--------------------------------------------------------------
-string AreaPolygon::messageToString(ofxOscMessage m){
-	string tempString = m.getAddress();
-    
-	for (int i = 0; i < m.getNumArgs(); ++i){
-        string type = m.getArgTypeName(i);
-        if (type == "f"){
-            tempString = tempString + " " + std::to_string(m.getArgAsFloat(i));
-        } else if (type == "i"){
-            tempString = tempString + " " + std::to_string(m.getArgAsInt(i));
-        } else {
-            tempString = tempString + " " + m.getArgAsString(i);
-        }
+string AreaPolygon::getInOscAll(){
+	string tempString = m_vInOsc[0];
+	for (int i = 1; i < m_vInOsc.size(); ++i){
+		tempString = tempString + " " + m_vInOsc[i];
 	}
 	return tempString;
 }
 
+//--------------------------------------------------------------
+string AreaPolygon::getOutOscAll(){
+	string tempString = m_vOutOsc[0];
+	for (int i = 1; i < m_vOutOsc.size(); ++i){
+		tempString = tempString + " " + m_vOutOsc[i];
+	}
+	return tempString;
+}
 
 //--------------------------------------------------------------
 bool AreaPolygon::doesStringContainOnlyNumber(string a_sString){
@@ -95,54 +81,48 @@ bool AreaPolygon::doesStringContainOnlyNumberAndOnePoint(string a_sString){
 }
 
 //--------------------------------------------------------------
-ofxOscMessage AreaPolygon::parseOscMessage(string _messageString){
-    
-    ofxOscMessage output = *new ofxOscMessage();
-	vector<string> strings = ofSplitString(_messageString, " ");
-    // Address
-    output.setAddress(strings[0]);
-    // Args
-	for (int i = 1; i < strings.size(); i++){
-		if (containOnlyAlpha(strings[i])){
+void AreaPolygon::loadOscMessage(string m_aInOsc, string m_aOutOsc){
+	m_vInOsc = ofSplitString(m_aInOsc, " ");
+	for (int i = 1; i < m_vInOsc.size(); i++){
+		if (containOnlyAlpha(m_vInOsc[i])){
 			// is a string 
-			output.addStringArg(strings[i]);
+			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
 		}
-		else if (doesStringContainOnlyNumber(strings[i])){
+		else if (doesStringContainOnlyNumber(m_vInOsc[i])){
 			//is a int 
-			output.addIntArg(ofToInt(strings[i]));
-        }
-		else if (doesStringContainOnlyNumberAndOnePoint(strings[i])){
+			m_oOscMessageIn.addIntArg(ofToInt(m_vInOsc[i]));
+			}
+		else if (doesStringContainOnlyNumberAndOnePoint(m_vInOsc[i])){
 			//is a float
-			output.addFloatArg(ofToFloat(strings[i]));
+			m_oOscMessageIn.addFloatArg(ofToFloat(m_vInOsc[i]));
 		}
 		else{
 			//Unknow type send as string
 			ofLogError("m_oOscMessageIn loaded an unknow variable as string");
-			output.addStringArg(strings[i]);
+			m_oOscMessageIn.addStringArg(m_vInOsc[i]);
 		}
 	}
-    
-    return output;
-}
 
-//--------------------------------------------------------------
-void AreaPolygon::loadOscMessages(vector<string> ins, vector<string> outs){
-    // Clear ofxOscMessages vectors
-    //std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
-    m_vOscMessagesIn.clear();
-    m_vOscMessagesOut.clear();
-    // Ins
-    for (int i=0; i<ins.size(); i++){
-        ofxOscMessage msg = parseOscMessage(ins[i]);
-        //std::cout << "Address" << msg.getAddress() << std::endl;
-        m_vOscMessagesIn.push_back(msg);
-    }
-    // Outs
-    for (int i=0; i<outs.size(); i++){
-        m_vOscMessagesOut.push_back(parseOscMessage(outs[i]));
-    }
-    
-    //std::cout << "Messages loaded : " << ins.size()+outs.size() << std::endl;
+	m_vOutOsc = ofSplitString(m_aOutOsc, " ");
+	for (int i = 1; i < m_vOutOsc.size(); i++){
+		if (containOnlyAlpha(m_vOutOsc[i])){
+			// is a string 
+			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
+		}
+		else if (doesStringContainOnlyNumber(m_vOutOsc[i])){
+			//is a int 
+			m_oOscMessageOut.addIntArg(ofToInt(m_vOutOsc[i]));
+		}
+		else if (doesStringContainOnlyNumberAndOnePoint(m_vOutOsc[i])){
+			//is a float
+			m_oOscMessageOut.addFloatArg(ofToFloat(m_vOutOsc[i]));
+		}
+		else{
+			//Unknow type send as string
+			ofLogError("m_oOscMessageOut loaded an unknow variable as string");
+			m_oOscMessageOut.addStringArg(m_vOutOsc[i]);
+		}
+	}
 }
 
 //--------------------------------------------------------------
@@ -151,101 +131,11 @@ void AreaPolygon::addPoint(ofVec2f a_oPoint){
 }
 
 //--------------------------------------------------------------
-void AreaPolygon::movePoint(int i, ofVec2f _target){
-    if (_target.x > 0 && _target.x < 1){
-        m_vVectorPoints[i].x = _target.x;
-    }
-    if (_target.y > 0 && _target.y < 1){
-        m_vVectorPoints[i].y = _target.y;
-    }
-    // Update polygon center
-    setPolygonCentroid();
-}
-void AreaPolygon::movePoint(int i, dir d){
-    if(d == dir::LEFT){
-        bool isMovePossible = true;
-        if (m_vVectorPoints[i].x - m_fMoveIncremente < 0.0){
-            isMovePossible = false;
-        }
-        if (isMovePossible){
-            m_vVectorPoints[i].x -= m_fMoveIncremente;
-        }
-    } else if(d == dir::RIGHT){
-        bool isMovePossible = true;
-        if (m_vVectorPoints[i].x + m_fMoveIncremente > 1.0){
-            isMovePossible = false;
-        }
-        if (isMovePossible){
-            m_vVectorPoints[i].x += m_fMoveIncremente;
-        }
-    } else if(d == dir::UP){
-        bool isMovePossible = true;
-        if (m_vVectorPoints[i].y - m_fMoveIncremente < 0.0){
-            isMovePossible = false;
-        }
-        if (isMovePossible){
-            m_vVectorPoints[i].y -= m_fMoveIncremente;
-        }
-    } else if(d == dir::DOWN){
-        bool isMovePossible = true;
-        if (m_vVectorPoints[i].y + m_fMoveIncremente > 1.0){
-            isMovePossible = false;
-        }
-        if (isMovePossible){
-            m_vVectorPoints[i].y += m_fMoveIncremente;
-        }
-    }
-    // Update polygon center
-    setPolygonCentroid();
-}
-
-//--------------------------------------------------------------
-int AreaPolygon::pointClicked(ofVec2f _mouse){
-    m_iSelectedPoint = -1; // Default is -1
-    
-    for (int i=0 ; i < m_vVectorPoints.size() ; i++){
-        // Compute distance between mouse and point
-        ofVec2f delta = _mouse - m_vVectorPoints[i];
-        float dist = sqrt(delta.x * delta.x + delta.y * delta.y);
-        if (dist < m_fPointRadius){
-            m_iSelectedPoint = i;
-            break; // We don't need to search more
-        }
-    }
-    return m_iSelectedPoint;
-}
-
-//--------------------------------------------------------------
 void AreaPolygon::drawPeopleInside(int width, int height){
-	if (m_bIsFinished && m_bDisplayInfo){
-        /*
-        string m_vInOscReadable="";
-        string m_vOutOscReadable="";
-        for(int i=0; i<m_vInOsc.size() ; i++)
-        {
-            m_vInOscReadable+=m_vInOsc[i]+" ";
-        }
-        for(int i=0; i<m_vOutOsc.size() ; i++)
-        {
-            m_vOutOscReadable+=m_vOutOsc[i]+" ";
-        }
-        */
-        // PEOPLE
-        ofDrawBitmapString("people : " + ofToString(m_iPeopleInside), ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height -10));
-        // INS
-        int count = 0;
-        for (int i=0; i< m_vOscMessagesIn.size(); i++){
-            string s = "[in] "+ messageToString(m_vOscMessagesIn[i]);
-            ofDrawBitmapString(s, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height + 10*count));
-            count ++;
-        }
-        // OUTS
-        for (int i=0; i< m_vOscMessagesOut.size(); i++){
-            string s = "[out] "+ messageToString(m_vOscMessagesOut[i]);
-            ofDrawBitmapString(s, ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height + 10*count));
-            count ++;
-        }
-		
+	if (m_bIsFinished){
+		ofDrawBitmapString("[in] " + m_vInOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 20));
+		ofDrawBitmapString("[out] " + m_vOutOsc[0], ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height - 10));
+		ofDrawBitmapString("people : " + ofToString(m_iPeopleInside), ofVec2f(m_oCentroid.x * width, m_oCentroid.y * height));
 	}
 }
 
@@ -266,83 +156,60 @@ void AreaPolygon::draw(int width,int height){
 	ofPushStyle();
 	int brightness = 150;
 
-
 	//The shape is finished
 	if (m_bIsFinished){
 		//draw completed poly
-        ofSetLineWidth(m_iLinesWidthCompleted);
 		ofSetColor(m_oLinesColor);
 		for (int i = 0; i < m_vVectorPoints.size() - 1; ++i){
 			for (int j = 1; j < m_vVectorPoints.size(); ++j){
-				ofDrawLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
+				ofLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
 				++i;
 			}
 		}
-		ofDrawLine(m_vVectorPoints[0].x * width, m_vVectorPoints[0].y * height, m_vVectorPoints[m_vVectorPoints.size() - 1].x * width, m_vVectorPoints[m_vVectorPoints.size() - 1].y * height);
+		ofLine(m_vVectorPoints[0].x * width, m_vVectorPoints[0].y * height, m_vVectorPoints[m_vVectorPoints.size() - 1].x * width, m_vVectorPoints[m_vVectorPoints.size() - 1].y * height);
 			
-        // Set color
-        ofColor tempColor;
-        if (m_iPeopleInside < 1){
-			 tempColor = m_oCompletedColor;
+		
+		 if (m_iPeopleInside > 0){
+			 if (m_bSelected){
+				 ofColor tempColor = m_oNotEmptyColor;
+				 tempColor.setBrightness(brightness);
+				 ofSetColor(tempColor);
+			 }
+			 else{
+				 ofSetColor(m_oNotEmptyColor);
+			 }
 		}
 		else{
-			tempColor = m_oNotEmptyColor;
+			if (m_bSelected){
+				ofColor tempColor = m_oCompletedColor;
+				tempColor.setBrightness(brightness);
+				ofSetColor(tempColor);
+			}
+			else{
+				ofSetColor(m_oCompletedColor);
+			}
 		}
-        
-        if (m_bSelected){
-            tempColor.setBrightness(brightness);
-            ofSetColor(tempColor);
-        }
-        else{
-            ofSetColor(tempColor);
-        }
-        
-        
 		ofSetPolyMode(OF_POLY_WINDING_NONZERO);
 		ofBeginShape();
 		for (size_t i = 0; i < m_vVectorPoints.size(); i++){
 			ofVertex(m_vVectorPoints[i].x*width, m_vVectorPoints[i].y*height);
 		}
-		ofEndShape();
-        
-        if (m_bSelected){
-            // Draw points
-            for (int i=0 ; i < m_vVectorPoints.size() ; i++){
-                if (m_iSelectedPoint == i){
-                    ofFill();
-                } else {
-                    ofNoFill();
-                }
-                ofSetColor(255, 255, 255);
-                ofDrawCircle(m_vVectorPoints[i].x*width, m_vVectorPoints[i].y*height, m_fPointRadius*width);
-            }
-        }
-        
+		ofEndShape();	
 	}
 	//The shape is not finished
 	else{
 		ofSetColor(m_oPointsColor);
 		for (int i = 0; i < m_vVectorPoints.size(); ++i){
-			ofDrawCircle(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_fRadius);
+			ofCircle(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_fRadius);
 		}
 		ofSetColor(m_oLinesColor);
 		ofSetLineWidth(m_iLinesWidth);
 		for (int i = 0; i < m_vVectorPoints.size() - 1; ++i){
 			for (int j = 1; j < m_vVectorPoints.size(); ++j){
-				ofDrawLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
+				ofLine(m_vVectorPoints[i].x * width, m_vVectorPoints[i].y * height, m_vVectorPoints[j].x * width, m_vVectorPoints[j].y * height);
 				++i;
 			}
 		}
-        
-        // Draw the potential point
-        if (m_vPotentialPoint.x > 0 && m_vPotentialPoint.y > 0 && m_vPotentialPoint.x < width && m_vPotentialPoint.y < height){ // Check if we should actually draw it
-            if (m_vVectorPoints.size() > 0){
-                ofPushStyle();
-                ofSetColor(255,255,255,100);
-                ofDrawLine(m_vVectorPoints.back().x * width, m_vVectorPoints.back().y * height, m_vPotentialPoint.x, m_vPotentialPoint.y);
-                ofPopStyle();
-            }
-        }
 	}
 	ofPopStyle();
 	drawPeopleInside(width,height);
@@ -407,13 +274,12 @@ void AreaPolygon::complete(){
 
 //--------------------------------------------------------------
 void AreaPolygon::setPolygonCentroid(){
-    ofVec2f centroid(0, 0);
+	ofVec2f centroid(0, 0);
 	for (int i = 0; i < m_vVectorPoints.size(); i++){
 		centroid += m_vVectorPoints[i];
 	}
 	centroid /= m_vVectorPoints.size();
 	m_oCentroid = centroid;
-
 }
 
 //--------------------------------------------------------------
@@ -448,6 +314,66 @@ bool AreaPolygon::removeLastPoint(){
 }
 
 //--------------------------------------------------------------
+void AreaPolygon::moveDown(){
+	bool isMovePossible = true;
+	for (int i = 0; i < m_vVectorPoints.size(); ++i){
+		if (m_vVectorPoints[i].y + m_fMoveIncremente > 1.0){
+			isMovePossible = false;
+		}
+	}
+	if (isMovePossible){
+		for (int i = 0; i < m_vVectorPoints.size(); ++i){
+			m_vVectorPoints[i].y = m_vVectorPoints[i].y + m_fMoveIncremente;
+		}
+	}
+}
+
+//--------------------------------------------------------------
+void AreaPolygon::moveLeft(){
+	bool isMovePossible= true;
+	for (int i = 0; i < m_vVectorPoints.size(); ++i){
+		if (m_vVectorPoints[i].x - m_fMoveIncremente < 0){
+			isMovePossible = false;
+		}
+	}
+	if (isMovePossible){
+		for (int i = 0; i < m_vVectorPoints.size(); ++i){
+			m_vVectorPoints[i].x = m_vVectorPoints[i].x - m_fMoveIncremente;
+		}
+	}
+}
+
+//--------------------------------------------------------------
+void AreaPolygon::moveRight(){
+	bool isMovePossible = true;
+	for (int i = 0; i < m_vVectorPoints.size(); ++i){
+		if (m_vVectorPoints[i].x + m_fMoveIncremente > 1.0){
+			isMovePossible = false;
+		}
+	}
+	if (isMovePossible){
+		for (int i = 0; i < m_vVectorPoints.size(); ++i){
+			m_vVectorPoints[i].x = m_vVectorPoints[i].x + m_fMoveIncremente;
+		}
+	}
+}
+
+//--------------------------------------------------------------
+void AreaPolygon::moveUp(){
+	bool isMovePossible = true;
+	for (int i = 0; i < m_vVectorPoints.size(); ++i){
+		if (m_vVectorPoints[i].y - m_fMoveIncremente < 0){
+			isMovePossible = false;
+		}
+	}
+	if (isMovePossible){
+		for (int i = 0; i < m_vVectorPoints.size(); ++i){
+			m_vVectorPoints[i].y = m_vVectorPoints[i].y - m_fMoveIncremente;
+		}
+	}
+}
+
+//--------------------------------------------------------------
 void AreaPolygon::move(float a_iX, float a_iY){
 	bool isXMovePossible = true;
 	bool isYMovePossible = true;
@@ -470,74 +396,14 @@ void AreaPolygon::move(float a_iX, float a_iY){
 			m_vVectorPoints[i].y = m_vVectorPoints[i].y - a_iY;
 		}
 	}
-    // Update polygon center
-    setPolygonCentroid();
 }
-void AreaPolygon::move(dir d){
-    if(d == dir::LEFT){
-        bool isMovePossible = true;
-        for (int i = 0; i < m_vVectorPoints.size(); ++i){
-            if ((m_vVectorPoints[i].x - m_fMoveIncremente) < 0 || (m_vVectorPoints[i].x - m_fMoveIncremente) > 1){
-                isMovePossible = false;
-                break; // exit the loop
-            }
-        }
-        if (isMovePossible){
-            for (int i = 0; i < m_vVectorPoints.size(); ++i){
-                m_vVectorPoints[i].x -= m_fMoveIncremente;
-            }
-        }
-    } else if(d == dir::RIGHT){
-        bool isMovePossible = true;
-        for (int i = 0; i < m_vVectorPoints.size(); ++i){
-            if ((m_vVectorPoints[i].x + m_fMoveIncremente) < 0 || (m_vVectorPoints[i].x + m_fMoveIncremente) > 1){
-                isMovePossible = false;
-                break; // exit the loop
-            }
-        }
-        if (isMovePossible){
-            for (int i = 0; i < m_vVectorPoints.size(); ++i){
-                m_vVectorPoints[i].x += m_fMoveIncremente;
-            }
-        }
-    } else if(d == dir::UP){
-        bool isMovePossible = true;
-        for (int i = 0; i < m_vVectorPoints.size(); ++i){
-            if ((m_vVectorPoints[i].y - m_fMoveIncremente) < 0 || (m_vVectorPoints[i].y - m_fMoveIncremente) > 1){
-                isMovePossible = false;
-                break; // exit the loop
-            }
-        }
-        if (isMovePossible){
-            for (int i = 0; i < m_vVectorPoints.size(); ++i){
-                m_vVectorPoints[i].y -= m_fMoveIncremente;
-            }
-        }
-    } else if(d == dir::DOWN){
-        bool isMovePossible = true;
-        for (int i = 0; i < m_vVectorPoints.size(); ++i){
-            if ((m_vVectorPoints[i].y + m_fMoveIncremente) < 0 || (m_vVectorPoints[i].y + m_fMoveIncremente) > 1){
-                isMovePossible = false;
-                break; // exit the loop
-            }
-        }
-        if (isMovePossible){
-            for (int i = 0; i < m_vVectorPoints.size(); ++i){
-                m_vVectorPoints[i].y += m_fMoveIncremente;
-            }
-        }
-    }
-    // Update polygon center
-    setPolygonCentroid();
-}
-
 
 //--------------------------------------------------------------
 void AreaPolygon::update(vector<Augmenta::Person*> a_vPeople, int a_iBounceIntervalTime){
 
-    setPeopleInside(a_vPeople, a_iBounceIntervalTime);
-    m_iPeopleMovement= m_iPeopleInside - m_iOldPeopleInside;
-    m_iOldPeopleInside = m_iPeopleInside;
+setPeopleInside(a_vPeople, a_iBounceIntervalTime);
+m_iPeopleMovement= m_iPeopleInside - m_iOldPeopleInside;
+m_iOldPeopleInside = m_iPeopleInside;
 
 }
 

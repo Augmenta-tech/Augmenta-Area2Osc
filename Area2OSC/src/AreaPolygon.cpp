@@ -17,8 +17,8 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	m_iOldPeopleInside=m_iPeopleInside;
 	m_bSelected = false;
 	m_fMoveIncremente = 0.001;
-	m_vInOsc.push_back("/area" + ofToString(a_iIndice) + "/personEntered");
-	m_vOutOsc.push_back("/area" + ofToString(a_iIndice) + "/personWillLeave");
+	m_vInOsc.push_back("/area/" + ofToString(a_iIndice) + "/personEntered");
+	m_vOutOsc.push_back("/area/" + ofToString(a_iIndice) + "/personWillLeave");
 
 	addPoint(a_oFirstPoint);
 }

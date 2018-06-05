@@ -27,7 +27,7 @@ void ofApp::setup(){
 	init();
 
 	//Augmenta
-	AugmentaReceiver.connect(m_iOscReceiverPort);
+	AugmentaReceiver.connect(m_sInputPort);
 	m_oPeople = AugmentaReceiver.getPeople();
 	m_oActualScene = AugmentaReceiver.getScene();
 
@@ -80,19 +80,20 @@ void ofApp::init(){
     //--------------------------------------------
     // Change default values here.
     //--------------------------------------------
-
     // App default values (preferences.xml)
     m_bHideInterface = false;
     m_bLogToFile = false;
     m_iFboWidth = 1024;
     m_iFboHeight = 768;
-    m_iOscReceiverPort = 13000;
-    m_iOscSenderPort = 12000;
-    m_sOscSenderHost = "127.0.0.1";
-    m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
+	m_sOutputIp = "127.0.0.1";
+	m_sOutputPort = 13000;
+	m_sInputPort = 12000;
+    //m_sInputPort = 13000;
+    //m_sOutputPort = 12000;
+    //m_sOutputIp = "127.0.0.1";
+    m_sReceiverOscDisplay = "Listening to OSC on port m_sInputPort\n";
 
-	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
-    
+	m_sAugmentaOscDiplay = "Listening to Augmenta OSC on port  m_sInputPort\n";
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
@@ -127,6 +128,9 @@ void ofApp::setupGUI(){
 	m_gui.setName("GUI Parameters");
 
 	// Add content to GUI panel
+	m_gui.add(m_sInputPort.setup("Input Port ", m_sInputPort));
+	m_gui.add(m_sOutputIp.setup("Output IP ", m_sOutputIp));
+	m_gui.add(m_sOutputPort.setup("Output Port ", m_sOutputPort));
 	m_gui.add(m_sScreenResolution.setup("Window res ", m_sScreenResolution));
 	m_gui.add(m_sSendFboResolution.setup("Fbo res ", m_sSendFboResolution));
 	m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
@@ -188,9 +192,9 @@ void ofApp::setupOSC(){
 		settings.load("preferences.xml");
 		if (settings.tagExists("OSC")){
 			settings.pushTag("OSC");
-			m_iOscReceiverPort = settings.getValue("ReceiverPort", m_iOscReceiverPort);
-			m_iOscSenderPort = settings.getValue("SenderPort", m_iOscSenderPort);
-			m_sOscSenderHost = settings.getValue("SenderHost", m_sOscSenderHost);
+			m_sInputPort = settings.getValue("ReceiverPort", m_sInputPort);
+			m_sOutputPort = settings.getValue("SenderPort", m_sOutputPort);
+			m_sOutputIp = settings.getValue("SenderHost", m_sOutputIp);
 			settings.popTag();
 		}
 		else{
@@ -204,24 +208,24 @@ void ofApp::setupOSC(){
 	if (bNeedToSaveSettings){
 		settings.addTag("OSC");
 		settings.pushTag("OSC");
-		settings.setValue("ReceiverPort", m_iOscReceiverPort);
-		settings.setValue("SenderPort", m_iOscSenderPort);
-		settings.setValue("SenderHost", m_sOscSenderHost);
+		settings.setValue("ReceiverPort", m_sInputPort);
+		settings.setValue("SenderPort", m_sOutputPort);
+		settings.setValue("SenderHost", m_sOutputIp);
 		settings.popTag();
 		settings.saveFile("preferences.xml");
 	}
 
-	m_sReceiverOscDisplay = "Listening to OSC on port " + ofToString(m_iOscReceiverPort) + "\n";
+	m_sReceiverOscDisplay = "Listening to OSC on port  m_sInputPort\n";
 
 	try{
-		m_oscReceiver.setup(m_iOscReceiverPort);
+		m_oscReceiver.setup(m_sInputPort);
 	}
 	catch (std::exception&e){
 		ofLogWarning("setupOSC") << "Error : " << ofToString(e.what());
-		m_sReceiverOscDisplay = "\n/!\\ ERROR : Could not bind to OSC port " + ofToString(m_iOscReceiverPort) + " !\n\n";
+		m_sReceiverOscDisplay = "\n/!\\ ERROR : Could not bind to OSC port m_sInputPort\n";
 	}
 
-	m_oscSender.setup(m_sOscSenderHost, m_iOscSenderPort);
+	m_oscSender.setup(m_sOutputIp, m_sOutputPort);
 }
 
 //--------------------------------------------------------------
@@ -421,7 +425,7 @@ void ofApp::drawHiddenInterface(){
 
 	ofDrawBitmapString("FPS: " +
 		ofToString(ofGetFrameRate()) + "\n" +
-		"Sending OSC to " + m_sOscSenderHost + ":" + ofToString(m_iOscSenderPort) + "\n" + m_sAugmentaOscDiplay
+		"Sending OSC to " + "m_sOutputIp" + ":" + "m_sOutputPort" + "\n" + m_sAugmentaOscDiplay
 		+ "\n" +
 		"Fbo width : " + ofToString(AugmentaReceiver.getScene()->width) + "\n" +
 		"Fbo height : " + ofToString(AugmentaReceiver.getScene()->height) + "\n\n-" +
@@ -910,8 +914,8 @@ void ofApp::loadPreferences(){
 			m_vAreaPolygonsVector[i].complete();
 
 				preferences.pushTag("Osc");
-				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area" + ofToString(m_iNextFreeId) + "/personEntered"),
-														preferences.getValue("Out", "/area" + ofToString(m_iNextFreeId) + "/personWillLeave"));
+				m_vAreaPolygonsVector[i].loadOscMessage(preferences.getValue("In", "/area/" + ofToString(m_iNextFreeId) + "/personEntered"),
+														preferences.getValue("Out", "/area/" + ofToString(m_iNextFreeId) + "/personWillLeave"));
 				preferences.popTag();
 
 			preferences.popTag();

@@ -11,7 +11,6 @@
 #include "ofxAugmenta.h"
 
 
-
 #ifdef WIN32
 #include "ofxSpout2Sender.h"
 #elif MAC_OS_X_VERSION_10_6
@@ -86,9 +85,9 @@ private:
     ofxOscReceiver m_oscReceiver;
     ofxOscSender m_oscSender;
     string m_sOscPortDisplayMessage;   
-    int m_iOscReceiverPort;
-    int m_iOscSenderPort;
-    string m_sOscSenderHost;
+    //int m_iOscReceiverPort;
+    //int m_iOscSenderPort;
+    //string m_sOscSenderHost;
     string m_sReceiverOscDisplay;
 
 	//Augmenta
@@ -120,6 +119,11 @@ private:
 	ofxLabel m_sNumberOfAreaPolygons;
     ofxButton m_bResetSettings;     // Boolean indicating if variables must be reset to their default values
     
+	// network settings
+	ofxInputField<string>  m_sOutputIp;
+	ofxInputField<int> m_sOutputPort;
+	ofxInputField<int> m_sInputPort;
+
 	// Parameters group to organize your parameters
 	ofParameterGroup m_guiFirstGroup, m_guiSecondGroup, m_guiThirdGroup;
 
