@@ -64,13 +64,13 @@ Any $ symbol in an osc message will be replaced by the number of people in the c
 
 ### System
 
-Windows 8.1
+Windows 10
 
 OSX 10.10
 
 ### Libs
 
-OpenFrameworks 0.8.4 
+OpenFrameworks 0.10.0
 
 #### Addons
 
