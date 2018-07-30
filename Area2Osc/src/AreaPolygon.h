@@ -35,7 +35,10 @@ public:
 	inline ofVec2f getPoint(int a_iIndice){ return m_vVectorPoints[a_iIndice]; };
 	inline void hasBeenSelected(bool a_bSelected){ m_bSelected = a_bSelected; };
 	inline int getPeopleMovement(){ return m_iPeopleMovement; };
-	inline int getPeopleInside(){ return m_iPeopleInside; };
+	inline int getPeopleInsideCount(){ return m_iPeopleInsideCount; };
+	inline int getPersonInside(int index) { return m_vIdPeopleInside[index]; };
+	inline int getLastIdWhichLeft() { return m_vLastIdWhichLeft; }; 
+	inline int getLastIdWhichEntered() { return m_vLastIdWhichEntered; };
 
 	//Osc
 	inline string getInOscAdress(){ return m_vInOsc[0]; };
@@ -50,6 +53,9 @@ public:
 	void draw(int width, int height); 
 	void drawPeopleInside(int width, int height);
 	void drawPeopleMovement(int width, int height);
+
+	//move point
+	void moveLastPoint(float x, float y);
 
 	//Move Poly
 	void moveLeft();
@@ -70,11 +76,15 @@ public:
 	bool doesStringContainOnlyNumberAndOnePoint(string s);
 
 private:
+	template <class T>
+	void contains(vector<T> list, int height);
 
 	vector<ofVec2f> m_vVectorPoints;
 	bool m_bIsFinished;
-	int m_iPeopleInside;
+	int m_iPeopleInsideCount;
 	int m_iOldPeopleInside;
+	int m_vLastIdWhichLeft;
+	int m_vLastIdWhichEntered;
 	bool m_bSelected;
 	ofVec2f m_oCentroid;
 	int m_iPeopleMovement;
