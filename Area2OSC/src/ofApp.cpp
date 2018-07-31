@@ -25,18 +25,17 @@ void ofApp::setup(){
 	// Init function is used to set default variables that can be changed.
 	// For example, GUI variables or preferences.xml variables.
 	init();
+	loadPreferences();
 
-	//Augmenta
-	AugmentaReceiver.connect(m_sInputPort);
-	m_oPeople = AugmentaReceiver.getPeople();
-	m_oActualScene = AugmentaReceiver.getScene();
 
 	// Important : call those function AFTER init,
 	// because init() will define all default values
 	m_iNextFreeId = 0;
 	setupGUI();
 	setupOSC();
-	loadPreferences();
+
+	m_oPeople = AugmentaReceiver.getPeople();
+	m_oActualScene = AugmentaReceiver.getScene();
 
 	if (m_oActualScene->width == 0 || m_oActualScene->height == 0){
 		m_iFboWidth = 1024;
@@ -187,50 +186,16 @@ void ofApp::setupGUI(){
 //--------------------------------------------------------------
 void ofApp::setupOSC(){
 
-	ofxXmlSettings settings;
-	bool bNeedToSaveSettings = false;
-
-	// If a file settings exists, load values saved ; else, take default values
-	if (ofFile::doesFileExist("preferences.xml")){
-		settings.load("preferences.xml");
-		if (settings.tagExists("OSC")){
-			settings.pushTag("OSC");
-			m_sInputPort = settings.getValue("ReceiverPort", m_sInputPort);
-			m_sOutputPort = settings.getValue("SenderPort", m_sOutputPort);
-			m_sOutputIp = settings.getValue("SenderHost", m_sOutputIp);
-			settings.popTag();
-		}
-		else{
-			bNeedToSaveSettings = true;
-		}
-	}
-	else{
-		ofFile newFile(ofToDataPath("preferences.xml"), ofFile::WriteOnly); //file doesn't exist yet
-		newFile.create();
-		bNeedToSaveSettings = true;
-	}
-
-	if (bNeedToSaveSettings){
-		settings.addTag("OSC");
-		settings.pushTag("OSC");
-		settings.setValue("ReceiverPort", m_sInputPort);
-		settings.setValue("SenderPort", m_sOutputPort);
-		settings.setValue("SenderHost", m_sOutputIp);
-		settings.popTag();
-		settings.saveFile("preferences.xml");
-	}
-
-	m_sReceiverOscDisplay = "Listening to OSC on port  m_sInputPort\n";
-
-	try{
-		m_oscReceiver.setup(m_sInputPort);
-	}
-	catch (std::exception&e){
-		ofLogWarning("setupOSC") << "Error : " << ofToString(e.what());
-		m_sReceiverOscDisplay = "\n/!\\ ERROR : Could not bind to OSC port m_sInputPort\n";
-	}
-
+	//m_sReceiverOscDisplay = "Listening to OSC on port " + std::to_string(m_sInputPort);
+	//m_oscReceiver.stop();
+	//AugmentaReceiver.stop();
+	//m_oscSender.clear();
+	
+	AugmentaReceiver.connect(m_sInputPort);
+	m_oscReceiver.setup(m_sInputPort);
 	m_oscSender.setup(m_sOutputIp, m_sOutputPort);
+
+	ofLogVerbose("OSC settings updated");
 }
 
 //--------------------------------------------------------------
@@ -264,10 +229,15 @@ void ofApp::update(){
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
 
-	//Update osc settings
-	if (m_oscReceiver.getPort() != m_sInputPort) {
+	////Update osc settings
+	//if (m_oscReceiver.getPort() != m_sInputPort || m_oscSender.getPort() != m_sOutputPort || m_oscSender.getHost().compare(m_sOutputIp) != 0) {
+	//	setupOSC();
+	//}
+	/*if (m_oscReceiver.getPort() != m_sInputPort) {
+		ofLogVerbose("tachatte");
 		try {
 			m_oscReceiver.setup(m_sInputPort);
+			AugmentaReceiver.connect(m_sInputPort);
 		}
 		catch (std::exception&e) {
 			ofLogWarning("setupOSC") << "Error : " << ofToString(e.what());
@@ -276,7 +246,7 @@ void ofApp::update(){
 	}
 	if (m_oscSender.getPort() != m_sOutputPort || m_oscSender.getHost().compare(m_sOutputIp) == 0) {
 		m_oscSender.setup(m_sOutputIp, m_sOutputPort);
-	}
+	}*/
 		
 	//update name
 	if (m_bSelectMode) {
@@ -872,6 +842,12 @@ void ofApp::savePreferences(){
 	preferences.addValue("FboHeight", m_iFboHeight);
 	preferences.addValue("NextFreeId", m_iNextFreeId);
 
+	preferences.addTag("OSC");
+	preferences.pushTag("OSC");
+	preferences.setValue("ReceiverPort", m_sInputPort);
+	preferences.setValue("SenderPort", m_sOutputPort);
+	preferences.setValue("SenderHost", m_sOutputIp);
+	preferences.popTag();
 
 	for (int i = 0; i < m_iNumberOfAreaPolygons; i++){
 		if (m_vAreaPolygonsVector[i].isCompleted()){
@@ -913,7 +889,17 @@ void ofApp::loadPreferences(){
 	// If a preferences.xml file exists, load it
 	if (ofFile::doesFileExist("preferences.xml")){
 		preferences.load("preferences.xml");
+
 		preferences.pushTag("Settings");
+
+		if (preferences.tagExists("OSC")) {
+			preferences.pushTag("OSC");
+			m_sInputPort = preferences.getValue("ReceiverPort", m_sInputPort);
+			m_sOutputPort = preferences.getValue("SenderPort", m_sOutputPort);
+			m_sOutputIp = preferences.getValue("SenderHost", m_sOutputIp);
+			preferences.popTag();
+		}
+
 		m_bHideInterface = preferences.getValue("HideInterface", m_bHideInterface);
 		m_bLogToFile = preferences.getValue("LogToFile", m_bLogToFile);
 		m_iFboWidth = preferences.getValue("FboWidth", m_iFboWidth);
@@ -964,7 +950,8 @@ void ofApp::loadPreferences(){
 		}
 	}
 	else{
-		ofLogNotice("Preferences file did not load..");
+		ofFile newFile(ofToDataPath("preferences.xml"), ofFile::WriteOnly); //file doesn't exist yet
+		newFile.create();
 	}
 }
 
@@ -1013,6 +1000,7 @@ ofxOscMessage m;
 					//X->0
 					m = m_vAreaPolygonsVector[i].getOutOscMessage();
 					m.setAddress(m_vAreaPolygonsVector[i].getOutOscAdress());
+					m.addInt32Arg(m_vAreaPolygonsVector[i].getLastIdWhichLeft());
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
 					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOscAdress();
@@ -1022,6 +1010,7 @@ ofxOscMessage m;
 					//0->X
 					m = m_vAreaPolygonsVector[i].getInOscMessage();
 					m.setAddress(m_vAreaPolygonsVector[i].getInOscAdress());
+					m.addInt32Arg(m_vAreaPolygonsVector[i].getLastIdWhichEntered());
 					m_oscSender.sendMessage(m); // Send it
 					m.clear(); // Clear message to be able to reuse it
 					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOscAdress();
