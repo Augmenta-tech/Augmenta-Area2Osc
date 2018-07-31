@@ -4,7 +4,7 @@
 #include <locale>
 
 
-AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce){
+AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, string a_sName, int m_iAntiBounce){
 	m_oPointsColor = ofColor(246,128,248,200);
 	m_oLinesColor = ofColor(237,232,229,200);
 	m_oCompletedColor = ofColor(255, 166, 70,200);
@@ -17,10 +17,17 @@ AreaPolygon::AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeo
 	m_iOldPeopleInside=m_iPeopleInsideCount;
 	m_bSelected = false;
 	m_fMoveIncremente = 0.001;
-	m_vInOsc.push_back("/area/" + ofToString(a_iIndice) + "/personEntered");
-	m_vOutOsc.push_back("/area/" + ofToString(a_iIndice) + "/personWillLeave");
+	m_vInOsc.push_back("/area/" + ofToString(a_sName) + "/personEntered");
+	m_vOutOsc.push_back("/area/" + ofToString(a_sName) + "/personWillLeave");
+	m_sPolyName = a_sName;
 
 	addPoint(a_oFirstPoint);
+}
+
+void AreaPolygon::setPolyName(string name) {
+	m_sPolyName = name;
+	m_vInOsc[0] = "/area/" + ofToString(name) + "/personEntered";
+	m_vOutOsc[0] = ("/area/" + ofToString(name) + "/personWillLeave");
 }
 
 //--------------------------------------------------------------

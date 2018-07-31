@@ -27,7 +27,7 @@ class AreaPolygon {
 public:
 
 	//Construction
-	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, int a_iIndice, int m_iAntiBounce);
+	AreaPolygon(ofVec2f a_oFirstPoint, vector<Augmenta::Person*> a_vPeople, string a_sName, int m_iAntiBounce);
 
 	//Inline
 	inline bool isCompleted(){ return m_bIsFinished; };
@@ -41,6 +41,8 @@ public:
 	inline int getLastIdWhichEntered() { return m_vLastIdWhichEntered; };
 
 	//Osc
+	void setPolyName(string name);
+	inline string getPolyName() {return m_sPolyName; };
 	inline string getInOscAdress(){ return m_vInOsc[0]; };
 	inline string getOutOscAdress(){ return m_vOutOsc[0]; };
 	inline ofxOscMessage getInOscMessage(){ return m_oOscMessageIn; };
@@ -79,6 +81,7 @@ private:
 	template <class T>
 	void contains(vector<T> list, int height);
 
+	string m_sPolyName;
 	vector<ofVec2f> m_vVectorPoints;
 	bool m_bIsFinished;
 	int m_iPeopleInsideCount;

@@ -4,6 +4,7 @@
 #include "AreaPolygon.h"
 #include "AugmentaScene.h"
 
+#include "ofFileUtils.h"
 #include "ofMain.h"
 #include "ofxGui.h"
 #include "ofxOsc.h"
@@ -133,6 +134,7 @@ private:
 	ofxFloatSlider m_fZoomCoef;
 
 	// Gui parameters inside m_SecondGroup
+	ofxInputField<string>  m_sPolyName;
 	ofxToggle m_oToggleClearAll;
 	ofxToggle m_oToggleDeleteLastPoly;
 

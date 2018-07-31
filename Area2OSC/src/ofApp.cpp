@@ -88,6 +88,7 @@ void ofApp::init(){
 	m_sOutputIp = "127.0.0.1";
 	m_sOutputPort = 13000;
 	m_sInputPort = 12000;
+	m_sPolyName = std::to_string(0);
     //m_sInputPort = 13000;
     //m_sOutputPort = 12000;
     //m_sOutputIp = "127.0.0.1";
@@ -97,7 +98,7 @@ void ofApp::init(){
 	m_iIndicePolygonSelected = -1;
     m_fPointRadius = 20;
 	m_iLinesWidthSlider = 2;
-	m_bRedondanteMode = true;
+	m_bRedondanteMode = false;
 	m_oToggleClearAll = false;
 	m_oToggleDeleteLastPoly = false;
 	m_bEditMode = false;
@@ -135,12 +136,14 @@ void ofApp::setupGUI(){
 	m_gui.add(m_sSendFboResolution.setup("Fbo res ", m_sSendFboResolution));
 	m_gui.add(m_sFramerate.setup("FPS", m_sFramerate));
 	m_gui.add(m_sNumberOfAreaPolygons.setup("Number of polygons", m_sNumberOfAreaPolygons));
+	m_gui.add(m_sPolyName.setup("Polygone name ", std::to_string(0)));
 	m_gui.add((m_fZoomCoef.setup("Zoom", 1, 0.3, 2)));
 	m_gui.add(m_bResetSettings.setup("Reset Settings", m_bResetSettings));
 
 	// guiFirstGroup parameters ---------------------------
 	string sFirstGroupName = "Polygons";
 	m_guiFirstGroup.setName(sFirstGroupName);     // Name the group of parameters (important if you want to apply color to your GUI)
+	//m_guiFirstGroup.add(m_sPolyName.setup("Polygone name ", m_sPolyName));
 	m_guiFirstGroup.add((m_oToggleClearAll.setup("Delete all polygons", m_oToggleClearAll))->getParameter());
 	m_guiFirstGroup.add((m_oToggleDeleteLastPoly.setup("Delete last polygon", m_oToggleDeleteLastPoly))->getParameter());
 	m_gui.add(m_guiFirstGroup);     // When all parameters of the group are set up, add the group to the gui panel.
@@ -202,6 +205,8 @@ void ofApp::setupOSC(){
 		}
 	}
 	else{
+		ofFile newFile(ofToDataPath("preferences.xml"), ofFile::WriteOnly); //file doesn't exist yet
+		newFile.create();
 		bNeedToSaveSettings = true;
 	}
 
@@ -258,6 +263,28 @@ void ofApp::update(){
 
 	//Update GUI
 	m_iNumberOfAreaPolygons = m_vAreaPolygonsVector.size();
+
+	//Update osc settings
+	if (m_oscReceiver.getPort() != m_sInputPort) {
+		try {
+			m_oscReceiver.setup(m_sInputPort);
+		}
+		catch (std::exception&e) {
+			ofLogWarning("setupOSC") << "Error : " << ofToString(e.what());
+			m_sReceiverOscDisplay = "\n/!\\ ERROR : Could not bind to OSC port m_sInputPort\n";
+		}
+	}
+	if (m_oscSender.getPort() != m_sOutputPort || m_oscSender.getHost().compare(m_sOutputIp) == 0) {
+		m_oscSender.setup(m_sOutputIp, m_sOutputPort);
+	}
+		
+	//update name
+	if (m_bSelectMode) {
+		m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolyName(m_sPolyName);
+	}
+	if (m_bEditMode) {
+		m_vAreaPolygonsVector[m_iNumberOfAreaPolygons - 1].setPolyName(m_sPolyName);
+	}
 
 	//Update Colision
 	for (size_t i = 0; i < m_iNumberOfAreaPolygons; i++){
@@ -673,6 +700,9 @@ void ofApp::mouseDragged(int x, int y, int button){
 				m_vAreaPolygonsVector[m_iIndicePolygonSelected].setPolygonCentroid();
 			}
 		}
+		else {
+			m_vAreaPolygonsVector[m_vAreaPolygonsVector.size() - 1].moveLastPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight);
+		}
 	}
 	m_oOldMousePosition = ofVec2f(x, y);
 }
@@ -717,6 +747,7 @@ void ofApp::mousePressed(int x, int y, int button){
 						m_vAreaPolygonsVector.pop_back();
 					}
 					isLastPoint = true;
+					m_sPolyName = std::to_string(m_iNextFreeId);
 				}
 				//Create another point
 				else{
@@ -724,9 +755,9 @@ void ofApp::mousePressed(int x, int y, int button){
 				}
 			}
 
-			//Every AreaPolygons are completed
+			//Every AreaPolygons are completed so create a new one
 			else{
-				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), m_oPeople, m_iNextFreeId,m_iAntiBounce));
+				m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight), m_oPeople, m_sPolyName ,m_iAntiBounce));
 				m_iNextFreeId++;
 				m_bEditMode = true;
 			}
@@ -741,12 +772,14 @@ void ofApp::mousePressed(int x, int y, int button){
 						m_iIndicePolygonSelected = i;
 						m_vAreaPolygonsVector[i].hasBeenSelected(true);
 						m_bSelectMode = true;
+						m_sPolyName = m_vAreaPolygonsVector[i].getPolyName();
 						break;//because we only want one selectd poly
 					}
 				}
 			}
-			else{
+			else{				
 				if (!m_vAreaPolygonsVector[m_iIndicePolygonSelected].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){
+					m_sPolyName = std::to_string(m_iNextFreeId);
 					//We leave the selection mode
 					m_vAreaPolygonsVector[m_iIndicePolygonSelected].hasBeenSelected(false);
 					m_iIndicePolygonSelected = -1;
@@ -757,6 +790,7 @@ void ofApp::mousePressed(int x, int y, int button){
 						if (m_vAreaPolygonsVector[i].isPointInPolygon(ofPoint(static_cast<float>(x) / m_iFboWidth, static_cast<float>(y) / m_iFboHeight))){						
 							m_iIndicePolygonSelected = i;
 							m_vAreaPolygonsVector[i].hasBeenSelected(true);
+							m_sPolyName = m_vAreaPolygonsVector[i].getPolyName();
 							m_bSelectMode = true;
 							break;//because we only want one selectd poly
 						}
@@ -844,6 +878,7 @@ void ofApp::savePreferences(){
 
 			preferences.addTag("AreaPolygon");
 			preferences.pushTag("AreaPolygon", i);
+			preferences.addValue("name", m_vAreaPolygonsVector[i].getPolyName());
 
 			for (int j = 0; j < m_vAreaPolygonsVector[i].getSize(); j++){
 				preferences.addTag("Point");
@@ -863,13 +898,15 @@ void ofApp::savePreferences(){
 	}
 	preferences.popTag();
 
-	preferences.saveFile("preferences.xml");
+	if (!preferences.saveFile("preferences.xml"))
+		ofLogVerbose("Failed to save file");
 }
 
 //--------------------------------------------------------------
 void ofApp::loadPreferences(){
 	ofxXmlSettings preferences;
 	ofVec2f p;
+	string name;
 	int nbrPoints;
 	int nbrPolygons;
 
@@ -888,9 +925,9 @@ void ofApp::loadPreferences(){
 
 		for (int i = 0; i < nbrPolygons; ++i){
 			preferences.pushTag("AreaPolygon", i);
-
+			name = preferences.getValue("name", "noName");
 			nbrPoints = preferences.getNumTags("Point");
-			ofLogVerbose("loadPreferences") << "load of " << nbrPoints << " points";
+			ofLogVerbose("loadPreferences") << "load of " << name << " polygon with " << nbrPoints << " points";
 
 			for (int j = 0; j < nbrPoints; j++){
 				preferences.pushTag("Point", j);
@@ -899,7 +936,7 @@ void ofApp::loadPreferences(){
 				p.y = preferences.getValue("y", 0.0f);
 
 				if (j == 0){
-					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y), m_oPeople, 0, m_iAntiBounce));
+					m_vAreaPolygonsVector.push_back(AreaPolygon(ofVec2f(p.x, p.y), m_oPeople, name, m_iAntiBounce));
 
 				}
 				else{
@@ -947,6 +984,7 @@ ofxOscMessage m;
 					m = m_vAreaPolygonsVector[i].getInOscMessage();
 					m.setAddress(m_vAreaPolygonsVector[i].getInOscAdress());
 					for (int j = 0; j < m_vAreaPolygonsVector[i].getPeopleMovement(); j++){
+						m.addInt32Arg(m_vAreaPolygonsVector[i].getLastIdWhichEntered());
 						m_oscSender.sendMessage(m); // Send it
 						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getInOscAdress();
 					}
@@ -957,6 +995,7 @@ ofxOscMessage m;
 					m = m_vAreaPolygonsVector[i].getOutOscMessage();
 					m.setAddress(m_vAreaPolygonsVector[i].getOutOscAdress());
 					for (int j = 0; j < abs(m_vAreaPolygonsVector[i].getPeopleMovement()); j++){
+						m.addInt32Arg(m_vAreaPolygonsVector[i].getLastIdWhichLeft());
 						m_oscSender.sendMessage(m); // Send it
 						ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOscAdress();
 					}
@@ -969,7 +1008,7 @@ ofxOscMessage m;
 		for (int i = 0; i < m_iNumberOfAreaPolygons; ++i){
 			if (m_vAreaPolygonsVector[i].isCompleted()){
 				//We can work on this polygon
-				if (m_vAreaPolygonsVector[i].getPeopleInside() == 0 
+				if (m_vAreaPolygonsVector[i].getPeopleInsideCount() == 0 
 					&& m_vAreaPolygonsVector[i].getPeopleMovement() < 0){
 					//X->0
 					m = m_vAreaPolygonsVector[i].getOutOscMessage();
@@ -978,8 +1017,8 @@ ofxOscMessage m;
 					m.clear(); // Clear message to be able to reuse it
 					ofLogVerbose("sendOSC") << m_vAreaPolygonsVector[i].getOutOscAdress();
 				}
-				if (m_vAreaPolygonsVector[i].getPeopleInside() != 0 
-					&& m_vAreaPolygonsVector[i].getPeopleInside() == m_vAreaPolygonsVector[i].getPeopleMovement()){
+				if (m_vAreaPolygonsVector[i].getPeopleInsideCount() != 0 
+					&& m_vAreaPolygonsVector[i].getPeopleInsideCount() == m_vAreaPolygonsVector[i].getPeopleMovement()){
 					//0->X
 					m = m_vAreaPolygonsVector[i].getInOscMessage();
 					m.setAddress(m_vAreaPolygonsVector[i].getInOscAdress());
@@ -1008,6 +1047,7 @@ void ofApp::exit(){
 	Parameters are saved in another file that the one used in saveSettings() function
 	to prevent saving wrong parameters if application quit unexpectedly.
 	*/
+	m_sPolyName = std::to_string(m_iNextFreeId);
 	m_gui.saveToFile("autosave.xml");
 	savePreferences();
 	// Remove listener because instance of our gui button will be deleted
